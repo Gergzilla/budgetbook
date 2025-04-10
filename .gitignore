@@ -1,0 +1,9 @@
+# Git ignore file for repository
+
+# Statements are bank statements and other import data, should not be uploaded ever
+
+statements/
+data/
+.vscode/
+**/*pycache*/*
+**/*init.py
