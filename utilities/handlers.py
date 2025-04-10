@@ -7,7 +7,7 @@ try:
     import utilities.db_handlers as db_handlers
 except:
     import db_handlers
-import settings.settings as settings
+import vars.settings as settings
 
 mydb = settings.mydb
 #dbconnect = db_handlers.createDB()

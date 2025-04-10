@@ -2,7 +2,7 @@
 import utilities.handlers as handlers
 import utilities.db_handlers as db_handlers
 import os
-import settings.settings as settings
+import vars.settings as settings
 
 mydb = settings.mydb
 

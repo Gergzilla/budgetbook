@@ -2,7 +2,7 @@
 
 import sqlite3
 import os
-import settings.settings as settings
+import vars.settings as settings
 
 #### Database Setup Functions #####
 mydb=settings.mydb
