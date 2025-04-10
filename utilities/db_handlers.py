@@ -57,7 +57,7 @@ def writeToExpenses(writedata="", mydb=mydb):
     dbconn = sqlite3.connect(mydb)
     writeCursor = dbconn.cursor()
     try:
-        writeCursor.executescript(writedata)
+        writeCursor.execute(writedata)
         dbconn.commit()
     except Exception as e:
         print("Error executing query: ", e)
@@ -67,25 +67,34 @@ def addExpenses(expensedata, year):
     insertstring = "INSERT INTO expenses{0} VALUES ({1})" .format(year, expensedata)
     writeToExpenses(insertstring)
     
-#def addExpenses(cur, expensedata, year):
-#    #this one works, backup copy for testing
-#    recordquery = "INSERT INTO expenses{0} VALUES ({1})" .format(year, expensedata)
-#    cur.executescript(recordquery)
-#    cur.close()
-    
 def addTag(expensdata, tag, year):
     updatestring = ""
     print("addTag")
 
 ##### read-only database functions  ########
 
-def showYearlyTable(year="2024", mydb=mydb):
-    readCursor = sqlite3.connect(mydb).cursor()
-    #recordquery = "SELECT date, charge_name, expense, tag, notes FROM expenses{0}" .format(year)
-    recordquery = "SELECT * FROM 'expenses{0}'" .format(year)
-    print(recordquery)
+def queryByMonth(month, year="2024", mydb=mydb):
+    dbconn = sqlite3.connect(mydb)
+    readCursor = dbconn.cursor()
+    monthQuery = "SELECT * FROM expenses{0} WHERE date LIKE '{1}%'".format(year,month)
     try:
-        readCursor.executescript(recordquery)
+        readCursor.execute(monthQuery)
+        monthlyExpenses = readCursor.fetchall()
+    except Exception as e:
+        print("Unable to execute for for reason: ", e)
+        monthlyExpenses = e
+    readCursor.close()
+    return monthlyExpenses
+
+
+def queryByYearlyTable(year="2024", mydb=mydb):
+    dbconn = sqlite3.connect(mydb)
+    readCursor = dbconn.cursor()
+    #recordquery = "SELECT date, charge_name, expense, tag, notes FROM expenses{0}" .format(year)
+    recordquery = "SELECT * FROM expenses{0}".format(year)
+    # print(recordquery)
+    try:
+        readCursor.execute(recordquery)
         fulltable = readCursor.fetchall()
     except Exception as e:
         print("unable to execute query for reason: ", repr(e))
@@ -95,16 +104,14 @@ def showYearlyTable(year="2024", mydb=mydb):
 
 ##### maintenance functions ######
 
-def removeDuplicates(cur, year): #NYI
+def removeDuplicates(mydb=mydb,year="2024"): #Not currently used
+    dbconn = sqlite3.connect(mydb)
+    writeCursor = dbconn.cursor()
     rowquery = "SELECT MIN(rowid) FROM expenses{0} group by date, charge_name, expense".format(year)
     deletedupes = "DELETE FROM expenses{0} WHERE rowid not in({1}".format(year, rowquery)
-    removalResult = cur.execute(deletedupes)
+    removalResult = writeCursor.execute(deletedupes)
     print(removalResult)
 
 if __name__ == "__main__":
 
-    #mydb = "../data/mybudget.db"
-    #dbconnect = createDB(mydb)
-    #cur = dbconnect.cursor()
-    print("ran in main")
-    #createBudgetTable(cur, year)
+    print("I'm a collection of database functions.  I dont think you meant to run this directly")
