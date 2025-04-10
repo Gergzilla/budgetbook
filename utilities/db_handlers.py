@@ -64,12 +64,18 @@ def writeToExpenses(writedata="", mydb=mydb):
     writeCursor.close()
     
 def addExpenses(expensedata, year):
-    insertstring = "INSERT INTO expenses{0} VALUES ({1})" .format(year, expensedata)
-    writeToExpenses(insertstring)
+    insertString = "INSERT INTO expenses{0} VALUES ({1})" .format(year, expensedata)
+    writeToExpenses(insertString)
     
-def addTag(expensdata, tag, year):
-    updatestring = ""
-    print("addTag")
+def addTag(expensdata, tag, year="2024"):
+    # more learning, the for loop for a tuple doesnt work on a single item because there is nothing to iterate over
+    # so here it is just a,b,c,y,z = tuple
+    date, entity, charge, activetag, note = expensdata
+    #activetag and note not needed here but allocated anyways to prevent ValueError
+    tagUpdate = "UPDATE expenses{0} SET tag='{1}' WHERE date='{2}' AND charge_name='{3}' AND expense={4}" \
+        .format(year, tag, date, entity, charge)
+    result = writeToExpenses(tagUpdate)
+    return result
 
 ##### read-only database functions  ########
 

@@ -32,14 +32,17 @@ def addTags():
     tag_choice = 9999
     listByMonth = handlers.monthlyQueryBuilder()
     handlers.displayPrettyExpenses(listByMonth)
-    # print(listByMonth[2])
-    # exit()
+    # prompt user for the entry they wish to modify
     while -1 > tag_choice or len(listByMonth) < tag_choice:
         try:
-            tag_choice = int(input("Choose an entry bay number to tag: "))
+            tag_choice = int(input("Choose an entry number to add a tag to (this overwrites existing tags as well): "))
         except ValueError:
             print("Selection not in list or was not a number, try again")
-    print("You chose: " + str(listByMonth[tag_choice-1]).strip("()").replace("'","") + "\nEnter a tag for this charge.")
+    tag = input("You chose: " + str(listByMonth[tag_choice-1]).strip("()").replace("'","") + "\nEnter a tag for this charge: ")
+    chosenRecord = listByMonth[tag_choice-1]
+    tag = tag.upper()
+    result = db_handlers.addTag(chosenRecord, tag)
+    print(result)
 
 
 def fileImport():
