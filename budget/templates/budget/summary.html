@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4 mb-4">
+<h1>Budget Summary</h1>
+<form method="get" >
+    <select type="button" class="btn btn-primary dropdown-toggle" name="summary" hx-get="{% url 'landing_page'%}" hx-target="#movie-container" hx-swap="innerHTML">
+        <option value="monthly" {% if category == "monthly" %} selected {% endif %}>By Month</option>
+        <option value="yearly" {% if category == "yearly" %} selected {% endif %}>By Year</option>
+    </select>
+</form>
+
+</div>
+{% endblock %}

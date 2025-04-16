@@ -8,3 +8,7 @@ data/
 **/pycache/*
 **/*pycache*/*
 **/init.py
+importer/
+users/
+database/
+db.sqlite3

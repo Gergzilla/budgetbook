@@ -1,12 +1,12 @@
 #!/usr/bin/python
-# Collection of handler functions
+# This file is a copy of handlers.py but is being modified for django integration and testing
 import os
 from dateutil.parser import parse as dateparse
 # import sqlite3 properly moved all db interaction to db_handlers
 try: 
-    import utilities.db_handlers as db_handlers
+    import utilities.dj_db_handlers as db_handlers
 except:
-    import db_handlers
+    import dj_db_handlers as db_handlers
 import vars.settings as settings
 
 month_selector = settings.month_selector
