@@ -21,90 +21,79 @@ month_selector = settings.month_selector
 #the old TextBoxBuilder has been replaced with entry box handling because that is better.  The original POC is in its own file
 class EntryBoxBuilder:
     # original test moved to TextBoxBuilder_test.py
-
+    
     def __init__(self, mainframe):
         self.mainframe = mainframe
+        #stringVar not currently used
         self.dateBoxValue = StringVar()
         self.chargeBoxValue = StringVar()
         self.amountBoxValue = StringVar()
         self.tagBoxValue = StringVar()
         self.noteBoxValue = StringVar()
-        # TextBoxBuilder.instance_count += 1
+        
 
-    def createEntryBoxRow(self, expenses, rowcount):
-        for y in range(5):
-            for x in range(rowcount):
-                my_entry = Entry(self.mainframe)
-                my_entry.grid(row=y, column=x, pady=10, padx=5)
+    def createEntryBoxRow(self, rowNumber):
+        # print(f"createEntryBoxRow was called with expensedata: {expenses} \n And rowNumber of: {rowNumber}")
+        BoxObjectList = []
+        self.BoxObjectList = BoxObjectList
+        dateBox = ttk.Entry(self.mainframe, width=12)
+        chargeBox = ttk.Entry(self.mainframe, width=30)
+        amountBox = ttk.Entry(self.mainframe, width=5)
+        tagBox = ttk.Entry(self.mainframe, width=15)
+        noteBox = ttk.Entry(self.mainframe, width=40)
 
-
-        # dateBox = ttk.Entry(self.mainframe, width=12)
-        # chargeBox = ttk.Entry(self.mainframe, width=30)
-        # amountBox = ttk.Entry(self.mainframe, width=5)
-        # tagBox = ttk.Entry(self.mainframe, width=15)
-        # noteBox = ttk.Entry(self.mainframe, width=40)
-        # dateBox = ttk.Entry(self.mainframe, width=12, textvariable=self.dateBoxValue)
-        # chargeBox = ttk.Entry(self.mainframe, width=30, textvariable=self.chargeBoxValue)
-        # amountBox = ttk.Entry(self.mainframe, width=5, textvariable=self.amountBoxValue)
-        # tagBox = ttk.Entry(self.mainframe, width=15, textvariable=self.tagBoxValue)
-        # noteBox = ttk.Entry(self.mainframe, width=40, textvariable=self.noteBoxValue)
-
-        # entryBoxArray = [dateBox, chargeBox, amountBox, tagBox, noteBox]
+        entryBoxArray = [dateBox, chargeBox, amountBox, tagBox, noteBox]
         # i = 0
-        # for r in range(rowcount):
-        #     rowSpace = r +1
-        #     dateBox = ttk.Entry(self.mainframe, width=12, textvariable=self.dateBoxValue)
-        #     chargeBox = ttk.Entry(self.mainframe, width=30, textvariable=self.chargeBoxValue)
-        #     amountBox = ttk.Entry(self.mainframe, width=5, textvariable=self.amountBoxValue)
-        #     tagBox = ttk.Entry(self.mainframe, width=15, textvariable=self.tagBoxValue)
-        #     noteBox = ttk.Entry(self.mainframe, width=40, textvariable=self.noteBoxValue)
-        #     dateBox.grid(column=1, row=rowSpace, sticky=N, padx=1)
-        #     chargeBox.grid(column=2, row=rowSpace, sticky=N, padx=1)
-        #     amountBox.grid(column=3, row=rowSpace, sticky=N, padx=1)
-        #     tagBox.grid(column=4, row=rowSpace, sticky=N, padx=1)
-        #     noteBox.grid(column=5, row=rowSpace, sticky=N, padx=1)
-            # self.dateBoxValue.set("a")
-            # self.chargeBoxValue.set("b")
-            # self.amountBoxValue.set("c")
-            # self.tagBoxValue.set("")
-            # self.noteBoxValue.set("e")
-            # for entry in entryBoxArray:
-                # print(entryBoxArray[i])
-                # entryBoxArray[i].grid(column=i+1, row=entry, sticky=N, padx=1)
-                # entry.grid(column=i, row=r, sticky=N, padx=1)
+        for r in range(rowNumber):
+            rowSpacing = r+1
+            # print(f"row number: {r} and rowcount var {rowNumber}")
+            dateBox.grid(column=1, row=rowSpacing, sticky=N, padx=1)
+            chargeBox.grid(column=2, row=rowSpacing, sticky=N, padx=1)
+            amountBox.grid(column=3, row=rowSpacing, sticky=N, padx=1)
+            tagBox.grid(column=4, row=rowSpacing, sticky=N, padx=1)
+            noteBox.grid(column=5, row=rowSpacing, sticky=N, padx=1)
+        BoxObjectList.append(dateBox)
+        BoxObjectList.append(chargeBox)
+        BoxObjectList.append(amountBox)
+        BoxObjectList.append(tagBox)
+        BoxObjectList.append(noteBox)
+        self.BoxObjectList = BoxObjectList
+        # print(f"dateBox is {dateBox}")
+        # print(f"Inside createEntryBoxRow BoxObjectList is {BoxObjectList}")
+        # return BoxObjectList
+        #self.populateBoxes(expenses, entryBoxArray)
 
-                # i += 1
+    def make_boxes(self, rowcount):
+        try:
+            #this is the sidestep to using the input box for testing
+            totalrows = int(rowcount.get())
+        except:
+            totalrows = rowcount
+        self.GlobalBoxList = []
+        for row in range(totalrows):
+            rowID = row +1
+            self.createEntryBoxRow(rowID)  # This works (forgot self.) and doesnt require input data
+            # print(f"Created row: {rowID}")
+            # print(f"inside make_boxes, self.BoxObjectList is: {self.BoxObjectList}")
+            for o in self.BoxObjectList:
+                self.GlobalBoxList.append(o)
+        # print(f"inside makeBoxes GlobalBoxList contains: {self.GlobalBoxList}")
+        # return self.BoxObjectList
+        return self.GlobalBoxList
 
-        # for r in range(rowcount): #still only makes one damn row?
-            # print(f"row count is: {r}")
-            # dateBox.grid(column=1, row=rowSpace, sticky=N, padx=1)
-            # chargeBox.grid(column=2, row=rowSpace, sticky=N, padx=1)
-            # amountBox.grid(column=3, row=rowSpace, sticky=N, padx=1)
-            # tagBox.grid(column=4, row=rowSpace, sticky=N, padx=1)
-            # noteBox.grid(column=5, row=rowSpace, sticky=N, padx=1)
 
-        # i = 0  this used to use the instance_count number to generate rows, however moving it to the utilities file seemed to break it because it was no longer
-        # aware of how often it was initialized  working on a way to pass row count of the source data to use.
-        # while 0 <= i < len(entryBoxArray):
-        #     entryBoxArray[i].grid(column=i+1, row=instance_count, sticky=N, padx=1)
-        #     i += 1
+    def print_box_data(self):
+        BoxObjectList = self.BoxObjectList
+        print(f"Contexts of the Box var is {BoxObjectList}")
+        print(f"Inside print_box_data {dir(BoxObjectList)}")
+        for object in BoxObjectList:
+            print(object.get())
 
-        # self.populateBoxes(expenses, entryBoxArray)
-    
-    def populateBoxes(self, expenses, boxes):
-        # This needs to be changed for entry not text boxes, currently doesn't work
-        # print(self.instance_count)
-        # This parses and populates each text box from the provided list
-        date = expenses[0].strip("'")
-        charge_name = expenses[1].strip("'").strip()
-        charge_amount = expenses[2].strip("'")
-        tag = expenses[3].strip("'")
-        notes = expenses[4].strip("'")
-        boxes[0].insert("1.0", date)
-        boxes[1].insert("1.0", charge_name)
-        boxes[2].insert("1.0", charge_amount)
-        boxes[3].insert("1.0", tag)
-        boxes[4].insert("1.0", notes)
+    def populateBoxes(self, expenseList, boxList):
+        i = 0
+        while i < len(expenseList):
+            boxList[i].insert(0, expenseList[i])
+            i += 1
 
 # mydb = settings.mydb - shouldnt be needed same as sqlite import
 
