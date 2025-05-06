@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # This file is a copy of pybudget.py but is being modified for django integration and testing
-import utilities.dj_handlers as handlers
-import utilities.dj_db_handlers as db_handlers
+import utilities.handlers as handlers
+import utilities.db_handlers as db_handlers
 import os
 
 

@@ -22,4 +22,23 @@ Future roadmap:
 - secure login capabilities for data protection
 - extend support for other file formats such as PDF
 - A possible desktop client alternative with GUI
-- use a database like SQLite to store all transaction data for more robust options
+- ~Use a database like SQLite to store all transaction data for more robust options~ Implemented
+
+## TODO List
+
+Tracking for what I need to change, fix or implement
+
+- ~Setup base landing page templates~
+- ~Modify original POC scripts to interact with Django's SQLite DB~
+- ~Import test data~
+- Correct formatting of import data <sup>The date format is causing issues</sup>
+- ~Create budget summary page template~
+- Update links, filters and buttons for summary browsing
+- Create a page to edit the budget data to add tags and make corrections
+- Add ability to upload CSV/TSV files for easier import
+- Setup tagging in a more friendly way, inline editing of a table perhaps
+- Add a reliable storage method for tags to be used to to correlate common names with a tag to 'learn' how things get tagged
+
+## Bugs
+
+- ~Despite the table having a date field the SQL query object doesnt have it so no date is displayed~ Resolved 4-17-2025
