@@ -1,0 +1,4 @@
+django>=5.2,<5.3
+django-htmx
+requests
+tkiner>=8.6
