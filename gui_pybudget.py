@@ -24,7 +24,6 @@ root.rowconfigure(0, weight=1)
 
 importfile = StringVar()
 
-# End EntryBoxBiulder Class ================================================
 
 
 def dateCheck(datestring, fuzzy=False):
@@ -34,21 +33,33 @@ def dateCheck(datestring, fuzzy=False):
     except:
         return False
     
-def file_import(): #This works now, don't change it
+def importFile(): #This works now, don't change it
     
     importfile.set(filedialog.askopenfilename(title="Select Expenses to Import"))
     # expenses, rowcount = handlers.readImportFile(importfile.get())  # Swaping to the new CSV importer
     expenses, rowcount = handlers.csvImporter(importfile.get())
     # Passes processed row count and expense list to update textboxes
-    update_TextBox(expenses, rowcount)
+    BoxMaking.updateTextBox(expenses, rowcount)
+    # update_TextBox(expenses, rowcount)
     if not importfile:
         return
     
-def update_TextBox(expenses, rowcount):
-    # Call make_boxes which parses the imported file and creates enough rows for the data
-    BoxObjects = BoxMaking.make_boxes(rowcount)
-    # Call populateBoxes which populates each created box with the parsed data
-    BoxMaking.populateBoxes(expenses, BoxObjects)
+# def update_TextBox(expenses, rowcount):  moved to class where it should be
+#     # Call make_boxes which parses the imported file and creates enough rows for the data
+#     BoxObjects = BoxMaking.createEntryBoxes(rowcount)
+#     # Call populateBoxes which populates each created box with the parsed data
+#     BoxMaking.populateBoxes(expenses, BoxObjects)
+
+def saveExpenses():
+    #I need to move update TextBox into the class
+    print("I saved them somewhere")
+
+def printBoxContents():
+    try:
+        BoxMaking.print_box_data()
+    except AttributeError:
+        messagebox.showwarning(message="Error: No data has been loaded yet")
+        # print("Error: No data has been loaded yet")
 
 def leave():
     try:
@@ -65,8 +76,9 @@ def main():
 
     ttk.Button(mainframe, text="View Expense Summary", command="").grid(column=8, row=2, sticky=(E, S))
     ttk.Button(mainframe, text="View Budget Report", command="").grid(column=8, row=3, sticky=(E, S))
-    ttk.Button(mainframe, text="Modify Expenses", command="").grid(column=8, row=4, sticky=(E, S))
-    ttk.Button(mainframe, text="Import Expenses", command=file_import).grid(column=8, row=5, sticky=(E, S))
+    ttk.Button(mainframe, text="Print Expenses", command=printBoxContents).grid(column=8, row=4, sticky=(E, S))
+    ttk.Button(mainframe, text="Import Expenses", command=importFile).grid(column=7, row=5, sticky=(E, S))
+    ttk.Button(mainframe, text="Save Expenses", command=saveExpenses).grid(column=8, row=5, sticky=(E, S))
     ttk.Button(mainframe, text="Quit", command=leave).grid(column=8, row=6, sticky=(E, S))
     # These were just for troubleshooting
     # rowcount = ttk.Entry(mainframe, width=5)
