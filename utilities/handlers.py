@@ -7,14 +7,18 @@ from tkinter import ttk
 from tkinter import messagebox, filedialog
 from dateutil.parser import parse as dateparse
 from datetime import datetime
-from collections import defaultdict
+# from collections import defaultdict
+import vars.settings as settings
 
+try:
+    from utilities.logger import LoggingHandler
+except:
+    from logger import LoggingHandler
 
 try: 
     import utilities.db_handlers as db_handlers
 except:
     import db_handlers as db_handlers
-import vars.settings as settings
 
 month_selector = settings.month_selector
 
@@ -23,7 +27,13 @@ class EntryBoxBuilder:
     # original test moved to TextBoxBuilder_test.py
     
     def __init__(self, mainframe):
+        self.name = __name__
+        # print(f"my __name__ is: {__name__}")
+        # print(f"my __class__ is: {__class__}")
+        # print(f"my __class__.__name__ is: {__class__.__name__}")
+        # print(__class__.__name__)
         self.mainframe = mainframe
+        self.logger = LoggingHandler(__class__).log
         #stringVar not currently used
         self.dateBoxValue = StringVar()
         self.chargeBoxValue = StringVar()
@@ -72,6 +82,7 @@ class EntryBoxBuilder:
             for o in self.BoxObjectList:
                 self.GlobalBoxList.append(o)
         # print(f"inside makeBoxes GlobalBoxList contains: {self.GlobalBoxList}")
+        self.logger.debug(f"inside makeBoxes GlobalBoxList contains: {self.GlobalBoxList}")
         # return self.BoxObjectList
         return self.GlobalBoxList
 

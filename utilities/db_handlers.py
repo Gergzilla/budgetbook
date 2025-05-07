@@ -4,9 +4,15 @@ import sqlite3
 import os
 import vars.dj_settings as settings
 
+try:
+    from utilities.logger import LoggingHandler
+except:
+    from logger import LoggingHandler
+
 #### Database Setup Functions #####
 mydb=settings.mydb
 mytable=settings.mytable
+logger=LoggingHandler("db_handlers").log #currenlty untested
 
 def createDB(mydb): 
     #can prompt for db name in the future, for now its hard set

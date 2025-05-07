@@ -2,6 +2,8 @@
 
 import utilities.handlers as handlers
 import utilities.db_handlers as db_handlers
+import os
+from utilities.logger import LoggingHandler
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox, filedialog
@@ -12,6 +14,8 @@ import tksheet
 # TODO: The current issue here is that I need to refactor the way that the parser handles the inputs.
 # I think the problem is I am sending just a big list to the textbox class which of course it cant handle.  Though I dont
 # know why it isnt creating more boxes because it should be creating multiple text boxes at least
+base = str(os.path.basename(__file__))
+logger = LoggingHandler(base).log
 
 root = Tk()
 root.title("Welcome to MyPyBudget")
@@ -90,4 +94,6 @@ def main():
     root.mainloop()
 
 if __name__ == "__main__":
+    #logging test
+    logger.debug("test")
     main()
