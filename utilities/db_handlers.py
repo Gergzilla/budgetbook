@@ -3,11 +3,13 @@
 import sqlite3
 import os
 import vars.dj_settings as settings
+from utilities.logger import LoggingHandler
+import utilities.db_handlers as db_handlers
 
-try:
-    from utilities.logger import LoggingHandler
-except:
-    from logger import LoggingHandler
+# try:
+#     from utilities.logger import LoggingHandler
+# except Exception:
+#     from logger import LoggingHandler
 
 #### Database Setup Functions #####
 mydb=settings.mydb
@@ -23,7 +25,7 @@ def createDB(mydb):
         print("File doesnt exist, creating file")
         try:
             dbconnect = sqlite3.connect(mydb)
-        except:
+        except Exception:
             print("could not create file for some reason at "+ mydb)
             dbconnect = ""
     return dbconnect
@@ -54,7 +56,7 @@ def pollMasterTable(cur, year="2024",mytable=mytable):
     masterdblist = cur.execute(createtable)
     try:
         checktables = masterdblist.fetchone()
-    except:
+    except Exception:
         checktables = None
     if checktables is None:
         return False

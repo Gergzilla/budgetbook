@@ -3,19 +3,20 @@
 import utilities.handlers as handlers
 import utilities.db_handlers as db_handlers
 import os
-from utilities.logger import LoggingHandler
+
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox, filedialog
 from dateutil.parser import parse as dateparse
 from datetime import datetime
 import tksheet
+try:
+    # Required as if -h is passed the program should exit cleanly
+    from utilities.logger import LoggingHandler
+except Exception:
+    quit()
 
-# TODO: The current issue here is that I need to refactor the way that the parser handles the inputs.
-# I think the problem is I am sending just a big list to the textbox class which of course it cant handle.  Though I dont
-# know why it isnt creating more boxes because it should be creating multiple text boxes at least
-base = str(os.path.basename(__file__))
-logger = LoggingHandler(base).log
+logger = LoggingHandler(str(os.path.basename(__file__))).log
 
 root = Tk()
 root.title("Welcome to MyPyBudget")
@@ -26,36 +27,19 @@ mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
 
-importfile = StringVar()
+importFilePrompt = StringVar()
 
-
-
-def dateCheck(datestring, fuzzy=False):
-    try:
-        dateparse(datestring, fuzzy=fuzzy)
-        return True
-    except:
-        return False
-    
 def importFile(): #This works now, don't change it
-    
-    importfile.set(filedialog.askopenfilename(title="Select Expenses to Import"))
-    # expenses, rowcount = handlers.readImportFile(importfile.get())  # Swaping to the new CSV importer
-    expenses, rowcount = handlers.csvImporter(importfile.get())
-    # Passes processed row count and expense list to update textboxes
-    BoxMaking.updateTextBox(expenses, rowcount)
-    # update_TextBox(expenses, rowcount)
-    if not importfile:
+    importFilePrompt.set(filedialog.askopenfilename(title="Select Expenses to Import"))
+    importFile = importFilePrompt.get()
+    if importFile == "":
         return
+    else:
+        expenses, rowcount = handlers.csvImporter(importFile)
+        # Passes processed row count and expense list to update textboxes
+        BoxMaking.updateTextBox(expenses, rowcount)
     
-# def update_TextBox(expenses, rowcount):  moved to class where it should be
-#     # Call make_boxes which parses the imported file and creates enough rows for the data
-#     BoxObjects = BoxMaking.createEntryBoxes(rowcount)
-#     # Call populateBoxes which populates each created box with the parsed data
-#     BoxMaking.populateBoxes(expenses, BoxObjects)
-
 def saveExpenses():
-    #I need to move update TextBox into the class
     print("I saved them somewhere")
 
 def printBoxContents():
@@ -94,6 +78,4 @@ def main():
     root.mainloop()
 
 if __name__ == "__main__":
-    #logging test
-    logger.debug("test")
     main()

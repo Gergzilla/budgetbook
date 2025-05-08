@@ -51,4 +51,5 @@ Tracking for what I need to change, fix or implement
 ## Bugs or Issues
 
 - ~Despite the table having a date field the SQL query object doesnt have it so no date is displayed~ Resolved 4-17-2025
+- App crashes if you cancel the import file dialogue box without selecting a file
 - The dynamic entry boxes do not always properly reset when importing different data or changing sources

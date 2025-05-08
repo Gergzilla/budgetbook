@@ -9,18 +9,16 @@ from dateutil.parser import parse as dateparse
 from datetime import datetime
 # from collections import defaultdict
 import vars.settings as settings
-
-try:
-    from utilities.logger import LoggingHandler
-except:
-    from logger import LoggingHandler
-
-try: 
-    import utilities.db_handlers as db_handlers
-except:
-    import db_handlers as db_handlers
+from utilities.logger import LoggingHandler
+import utilities.db_handlers as db_handlers
+   
+# try: 
+#     import utilities.db_handlers as db_handlers
+# except Exception:
+#     import db_handlers as db_handlers
 
 month_selector = settings.month_selector
+logger = LoggingHandler(str(os.path.basename(__file__))).log
 
 #the old TextBoxBuilder has been replaced with entry box handling because that is better.  The original POC is in its own file
 class EntryBoxBuilder:
@@ -28,13 +26,9 @@ class EntryBoxBuilder:
     
     def __init__(self, mainframe):
         self.name = __name__
-        # print(f"my __name__ is: {__name__}")
-        # print(f"my __class__ is: {__class__}")
-        # print(f"my __class__.__name__ is: {__class__.__name__}")
-        # print(__class__.__name__)
         self.mainframe = mainframe
         self.logger = LoggingHandler(__class__).log
-        #stringVar not currently used
+        #stringVar not currently used nor seems to be needed?
         self.dateBoxValue = StringVar()
         self.chargeBoxValue = StringVar()
         self.amountBoxValue = StringVar()
@@ -71,14 +65,12 @@ class EntryBoxBuilder:
         try:
             #this is the sidestep to using the input box for testing and isnt needed for now
             totalrows = int(rowcount.get())
-        except:
+        except Exception:
             totalrows = rowcount
         self.GlobalBoxList = []
         for row in range(totalrows):
             rowID = row +1
             self.createEntryBoxRow(rowID)  # This works (forgot self.) and doesnt require input data
-            # print(f"Created row: {rowID}")
-            # print(f"inside createEntryBoxes, self.BoxObjectList is: {self.BoxObjectList}")
             for o in self.BoxObjectList:
                 self.GlobalBoxList.append(o)
         # print(f"inside makeBoxes GlobalBoxList contains: {self.GlobalBoxList}")
@@ -112,23 +104,27 @@ def dateCheck(datestring, fuzzy=False):
     try:
         dateparse(datestring, fuzzy=fuzzy)
         return True
-    except:
+    except Exception as e:
+        #e isnt used but its caught for proper coding, this merely needs to return false if it cant parse the date for any reason
         return False
 
-####### File hanlding ########
+####### File Handlers ########
 
 def csvImporter(inputFileName, year="2025"):
     # Works perfectly!  results in a joined list of formatted data
     joinedCsv = []
     # For now we hardcode tab delim, need to do better handling later
-    with open(inputFileName, newline="") as infile:
-        infilereader = csv.reader(filter(lambda line: line.strip(), infile), delimiter=",")        
-        for row in infilereader:
-            parsedRow, rowCount = parseCSV(row, year)
-            for i in parsedRow:
-                joinedCsv.append(i)
-    infile.close()
-    return joinedCsv, rowCount
+    try:
+        with open(inputFileName, newline="") as infile:
+            infilereader = csv.reader(filter(lambda line: line.strip(), infile), delimiter=",")        
+            for row in infilereader:
+                parsedRow, rowCount = parseCSV(row, year)
+                for i in parsedRow:
+                    joinedCsv.append(i)
+        infile.close()
+        return joinedCsv, rowCount
+    except FileNotFoundError:
+        logger.critical("No valid file was found to inport")
 
 ####### Parsers and Writers ########
 

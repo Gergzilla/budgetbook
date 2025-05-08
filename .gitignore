@@ -5,6 +5,7 @@
 **/pycache/*
 **/*pycache*/*
 **/init.py
+logs/
 
 # Statements are bank statements and other import data, should not be uploaded ever
 statements/

@@ -3,6 +3,7 @@ import datetime
 from dateutil.parser import parse as dateparse
 import logging
 
+#copy pasted from handler, no changes made yet
 def dateCheck(datestring, fuzzy=False):
     try:
         dateparse(datestring, fuzzy=fuzzy)
