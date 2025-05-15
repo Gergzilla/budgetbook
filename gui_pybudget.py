@@ -21,11 +21,16 @@ logger = LoggingHandler(str(os.path.basename(__file__))).log
 root = Tk()
 root.title("Welcome to MyPyBudget")
 root.geometry("1024x800")
-
-mainframe = ttk.Frame(root, padding="8 8 12 12")
-mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
+root.configure(background="DarkGray")
+
+nb = ttk.Notebook(root, padding="8 8 12 12")
+mainframe = ttk.Frame(nb)
+mainframe.grid(column=0, columnspan=9, row=0, rowspan=9, sticky=(N, W, E, S))
+
+nb.add(mainframe, text="Main")
+nb.pack()
 
 importFilePrompt = StringVar()
 
@@ -40,14 +45,19 @@ def importFile(): #This works now, don't change it
         BoxMaking.updateTextBox(expenses, rowcount)
     
 def saveExpenses():
-    print("I saved them somewhere")
+    expenses = BoxMaking.getBoxContents()
+    handlers.writeExpenseToDB(expenses)
 
 def printBoxContents():
     try:
-        BoxMaking.print_box_data()
+        print(BoxMaking.getBoxContents())
+        # BoxMaking.print_box_data()
     except AttributeError:
         messagebox.showwarning(message="Error: No data has been loaded yet")
         # print("Error: No data has been loaded yet")
+
+def deleteDupes():
+    db_handlers.removeDuplicates()
 
 def leave():
     try:
@@ -71,9 +81,9 @@ def main():
     # These were just for troubleshooting
     # rowcount = ttk.Entry(mainframe, width=5)
     # rowcount.grid(column=8, row=7, padx=10, pady=10)
-    # ttk.Button(mainframe, text="make rows", command=lambda: BoxMaking.make_boxes(rowcount)).grid(column=7, row=7, sticky=(E, S), padx=5, pady=10)
+    ttk.Button(mainframe, text="delete duplicates", command=deleteDupes).grid(column=7, row=7, sticky=(E, S), padx=5, pady=10)
     # ttk.Button(mainframe, text="Print Box content", command=lambda: BoxMaking.print_box_data()).grid(column=8, row=8, padx=5, pady=5)
-    
+  
     # TextBoxBuilder(root)
     root.mainloop()
 

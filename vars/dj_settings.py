@@ -4,8 +4,10 @@ import sqlite3
 
 #mydb = os.path.join(os.path.dirname(__file__), "", "data", "mybudget.db")
 mydb = os.path.join("D:\\","scripts","pybudget", "db.sqlite3")
-dbconnect = sqlite3.connect(mydb)
+expenseDB = os.path.join("D:\\","scripts","pybudget", "db.sqlite3")
+dbconnect = sqlite3.connect(expenseDB)
 mytable = "database_transaction"
+expenseTable = "database_transaction"
 
 month_selector = {
     "Jan": "January",

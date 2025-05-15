@@ -2,12 +2,12 @@
 # This file is a copy of handlers.py but is being modified for django integration and testing
 import os
 import csv
+# import itertools
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox, filedialog
 from dateutil.parser import parse as dateparse
 from datetime import datetime
-# from collections import defaultdict
 import vars.settings as settings
 from utilities.logger import LoggingHandler
 import utilities.db_handlers as db_handlers
@@ -84,19 +84,22 @@ class EntryBoxBuilder:
         # Call populateBoxes which populates each created box with the parsed data
         self.populateBoxes(expenses, BoxObjects)
 
-    def print_box_data(self):
-        BoxObjectList = self.GlobalBoxList
-        # BoxObjectList = self.BoxObjectList
-        print(f"Contexts of the Box var is {BoxObjectList}")
-        print(f"Inside print_box_data {dir(BoxObjectList)}")
-        for object in BoxObjectList:
-            print(object.get())
-
     def populateBoxes(self, expenseList, boxList):
         i = 0
         while i < len(expenseList):
             boxList[i].insert(0, expenseList[i])
             i += 1
+    
+    def getBoxContents(self):
+        self.GlobalExpenseData = []
+        try:
+            for contents in self.GlobalBoxList:
+                self.GlobalExpenseData.append(contents.get())
+                # print(contents.get())
+            return self.GlobalExpenseData
+        except AttributeError:
+            messagebox.showwarning(message="Error: No data has been loaded yet")
+            return
 # End EntryBoxBiulder Class ================================================
 
 ####### Misc utilities  #######
@@ -138,7 +141,7 @@ def parseCSV(row, year):  # Works perfect!
             if dateCheck(row[i], fuzzy=False) is True:
                 date = "'{}'".format(row[i])
                 date = year + " " + str(date).strip("'")
-                date = "'{}'".format(str(datetime.strptime(date,"%Y %b %d").date()))
+                date = "{}".format(str(datetime.strptime(date,"%Y %b %d").date()))
                 expenses.append(date)
             elif "$" in row[i]:
                 expense = row[i].replace("$", "").strip("\n")
@@ -147,15 +150,36 @@ def parseCSV(row, year):  # Works perfect!
                 expenses.append(tag)
                 expenses.append(notes)
             else:
-                charge_name = "'{}'".format(row[i])
+                charge_name = "{}".format(row[i])
+                # charge_name = "'{}'".format(row[i])
                 expenses.append(charge_name)
             i += 1
         else:
             i += 1
     return expenses, i
-    # print(f"Espenses prior to return: {expenses}")   
+    # print(f"Espenses prior to return: {expenses}")
+
+def expenseChunks(expenseList, chunkSize):
+    # this should take the list and return tuples of size chunkSize for all data sent to it
+    for i in range(0, len(expenseList), chunkSize):
+        yield expenseList[i:i+chunkSize]
+
+def writeExpenseToDB(expenses):
+    """
+    This should bring in all data provided to it in a list form, most likely from parsing the box contents
+    and then prepare that data to be written to the sqlite database cleanly
+    """
+    for expense_batch in expenseChunks(expenses, 5):
+        # print(expense_batch)
+        result = db_handlers.saveExpensesToDB(expense_batch)
+    if result:
+        logger.error(result)
+    else:
+        messagebox.showinfo(message="All Entries saved to the Database")
+        # db_handlers.addExpenses(expense_batch, "2024")
 
 def parseToSQL(rawimport, year="2025"):
+    #this was replaced by parseCSV, we need to create a new generic SQL prep function to write data to the DB
     # parse input data to sql data and call writeToDB
     i = 0
     date, charge_name, expense = "","",""
@@ -179,6 +203,7 @@ def parseToSQL(rawimport, year="2025"):
     writeExpenseToDB(date, charge_name, expense)
 
 def monthlyQueryBuilder(): #rewriting for error handling on bad input
+    #not currently used in the UI
     month = ""
     month = input("Enter the name of the Month to modify: ").capitalize()
     while month not in month_selector:
@@ -210,10 +235,10 @@ def displayPrettyExpenses(queryresult):
         print(i, date, entity, expense, tag, notes)
         i = i +1
 
-def writeExpenseToDB(date, charge_name, expense, tag="' '", notes="' '"):
-    expensedata = date + "," + charge_name + "," + expense + "," + tag + "," + notes
-    print(expensedata)
-    db_handlers.addExpenses(expensedata, "2024")
+# def writeExpenseToDB(date, charge_name, expense, tag="' '", notes="' '"):
+#     expensedata = date + "," + charge_name + "," + expense + "," + tag + "," + notes
+#     print(expensedata)
+#     db_handlers.addExpenses(expensedata, "2024")
 
 if __name__ == "__main__":
     print("I'm a collection of functions.  I dont think you meant to run this directly")

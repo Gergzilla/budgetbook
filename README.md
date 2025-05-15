@@ -29,6 +29,8 @@ Future roadmap:
 - Functional GUI using TKinter
 - Able to import CSV expense files
 - Dynamically update GUI with imported data
+- Able to import transactions from capital one pdf files as pandas dataFrames
+- PDF parsing converted to a class for better page and document handling
 
 ## TODO List
 
@@ -48,8 +50,12 @@ Tracking for what I need to change, fix or implement
 - Setup tagging in a more friendly way, inline editing of a table perhaps
 - Add a reliable storage method for tags to be used to to correlate common names with a tag to 'learn' how things get tagged
 
+## Rlease Notes
+
+- Moving future commits to dev branch for better sanity checks and logic control - 5/15/2025
+
 ## Bugs or Issues
 
 - ~Despite the table having a date field the SQL query object doesnt have it so no date is displayed~ Resolved 4-17-2025
-- App crashes if you cancel the import file dialogue box without selecting a file
+- ~App crashes if you cancel the import file dialogue box without selecting a file~ Resolved 5-8-2025
 - The dynamic entry boxes do not always properly reset when importing different data or changing sources
