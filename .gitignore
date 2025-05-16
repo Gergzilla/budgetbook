@@ -18,13 +18,13 @@ db.sqlite3
 Dead_db.sqlite3_dead
 
 # Misc test/scratch and log files that shouldnt be on Git
+**/runninglog.txt*
+**/*runninglog.txt*
+
+#temporary setups that should not be replicated to actual release
+budgetbook/utilities/importers/utilities/
 budgetbook/tkintertest.py
-budgetbook/class-scratch.py
 budgetbook/TextBoxBuilder_test.py
-budgetbook/logs/
-budgetbook/importers/logs/
-budgetbook/runninglog.txt
-runninglog.txt
 budgetbook/import_testing.py
 budgetbook/tabtest.py
 
