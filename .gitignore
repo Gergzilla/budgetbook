@@ -5,26 +5,22 @@
 **/pycache/*
 **/*pycache*/*
 **/init.py
-logs/
 
 # Statements are bank statements and other import data, should not be uploaded ever
 statements/
-
-# These are django files and are being omitted for now
 data/
-importer/
-users/
-database/
-budget/
 
 # deprecated archive, kept local for reference
 utilities/deprecated/*
 
-# databases
+# databases are ommited because it should be created on initial run
 db.sqlite3
 Dead_db.sqlite3_dead
 
-# Misc test/scratch files that shouldnt be on Git
+# Misc test/scratch and log files that shouldnt be on Git
 tkintertest.py
 class-scratch.py
 TextBoxBuilder_test.py
+logs/
+importers/logs/
+runninglog.txt
