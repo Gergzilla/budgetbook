@@ -7,20 +7,34 @@
 **/init.py
 
 # Statements are bank statements and other import data, should not be uploaded ever
-statements/
-data/
+budgetbook/statements/
+budgetbook/data/
 
 # deprecated archive, kept local for reference
-utilities/deprecated/*
+budgetbook/utilities/deprecated/*
 
 # databases are ommited because it should be created on initial run
 db.sqlite3
 Dead_db.sqlite3_dead
 
 # Misc test/scratch and log files that shouldnt be on Git
-tkintertest.py
-class-scratch.py
-TextBoxBuilder_test.py
-logs/
-importers/logs/
+budgetbook/tkintertest.py
+budgetbook/class-scratch.py
+budgetbook/TextBoxBuilder_test.py
+budgetbook/logs/
+budgetbook/importers/logs/
+budgetbook/runninglog.txt
 runninglog.txt
+budgetbook/import_testing.py
+budgetbook/tabtest.py
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/

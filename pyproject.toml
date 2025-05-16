@@ -1,0 +1,41 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[project]
+name = "budgetbook"
+version = "0.3.0"
+dependencies = [
+    "pandas>=2.2.0",
+    "numpy>=1.26.4",
+    "PyMuPDF>=1.25.5",
+    "tkinter"
+]
+requires-python = ">= 3.8"
+authors = [{name = "Greg"}]
+maintainers = [{name = "Greg"}]
+readme = {file = "README.md", content-type = "text/markdown"}
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+description = "Budget and Expenses tracker"
+keywords = ["budget","expense","money","financial","tracking"] #this needs work, check pypi for ideas
+
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Financial and Insurance Industry",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Office/Business :: Financial"
+]
+
+[project.urls]
+Documentation = "https://github.com/Gergzilla/budgetbook"
+Repository = "https://github.com/Gergzilla/budgetbook"
+Issues = "https://github.com/Gergzilla/budgetbook/issues"
+[project.gui-scripts]
+budget-book-gui = "main:main"
