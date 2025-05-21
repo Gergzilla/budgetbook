@@ -102,7 +102,6 @@ def cap_one_import(pdf_path):
     pdf = pymupdf.open(pdf_path)
     # I had this backwards before in the for section, not sure why it broke but likely due to object order
     import_pages = [Page(page, page_num) for page_num, page in enumerate(pdf)]
-    # print(page)
     for pages in import_pages:
         imports = pages.import_cap_one_pdf()
         if not imports.empty:
@@ -110,10 +109,10 @@ def cap_one_import(pdf_path):
             frame_list.append(imports)
         else:
             pass
+    # Join all tables into one DataFrame and reset the index before cleanup
     all_imports = pd.concat(frame_list)
-    # print(all_imports)
-    # Reset the index to clean up the content
     all_imports = all_imports.reset_index(drop=True)
+    # valid rows should have a Date in the first column, removing ones that dont
     for row in all_imports.itertuples():
         try:
             datecheck = dateparse(row[1], fuzzy=True)
@@ -124,10 +123,10 @@ def cap_one_import(pdf_path):
             else:
                 all_imports.drop(index=row[0], inplace=True)
         except:
+            # any reason it is not a valid date should remove the row
             all_imports.drop(index=row[0], inplace=True)
             pass
-        # print(str(rows[0]) + str(rows[1]))
-    # Now join col 2 and 3 due to pdf parsing issues
+    # Now join col 2 and 3 due to pdf parsing issues and drop the old ones
     all_imports["Col6"] = all_imports["Col2"].str.cat(all_imports["Col3"], sep=" ")
     all_imports.drop(["Col2", "Col3"], axis=1, inplace=True)
     # Reorder the dataframe
@@ -139,6 +138,16 @@ def cap_one_import(pdf_path):
         "transaction_name",
         "transaction_amount",
     ]
+    # check for missaligned columns, in testing it would happen where negative values greater than ###.## would lose
+    # the minus sign to the previous column, check for this trailing - and move it
+    for row in all_imports.itertuples():
+        if row[3][-1] == "-":
+            print(f"Minus sign found in charge_name at index {row[0]}")
+            all_imports.loc[row[0], "transaction_name"] = row[3][:-1].strip()
+            all_imports.loc[row[0], "transaction_amount"] = "- " + row[4]
+        else:
+            pass
+
     print(all_imports)
     return all_imports
 
