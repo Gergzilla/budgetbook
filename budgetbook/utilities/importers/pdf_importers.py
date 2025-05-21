@@ -2,57 +2,65 @@ import pandas as pd
 import os
 import pymupdf
 import numpy as np
+from dateutil.parser import parse as dateparse
+
 # this stuff below is only really needed for testing, not for prod
-from utilities.logger import LoggingHandler #temporary local utilities until packaging later
+from utilities.logger import (
+    LoggingHandler,
+)  # temporary local utilities until packaging later
 import pprint
 import matplotlib.pyplot as plt
 
 # Class is fully functional as is joining all discovered tables for the following institutions: Capital One
 # future insitutions will be added as I need them but the core functions should be universal in general
 # Also planning to create a helper file for adding new institutions with functions as well
+# helper file in import_template_tool.py
 logger = LoggingHandler(str(os.path.basename(__file__))).log
 
+
 class Page:
-    def __init__(self, page : pymupdf.Page, page_number):
+    def __init__(self, page: pymupdf.Page, page_number):
         self.name = __name__
         self.page = page
         self.page_number = page_number
         self.logger = LoggingHandler(__class__).log
 
     def find_transaction_table(self, needle):
-        end_of_table = self.get_rect(needle)#for capitalOne only
+        end_of_table = self.get_rect(needle)  # for capitalOne only
         if end_of_table:
             self.logger.debug("rect of needle: {end_of_table}")
             return True
-        else: 
+        else:
             return False
-        
+
     def find_table_end(self, needle):
         self.clip_y1 = 0
         end_of_table = self.get_rect(needle)
         if end_of_table:
-            self.clip_y1 = round(end_of_table[0].y1,0)-5
+            self.clip_y1 = round(end_of_table[0].y1, 0) - 5
             # this sets the rectable up a few units to avoid including the end of table keyword in the rectangle
             return self.clip_y1
         else:
             self.logger.debug("Table end not found on page")
             return self.clip_y1
-    
+
     def get_rect(self, needle):
         found_rect = self.page.search_for(needle)
         return found_rect
-    
+
     def parse_transaction_table(self, new_clip):
-        tabs = self.page.find_tables(clip=new_clip, strategy="text", join_x_tolerance=5, text_x_tolerance=5)
+        tabs = self.page.find_tables(
+            clip=new_clip, strategy="text", join_x_tolerance=3, text_x_tolerance=5
+        )
         if tabs.tables:
             df = tabs[0].to_pandas()
-            #TODO I need to make column relabelling dynamic later
-            df.columns = ["Col1","Col2","Col3","Col4","Col5"]
+            # TODO I need to make column relabelling dynamic later
+            df.columns = ["Col1", "Col2", "Col3", "Col4", "Col5"]
             df = df.replace("", np.nan)
             df = df.dropna()
-        return df    
-        
-    def import_cap_one_pdf(self): 
+        return df
+
+    def import_cap_one_pdf(self):
         # This is specific to capital One credit card PDF statements which is what the needles and rect reference
         table_title = "Trans Date"
         end_of_trans_needle = "Total Transactions for This Period"
@@ -62,32 +70,38 @@ class Page:
         if alt_clip == ():
             alt_clip = default_clip
         if self.find_transaction_table(table_title):
-            self.logger.debug("Page {self.page.number} appears to have a transaction table")
+            self.logger.debug(
+                "Page {self.page.number} appears to have a transaction table"
+            )
             new_clip_y1 = self.find_table_end(end_of_trans_needle)
             if new_clip_y1 == 0:
                 self.parsed_dataframe = self.parse_transaction_table(default_clip)
             else:
-                alt_clip[3] = new_clip_y1
+                clip_list = list(alt_clip)
+                clip_list[3] = new_clip_y1
+                alt_clip = tuple(clip_list)
                 self.logger.debug("parsed alt_clip is {alt_clip}")
                 self.parsed_dataframe = self.parse_transaction_table(alt_clip)
             return self.parsed_dataframe
         else:
             # df = pd.DataFrame()
             return self.parsed_dataframe
-    
-   # Add more bank specific functions here
-        
+
+    # Add more bank specific functions here
+
     def __str__(self):
         return self.name
-    
-######## end classes ########
- 
+
+
+######## Begin import handler functions ########
+
+
 def cap_one_import(pdf_path):
     frame_list = []
     all_imports = pd.DataFrame
     pdf = pymupdf.open(pdf_path)
-    #I had this backwards before in the for section, not sure why it broke but likely due to object order
-    import_pages =[Page(page, page_num) for page_num, page in enumerate(pdf)]
+    # I had this backwards before in the for section, not sure why it broke but likely due to object order
+    import_pages = [Page(page, page_num) for page_num, page in enumerate(pdf)]
     # print(page)
     for pages in import_pages:
         imports = pages.import_cap_one_pdf()
@@ -96,10 +110,41 @@ def cap_one_import(pdf_path):
             frame_list.append(imports)
         else:
             pass
-    # print(f"\n\n\nframe_list is \n: {frame_list}")
     all_imports = pd.concat(frame_list)
+    # print(all_imports)
+    # Reset the index to clean up the content
+    all_imports = all_imports.reset_index(drop=True)
+    for row in all_imports.itertuples():
+        try:
+            datecheck = dateparse(row[1], fuzzy=True)
+            # print(datecheck)
+            if datecheck:
+                pass
+                # print(f"{row[1]} is a valid date")
+            else:
+                all_imports.drop(index=row[0], inplace=True)
+        except:
+            all_imports.drop(index=row[0], inplace=True)
+            pass
+        # print(str(rows[0]) + str(rows[1]))
+    # Now join col 2 and 3 due to pdf parsing issues
+    all_imports["Col6"] = all_imports["Col2"].str.cat(all_imports["Col3"], sep=" ")
+    all_imports.drop(["Col2", "Col3"], axis=1, inplace=True)
+    # Reorder the dataframe
+    all_imports = all_imports[["Col1", "Col6", "Col4", "Col5"]]
+    # Relabel for clarity
+    all_imports.columns = [
+        "transaction_date",
+        "post_date",
+        "transaction_name",
+        "transaction_amount",
+    ]
     print(all_imports)
     return all_imports
+
+
+######## End import handler functions ########
+
 
 def main():
     print("this is main")
@@ -112,6 +157,7 @@ def main():
     if selection == "2":
         print("Exiting...")
         quit()
+
 
 if __name__ == "__main__":
     main()

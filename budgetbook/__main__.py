@@ -8,7 +8,8 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox, filedialog
 from dateutil.parser import parse as dateparse
-from datetime import datetime
+
+# from datetime import datetime
 
 try:
     # Required as if -h is passed the program should exit cleanly

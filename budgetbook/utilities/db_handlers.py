@@ -2,7 +2,7 @@
 # This file is a copy of db_handlers.py but is being modified for django integration and testing
 import sqlite3
 import os
-import budgetbook.vars.settings as settings
+import vars.settings as settings
 from utilities.logger import LoggingHandler
 import utilities.db_handlers as db_handlers
 

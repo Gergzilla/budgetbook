@@ -39,6 +39,8 @@ Future roadmap:
 
 Tracking for what I need to change, fix or implement
 
+- Major next step is I need to finish converting the imported PDF into usable CSV and switch the 'import expenses' to use multiple
+  file formats and parse which ones should be used.  aka selecting back type along with file to call correct importers/parsers
 - Update the SQL functions to support the TKinter version
 - In addition to updating SQL functions I need to rework the database again after splitting the systems.  I plan to use the same
   format but need to decouple it from Django components

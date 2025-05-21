@@ -8,6 +8,7 @@
 
 # Statements are bank statements and other import data, should not be uploaded ever
 budgetbook/statements/
+budgetbook/utilities/importers/statements/
 budgetbook/data/
 
 # deprecated archive, kept local for reference
@@ -27,6 +28,8 @@ budgetbook/tkintertest.py
 budgetbook/TextBoxBuilder_test.py
 budgetbook/import_testing.py
 budgetbook/tabtest.py
+
+test_main.py
 
 # Unit test / coverage reports
 htmlcov/
