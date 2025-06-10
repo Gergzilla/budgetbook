@@ -5,6 +5,7 @@ import csv
 from PyQt6.QtWidgets import QLineEdit
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtCore import Qt
+import pandas as pd
 
 # import itertools
 from tkinter import *
@@ -28,7 +29,7 @@ logger = LoggingHandler(str(os.path.basename(__file__))).log
 # the old TextBoxBuilder has been replaced with entry box handling because that is better.  The original POC is in its own file
 
 
-class TableDataDisplay(QtCore.QAbstractTableModel):
+class PandasTableDataDisplay(QtCore.QAbstractTableModel):
     # https://www.pythonguis.com/tutorials/pyqt6-qtableview-modelviews-numpy-pandas/
     def __init__(self, data):
         super().__init__()
@@ -38,32 +39,55 @@ class TableDataDisplay(QtCore.QAbstractTableModel):
 
     def data(self, index, role):
         if role == Qt.ItemDataRole.DisplayRole:
-            # See below for the nested-list data structure.
-            # .row() indexes into the outer list,
-            # .column() indexes into the sub-list
-            return self._data[index.row()][index.column()]
+            value = self._data.iloc[index.row(), index.column()]
+            return str(value)
+
+            # if isinstance(value, datetime):
+            #     # Render time to YYY-MM-DD.
+            #     return value.strftime("%Y-%m-%d")
+
+            # if isinstance(value, float):
+            #     # Render float to 2 dp
+            #     return "%.2f" % value
+
+            # if isinstance(value, str):
+            #     # Render strings with quotes
+            #     return '"%s"' % value
 
     def rowCount(self, index):
-        return len(self._data)
+        return self._data.shape[0]
 
     def columnCount(self, index):
-        return len(self._data[0])
+        return self._data.shape[1]
+
+    def headerData(self, section, orientation, role):
+        if role == Qt.ItemDataRole.DisplayRole:
+            if orientation == Qt.Orientation.Horizontal:
+                return str(self._data.columns[section])
+
+            if orientation == Qt.Orientation.Vertical:
+                return str(self._data.index[section])
 
 
 class TableData(QtWidgets.QMainWindow):
-    def __init__(self):
+    def __init__(self, dataframe):
         super().__init__()
 
         self.table = QtWidgets.QTableView()
-
-        data = [
-            [33, 18, 4, 9, 2],
-            [443, "lets test the dynamic box size for these things", 1, 0, 0],
-            [23, 58, 3, 5, 0],
-            [873, 28, 3, 3, 2],
-            [13, 8, 7, 8, 9],
-        ]
-        self.model = TableDataDisplay(data)
+        # print(f"self.data is: {self.data}")
+        blank_data = pd.DataFrame(
+            [
+                ["", "", "", "", ""],
+            ],
+            columns=["Charge Date", "Charge Name", "Charge Amount", "Tag", "Notes"],
+            index=["1"],
+        )
+        if dataframe == "":
+            self.data = blank_data
+        else:
+            self.data = dataframe
+        # self.model = PandasTableDataDisplay(self.data)
+        self.model = PandasTableDataDisplay(self.data)
         self.table.setModel(self.model)
 
         self.setCentralWidget(self.table)

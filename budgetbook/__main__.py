@@ -7,14 +7,18 @@ import sys
 
 
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
     QMainWindow,
     QTabWidget,
+    QToolBar,
+    QStatusBar,
+    QDialog,
+    QFileDialog,
+    QDialogButtonBox,
     QVBoxLayout,
-    QDateEdit,
     QLabel,
     QPushButton,
     QLineEdit,
@@ -43,10 +47,31 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Budget Book")
         self.setMinimumSize(QSize(1000, 800))
 
-        # Setup Tab Menus
+        # Setup Menu Actions
+
+        button_quit = QAction("&Quit", self)
+        button_quit.setStatusTip("Exit Application")
+        button_quit.triggered.connect(self.button_quit_clicked)
+
+        button_import = QAction("&Import", self)
+        button_import.setStatusTip("Import Expense File")
+        button_import.triggered.connect(self.button_import_clicked)
+        # file_menu.addAction(button_quit)
+
+        # Setup Main Menu
+        self.setStatusBar(QStatusBar(self))
+
+        menu = self.menuBar()
+
+        file_menu = menu.addMenu("&File")
+        file_menu.addAction(button_import)
+        file_menu.addAction(button_quit)
+
+        # Setup Tabs
         self.main_tabs = QTabWidget()
         self.main_tabs.setTabPosition(QTabWidget.TabPosition.North)
         self.main_tabs.setMovable(False)
+        # I need to create an external style sheet for better usability
         self.main_tabs.setStyleSheet(
             """
          QTabBar::tab {
@@ -73,18 +98,18 @@ class MainWindow(QMainWindow):
         report_tab.setLayout(report_layout)
         self.main_tabs.addTab(report_tab, "Reports")
 
-        # Imports Tab
-        imports_tab = QWidget()
-        imports_layout = QVBoxLayout()
-        imports_label = QLabel("Imports")
-        imports_table = handlers.TableData()
-        imports_layout.addWidget(imports_label)
-        imports_layout.addWidget(imports_table)
-        imports_layout.addStretch()
-        imports_tab.setLayout(imports_layout)
-        self.main_tabs.addTab(imports_tab, "Imports")
+        # Data Tab
+        data_tab = QWidget()
+        data_layout = QVBoxLayout()
+        data_label = QLabel("Data")
+        data_table = handlers.TableData("")
+        data_layout.addWidget(data_label)
+        data_layout.addWidget(data_table)
+        data_layout.addStretch()
+        data_tab.setLayout(data_layout)
+        self.main_tabs.addTab(data_tab, "Data")
 
-        # Report Tab
+        # Updates Tab
         updates_tab = QWidget()
         updates_layout = QVBoxLayout()
         updates_label = QLabel("Updates")
@@ -94,7 +119,56 @@ class MainWindow(QMainWindow):
         self.main_tabs.addTab(updates_tab, "Updates")
 
         self.setCentralWidget(self.main_tabs)
-        # Setup Main Buttons
+        # Setup menu and button functions
+
+    def button_quit_clicked(self, state):
+        confirm_quit = CustomOkCancelDialog("Quit?", "Are you sure you want to quit?")
+        if confirm_quit.exec():
+            sys.exit(0)
+        else:
+            pass
+
+    def button_import_clicked(self, state):
+        try:
+            import_filename = QFileDialog.getOpenFileName(
+                self,
+                str("Open expense file"),
+                "/scripts/pybudget/budgetbook/statements",
+                str("Expense files (*.csv *.pdf *.xls *.xlsx)"),
+            )
+            # folder is hardcoded for now for dev convenience
+
+            print(type(import_filename))
+            print(import_filename)
+            print(import_filename[0])
+            if import_filename == "":
+                return
+            else:
+                expenses, rowcount = handlers.csvImporter(import_filename)
+        except:
+            pass
+
+
+class CustomOkCancelDialog(QDialog):
+    def __init__(self, box_title, prompt_message):
+        super().__init__()
+        self.box_title = str(box_title)
+        self.prompt_message = str(prompt_message)
+        self.setWindowTitle(str(self.box_title))
+
+        Qbutton_set = (
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+
+        self.button_box = QDialogButtonBox(Qbutton_set)
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+
+        dialog_layout = QVBoxLayout()
+        dialog_message = QLabel(self.prompt_message)
+        dialog_layout.addWidget(dialog_message)
+        dialog_layout.addWidget(self.button_box)
+        self.setLayout(dialog_layout)
 
         # view_expenses_button = QPushButton(text="View Expense Summar", parent=self)
         # view_expenses_button.setFixedSize(200, 20)
@@ -193,6 +267,7 @@ class MainWindow(QMainWindow):
 
 
 class FileImportWindow(Toplevel):
+    # need to adapt this to PyQt6, currently tkinter method
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.title("Select budget file to import")
@@ -235,30 +310,6 @@ class FileImportWindow(Toplevel):
 
 
 def main():
-    # root = Tk()
-    # root.title("Welcome to MyPyBudget")
-    # root.geometry("1024x800")
-    # root.columnconfigure(0, weight=1)
-    # root.rowconfigure(0, weight=1)
-
-    # root.configure(background="DarkGray")
-    # style = ttk.Style(root)
-    # style.configure("TNotebook.Tab", width=root.winfo_screenwidth())
-
-    # nb = ttk.Notebook(
-    #     root,
-    #     padding="8 8 12 12",
-    #     width=root.winfo_screenmmwidth(),
-    #     height=root.winfo_screenmmheight(),
-    # )
-
-    # # I need to check the formatting and layout, its broken now with the class
-    # mainframe = MainWindow(nb)
-    # mainframe.grid(column=0, columnspan=9, row=0, rowspan=9, sticky=(N, W, E, S))
-
-    # nb.add(mainframe, text="Main")
-    # nb.pack()
-    # root.mainloop()
 
     main_app = QApplication(sys.argv)
     main_window = MainWindow()
