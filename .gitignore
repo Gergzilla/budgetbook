@@ -29,6 +29,9 @@ budgetbook/TextBoxBuilder_test.py
 budgetbook/import_testing.py
 budgetbook/tabtest.py
 
+charcode.py
+otje.webp
+
 test_main.py
 
 # Unit test / coverage reports
