@@ -192,12 +192,6 @@ class MainWindow(QMainWindow):
             columns=["Charge Date", "Charge Name", "Charge Amount", "Tag", "Notes"],
             index=["0"],
         )
-        # new_data_dict = {
-        #     "Item": ["Alpha", "Beta", "Gamma"],
-        #     "Value": [1.1, 2.2, 3.3],
-        #     "Status": [True, True, False],
-        # }
-        # new_df = pd.DataFrame(new_data_dict)
         self.data_table_model.update_table_from_dataframe(blank_data)
 
         # Setup menu and button functions
@@ -245,6 +239,9 @@ class MainWindow(QMainWindow):
 
         except:
             pass
+
+        # buttons below were removed from main page for tab conversion, left to be used later as the functionality
+        # is still needed in most cases and is a reference to the old UI layout but ported to PyQt6
 
         # view_expenses_button = QPushButton(text="View Expense Summar", parent=self)
         # view_expenses_button.setFixedSize(200, 20)
@@ -316,6 +313,7 @@ class MainWindow(QMainWindow):
 
 class FileImportWindow(Toplevel):
     # need to adapt this to PyQt6, currently tkinter method
+    # 6-13-2025 file import dialogue has been ported but the extra input variables need to be added for data sanity
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.title("Select budget file to import")
