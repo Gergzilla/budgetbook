@@ -32,8 +32,13 @@ budgetbook/tabtest.py
 charcode.py
 otje.webp
 pyside_main.py
-
+broken__main__.py
 test_main.py
+table_test_py
+signal_helpyer.py
+
+# not ready to publish this yet, but soon
+roadmap.md
 
 # Unit test / coverage reports
 htmlcov/

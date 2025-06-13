@@ -1,0 +1,19 @@
+/* Style sheet for the application, current 
+basic is just dark mode via setColorScheme,
+more customoziations to follow later */
+
+/* QWidget {
+    background-color: black
+} */
+/* 
+QMainWindow {
+    background-color: black
+} */
+
+/* QPushButton {
+    color: red
+} */
+
+QTabBar::tab {
+    font-size: 12pt;
+}

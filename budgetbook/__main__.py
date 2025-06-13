@@ -2,12 +2,15 @@
 
 import utilities.handlers as handlers
 import utilities.db_handlers as db_handlers
+import utilities.gui_handlers as gui_handlers
+import utilities.importers.pdf_importers as pdf_importers
+import pandas as pd
 import os
 import sys
 
 
-from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtCore import QSize, Qt, QAbstractTableModel, QModelIndex, pyqtSignal
+from PyQt6.QtGui import QAction, QIcon, QColor
 from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
@@ -17,11 +20,12 @@ from PyQt6.QtWidgets import (
     QStatusBar,
     QDialog,
     QFileDialog,
+    QTableView,
     QDialogButtonBox,
     QVBoxLayout,
+    QHBoxLayout,
     QLabel,
     QPushButton,
-    QLineEdit,
 )
 from tkinter import *
 from tkinter import ttk
@@ -38,8 +42,56 @@ except Exception:
 
 logger = LoggingHandler(str(os.path.basename(__file__))).log
 
+main_tab_list = ["Summary", "Data", "Imports", "Admin"]
 
-# converting tkinter window to class to handle multiple windows
+
+# class PandasTableDataDisplay(QAbstractTableModel):
+#     # moved from handlers for testing
+#     # https://www.pythonguis.com/tutorials/pyqt6-qtableview-modelviews-numpy-pandas/
+#     def __init__(self, data: pd.DataFrame, parent=None):
+#         super().__init__(parent)
+#         # self.name = __name__
+#         self.logger = LoggingHandler(__class__).log
+#         self._data = data
+
+#     def rowCount(self, index, parent=QModelIndex()):
+#         return self._data.shape[0]
+
+#     def columnCount(self, index, parent=QModelIndex()):
+#         return self._data.shape[1]
+
+#     def headerData(self, section, orientation, role):
+#         if role == Qt.ItemDataRole.DisplayRole:
+#             if orientation == Qt.Orientation.Horizontal:
+#                 return str(self._data.columns[section])
+
+#             if orientation == Qt.Orientation.Vertical:
+#                 return str(self._data.index[section])
+
+#     def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+#         if not index.isValid():
+#             print("bad index")
+#             return None
+#         if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
+#             try:
+#                 value = self._data.iloc[index.row(), index.column()]
+#                 # print(f"data function got value: \n {value}")
+#             except Exception as e:
+#                 print(e)
+#             # print(f"The data function got the value:\n {value}")
+
+#             return str(value)
+#         return None
+
+#     def update_table_from_dataframe(self, new_dataframe: pd.DataFrame):
+#         # print(f"start reset function")
+#         # print(f"start reset function, dataframe contains:\n {new_dataframe}")
+#         self.beginResetModel()
+#         self._data = new_dataframe
+#         self.endResetModel()
+#         print("Model reset completely. beginResetModel/endResetModel emitted.")
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -67,68 +119,138 @@ class MainWindow(QMainWindow):
         file_menu.addAction(button_import)
         file_menu.addAction(button_quit)
 
-        # Setup Tabs
+        # Old Setup Tabs
+        # self.main_tabs = QTabWidget()
+        # self.main_tabs.setTabPosition(QTabWidget.TabPosition.North)
+        # self.main_tabs.setMovable(False)
+        # Setup new local tab config, no classes
+
+        # setup main tab object
         self.main_tabs = QTabWidget()
+        self.setCentralWidget(self.main_tabs)
         self.main_tabs.setTabPosition(QTabWidget.TabPosition.North)
         self.main_tabs.setMovable(False)
-        # I need to create an external style sheet for better usability
-        self.main_tabs.setStyleSheet(
-            """
-         QTabBar::tab {
-             font-size: 12pt;
-         }
-     """
-        )
 
         # Summary Tab
-        summary_tab = QWidget()
-        summary_layout = QVBoxLayout()
-        summary_label = QLabel("Summary")
-        summary_layout.addWidget(summary_label)
-        summary_layout.addStretch()
-        summary_tab.setLayout(summary_layout)
-        self.main_tabs.addTab(summary_tab, "Summary")
+        self.summary_tab_widget = QWidget()
+        self.summary_layout = QVBoxLayout(self.summary_tab_widget)
 
-        # Report Tab
-        report_tab = QWidget()
-        report_layout = QVBoxLayout()
-        report_label = QLabel("Reports")
-        report_layout.addWidget(report_label)
-        report_layout.addStretch()
-        report_tab.setLayout(report_layout)
-        self.main_tabs.addTab(report_tab, "Reports")
+        summary_label = QLabel("Summary Tab")
+        summary_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.summary_layout.addWidget(summary_label)
+        self.summary_layout.addStretch()
+        self.main_tabs.addTab(self.summary_tab_widget, "Summary")
 
         # Data Tab
-        data_tab = QWidget()
-        data_layout = QVBoxLayout()
-        data_label = QLabel("Data")
-        data_table = handlers.TableData("")
-        data_layout.addWidget(data_label)
-        data_layout.addWidget(data_table)
-        data_layout.addStretch()
-        data_tab.setLayout(data_layout)
-        self.main_tabs.addTab(data_tab, "Data")
+        self.data_tab_widget = QWidget()
+        self.data_tab_layout = QVBoxLayout(self.data_tab_widget)
+        blank_data = pd.DataFrame(
+            [
+                ["", "", "", "", ""],
+            ],
+            columns=["Charge Date", "Charge Name", "Charge Amount", "Tag", "Notes"],
+            index=["0"],
+        )
 
-        # Updates Tab
-        updates_tab = QWidget()
-        updates_layout = QVBoxLayout()
-        updates_label = QLabel("Updates")
-        updates_layout.addWidget(updates_label)
-        updates_layout.addStretch()
-        updates_tab.setLayout(updates_layout)
-        self.main_tabs.addTab(updates_tab, "Updates")
+        self.data_table_model = handlers.PandasTableDataDisplay(blank_data)
+        self.data_table_view = QTableView()
+        self.data_table_view.setModel(self.data_table_model)
 
-        self.setCentralWidget(self.main_tabs)
+        self.data_table_view.setEditTriggers(
+            QTableView.EditTrigger.DoubleClicked | QTableView.EditTrigger.AnyKeyPressed
+        )
+        self.data_table_view.resizeColumnsToContents()
+
+        # Data Tab Buttons
+        self.data_tab_button_layout = QHBoxLayout()
+        self.import_data_button = QPushButton("Import File")
+        # self.import_data_button.clicked.connect(self.button_import_clicked())
+
+        self.data_tab_button_layout.addWidget(self.import_data_button)
+
+        self.data_tab_reset_table_button = QPushButton("Reset Table Data")
+        self.data_tab_reset_table_button.clicked.connect(self._reset_table)
+
+        self.data_tab_button_layout.addWidget(self.data_tab_reset_table_button)
+
+        self.data_tab_layout.addWidget(self.data_table_view)
+        self.data_tab_layout.addLayout(self.data_tab_button_layout)
+
+        self.main_tabs.addTab(self.data_tab_widget, "Data")
+
+    def _reset_table(self):
+        new_data_dict = {
+            "Item": ["Alpha", "Beta", "Gamma"],
+            "Value": [1.1, 2.2, 3.3],
+            "Status": [True, True, False],
+        }
+        new_df = pd.DataFrame(new_data_dict)
+        self.data_table_model.update_table_from_dataframe(new_df)
+
+        # self.data_tab_widget = QWidget()
+        # self.data_tab_layout = QVBoxLayout(self.data_tab_widget)
+        # self.data_tab_label = QLabel("Data")
+        # self.data_tab_second_label = QLabel("Data 2")
+        # self.data_tab_layout.addWidget(self.data_tab_label)
+        # self.data_tab_layout.addWidget(self.data_tab_second_label)
+        # print(f"self.data_table_view is: {self.data_table_view}")
+        # self.data_tab_layout.addWidget(self.data_table_view)
+        # self.data_tab_layout.addStretch()
+        # self.main_tabs.addTab(self.data_tab_widget, "Data")
+
+        # Class Tabs below in theory work. creaitng new setup above to retest what the hell Im doing wrong
+
+        # # new class tab
+        # summary_tab = gui_handlers.TabGenerator()
+        # summary_tab.setup_new_tab("Summary")
+        # summary_tab.tab_layout.addStretch()
+        # self.main_tabs.addTab(summary_tab, "Summary")
+        # print(f"self.summary_tab.layout is: {self.summary_tab.layout()}")
+
+        # # Report Tab
+        # report_tab = gui_handlers.TabGenerator()
+        # report_tab.setup_new_tab("Reports")
+        # report_tab.tab_layout.addStretch()
+        # self.main_tabs.addTab(report_tab, "Reports")
+
+        # # Data Tab
+
+        # current class, blocked for internal testing
+        # self.data_tab = gui_handlers.TabGenerator()
+        # self.data_tab.setup_new_tab("Data")
+        # self.main_tabs.addTab(self.data_tab, "Data")
+
+        # # Brings in the pandas table
+        # self.data_table_model = handlers.RenderTableData("")
+        # temp shoehorn for validation
+        # self.data_table_model = handlers.PandasTableDataDisplay()
+        # self.data_table_model = handlers.PandasTableDataDisplay(blank_data)
+        ############### Here is the data table #######################################
+
+        # self.data_tab.tab_layout.addWidget(self.data_table_view)
+        # self.data_tab.tab_layout.addStretch()
+        # self.main_tabs.addTab(self.data_tab, "Data")
+
+        # # Updates Tab
+        # admin_tab = gui_handlers.TabGenerator()
+        # admin_tab.setup_new_tab("Admin")
+        # admin_tab.tab_layout.addStretch()
+        # self.main_tabs.addTab(admin_tab, "Admin")
+
+        # self.setCentralWidget(self.main_tabs)
+
         # Setup menu and button functions
 
-    def button_quit_clicked(self, state):
-        confirm_quit = CustomOkCancelDialog("Quit?", "Are you sure you want to quit?")
+    def button_quit_clicked(self):
+        confirm_quit = gui_handlers.CustomOkCancelDialog(
+            "Quit?", "Are you sure you want to quit?"
+        )
         if confirm_quit.exec():
             sys.exit(0)
         else:
             pass
 
-    def button_import_clicked(self, state):
+    def button_import_clicked(self):
         try:
             import_filename = QFileDialog.getOpenFileName(
                 self,
@@ -138,37 +260,47 @@ class MainWindow(QMainWindow):
             )
             # folder is hardcoded for now for dev convenience
 
-            print(type(import_filename))
-            print(import_filename)
-            print(import_filename[0])
-            if import_filename == "":
+            # print(type(import_filename))
+            # print(import_filename)
+            # print(import_filename[0])
+            # print(import_filename)
+            if import_filename[0] == "":
                 return
             else:
-                expenses, rowcount = handlers.csvImporter(import_filename)
+                self.main_tabs.setCurrentWidget(self.data_tab_widget)
+                expenses = pdf_importers.cap_one_import(import_filename[0])
+                # import works, there was an issue with the pdf parsing and column count in the pdf_importers module
+                # print(dir(self.data_table_model))
+                # print(type(self.data_table_model))
+                print("Data import complete")
+                data = pd.DataFrame(
+                    [
+                        [1, 9, 2],
+                        [1, 0, -1],
+                        [3, 5, 2],
+                        [3, 3, 2],
+                        [5, 8, 9],
+                    ],
+                    columns=["A", "B", "C"],
+                    index=["Row 1", "Row 2", "Row 3", "Row 4", "Row 5"],
+                )
+                try:
+                    # self.data_table_model.update_table_from_dataframe(data)
+                    self.data_table_model.update_table_from_dataframe(expenses)
+                except Exception as e:
+                    print(e)
+                print("table view updated with import...maybe?")
+
         except:
             pass
 
-
-class CustomOkCancelDialog(QDialog):
-    def __init__(self, box_title, prompt_message):
-        super().__init__()
-        self.box_title = str(box_title)
-        self.prompt_message = str(prompt_message)
-        self.setWindowTitle(str(self.box_title))
-
-        Qbutton_set = (
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-
-        self.button_box = QDialogButtonBox(Qbutton_set)
-        self.button_box.accepted.connect(self.accept)
-        self.button_box.rejected.connect(self.reject)
-
-        dialog_layout = QVBoxLayout()
-        dialog_message = QLabel(self.prompt_message)
-        dialog_layout.addWidget(dialog_message)
-        dialog_layout.addWidget(self.button_box)
-        self.setLayout(dialog_layout)
+    def create_data_table(self, data_frame=""):
+        self.model = PandasTableDataDisplay(data_frame)
+        # self.model = handlers.PandasTableDataDisplay(data_frame)
+        self.data_table_view = QTableView()
+        self.data_table_view.setModel(self.model)
+        self.data_table_view.resizeColumnsToContents()
+        return self.model
 
         # view_expenses_button = QPushButton(text="View Expense Summar", parent=self)
         # view_expenses_button.setFixedSize(200, 20)
@@ -201,35 +333,7 @@ class CustomOkCancelDialog(QDialog):
         # self.setCentralWidget(main_window_widget)
 
 
-# class MainWindow(ttk.Frame):
-#     def __init__(self, master=None, **kwargs):
-#         super().__init__(master, **kwargs)
-
-#         ttk.Button(self, text="View Expense Summary", command="").grid(
-#             column=8, row=2, sticky=(E, S)
-#         )
-#         ttk.Button(self, text="View Budget Report", command="").grid(
-#             column=8, row=3, sticky=(E, S)
-#         )
-#         ttk.Button(self, text="Print Expenses", command=self.printBoxContents).grid(
-#             column=8, row=4, sticky=(E, S)
-#         )
-#         ttk.Button(self, text="Import Expenses", command=self.openFileImporter).grid(
-#             column=7, row=5, sticky=(E, S)
-#         )
-#         ttk.Button(self, text="Save Expenses", command=self.saveExpenses).grid(
-#             column=8, row=5, sticky=(E, S)
-#         )
-#         ttk.Button(self, text="Quit", command=self.leave).grid(
-#             column=8, row=6, sticky=(E, S)
-#         )
-#         ttk.Button(self, text="delete duplicates", command=self.deleteDupes).grid(
-#             column=7, row=7, sticky=(E, S), padx=5, pady=10
-#         )
-#         # ttk.Button(mainframe, text="Print Box content", command=lambda: self.BoxMaking.print_box_data()).grid(column=8, row=8, padx=5, pady=5)
-#         self.BoxMaking = handlers.EntryBoxBuilder(self)
-#         self.importFilePrompt = StringVar()
-
+# class removed for cleanup, methods left for conversion reference
 #     def saveExpenses(self):
 #         expenses = self.BoxMaking.getBoxContents()
 #         handlers.writeExpenseToDB(expenses)
@@ -310,8 +414,15 @@ class FileImportWindow(Toplevel):
 
 
 def main():
+    try:
+        with open("gui_style.css", "r") as f:
+            stylesheet = f.read()
+    except:
+        stylesheet = ""
 
     main_app = QApplication(sys.argv)
+    main_app.setStyleSheet(stylesheet)
+    main_app.styleHints().setColorScheme(Qt.ColorScheme.Dark)
     main_window = MainWindow()
     main_window.show()
     sys.exit(main_app.exec())

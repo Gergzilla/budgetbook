@@ -4,7 +4,8 @@ import os
 import csv
 from PyQt6.QtWidgets import QLineEdit
 from PyQt6 import QtCore, QtGui, QtWidgets
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QAbstractTableModel, QModelIndex
+from PyQt6.QtSql import QSqlQueryModel
 import pandas as pd
 
 # import itertools
@@ -29,35 +30,19 @@ logger = LoggingHandler(str(os.path.basename(__file__))).log
 # the old TextBoxBuilder has been replaced with entry box handling because that is better.  The original POC is in its own file
 
 
-class PandasTableDataDisplay(QtCore.QAbstractTableModel):
+class PandasTableDataDisplay(QAbstractTableModel):
+    # moved from handlers for testing
     # https://www.pythonguis.com/tutorials/pyqt6-qtableview-modelviews-numpy-pandas/
-    def __init__(self, data):
-        super().__init__()
-        self.name = __name__
+    def __init__(self, data: pd.DataFrame, parent=None):
+        super().__init__(parent)
+        # self.name = __name__
         self.logger = LoggingHandler(__class__).log
         self._data = data
 
-    def data(self, index, role):
-        if role == Qt.ItemDataRole.DisplayRole:
-            value = self._data.iloc[index.row(), index.column()]
-            return str(value)
-
-            # if isinstance(value, datetime):
-            #     # Render time to YYY-MM-DD.
-            #     return value.strftime("%Y-%m-%d")
-
-            # if isinstance(value, float):
-            #     # Render float to 2 dp
-            #     return "%.2f" % value
-
-            # if isinstance(value, str):
-            #     # Render strings with quotes
-            #     return '"%s"' % value
-
-    def rowCount(self, index):
+    def rowCount(self, index, parent=QModelIndex()):
         return self._data.shape[0]
 
-    def columnCount(self, index):
+    def columnCount(self, index, parent=QModelIndex()):
         return self._data.shape[1]
 
     def headerData(self, section, orientation, role):
@@ -68,32 +53,32 @@ class PandasTableDataDisplay(QtCore.QAbstractTableModel):
             if orientation == Qt.Orientation.Vertical:
                 return str(self._data.index[section])
 
+    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+        if not index.isValid():
+            print("bad index")
+            return None
+        if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
+            try:
+                value = self._data.iloc[index.row(), index.column()]
+                # print(f"data function got value: \n {value}")
+            except Exception as e:
+                print(e)
+            # print(f"The data function got the value:\n {value}")
 
-class TableData(QtWidgets.QMainWindow):
-    def __init__(self, dataframe):
-        super().__init__()
+            return str(value)
+        return None
 
-        self.table = QtWidgets.QTableView()
-        # print(f"self.data is: {self.data}")
-        blank_data = pd.DataFrame(
-            [
-                ["", "", "", "", ""],
-            ],
-            columns=["Charge Date", "Charge Name", "Charge Amount", "Tag", "Notes"],
-            index=["1"],
-        )
-        if dataframe == "":
-            self.data = blank_data
-        else:
-            self.data = dataframe
-        # self.model = PandasTableDataDisplay(self.data)
-        self.model = PandasTableDataDisplay(self.data)
-        self.table.setModel(self.model)
-
-        self.setCentralWidget(self.table)
+    def update_table_from_dataframe(self, new_dataframe: pd.DataFrame):
+        # print(f"start reset function")
+        # print(f"start reset function, dataframe contains:\n {new_dataframe}")
+        self.beginResetModel()
+        self._data = new_dataframe
+        self.endResetModel()
+        print("Model reset completely. beginResetModel/endResetModel emitted.")
 
 
 class EntryBoxBuilder:
+    # this is being deprecated for PyQt6
     # original test moved to TextBoxBuilder_test.py
 
     def __init__(self, mainframe):

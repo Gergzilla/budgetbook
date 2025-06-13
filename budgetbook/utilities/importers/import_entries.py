@@ -2,8 +2,10 @@
 """
 Base class format for all importable transactions to standardize processing between different importable files
 """
-class ImportRecord(object):
 
+
+class ImportRecord(object):
+    # This isnt currently used. given the native support for pandas in PyQt6 this may not be needed but I will need to test further
     account = ""
     charge_name = ""
     transaction_date = ""
