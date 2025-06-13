@@ -119,31 +119,27 @@ class MainWindow(QMainWindow):
         file_menu.addAction(button_import)
         file_menu.addAction(button_quit)
 
-        # Old Setup Tabs
-        # self.main_tabs = QTabWidget()
-        # self.main_tabs.setTabPosition(QTabWidget.TabPosition.North)
-        # self.main_tabs.setMovable(False)
-        # Setup new local tab config, no classes
-
-        # setup main tab object
+        # Setup Tab Widget
         self.main_tabs = QTabWidget()
         self.setCentralWidget(self.main_tabs)
         self.main_tabs.setTabPosition(QTabWidget.TabPosition.North)
         self.main_tabs.setMovable(False)
 
         # Summary Tab
-        self.summary_tab_widget = QWidget()
-        self.summary_layout = QVBoxLayout(self.summary_tab_widget)
+        self.summary_tab_widget = gui_handlers.TabGenerator()
+        self.summary_tab_widget.setup_new_tab("Summary")
+        self.summary_tab_widget.tab_layout.addStretch()
 
-        summary_label = QLabel("Summary Tab")
-        summary_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.summary_layout.addWidget(summary_label)
-        self.summary_layout.addStretch()
-        self.main_tabs.addTab(self.summary_tab_widget, "Summary")
+        # Report Tab
+        self.report_tab = gui_handlers.TabGenerator()
+        self.report_tab.setup_new_tab("Reports")
+        self.report_tab.tab_layout.addStretch()
 
         # Data Tab
-        self.data_tab_widget = QWidget()
-        self.data_tab_layout = QVBoxLayout(self.data_tab_widget)
+        self.data_tab_widget = gui_handlers.TabGenerator()
+        self.data_tab_widget.setup_new_tab("Data")
+
+        # empty frame to just show standard columns for Data
         blank_data = pd.DataFrame(
             [
                 ["", "", "", "", ""],
@@ -151,93 +147,58 @@ class MainWindow(QMainWindow):
             columns=["Charge Date", "Charge Name", "Charge Amount", "Tag", "Notes"],
             index=["0"],
         )
-
+        # Create pandas table object widget from handlers class
         self.data_table_model = handlers.PandasTableDataDisplay(blank_data)
         self.data_table_view = QTableView()
         self.data_table_view.setModel(self.data_table_model)
 
         self.data_table_view.setEditTriggers(
             QTableView.EditTrigger.DoubleClicked | QTableView.EditTrigger.AnyKeyPressed
-        )
-        self.data_table_view.resizeColumnsToContents()
+        )  # This doesnt currently work in my app but it did in testing.
+        # self.data_table_view.resizeColumnsToContents() # this isnt needed here when there is no data for now
 
         # Data Tab Buttons
         self.data_tab_button_layout = QHBoxLayout()
         self.import_data_button = QPushButton("Import File")
-        # self.import_data_button.clicked.connect(self.button_import_clicked())
-
-        self.data_tab_button_layout.addWidget(self.import_data_button)
+        self.import_data_button.clicked.connect(self.button_import_clicked)
+        # this triggered on launch because I connected it to the function call in the other class
 
         self.data_tab_reset_table_button = QPushButton("Reset Table Data")
         self.data_tab_reset_table_button.clicked.connect(self._reset_table)
-
+        # add button widgets to the tabs laytout
+        self.data_tab_button_layout.addWidget(self.import_data_button)
         self.data_tab_button_layout.addWidget(self.data_tab_reset_table_button)
 
-        self.data_tab_layout.addWidget(self.data_table_view)
-        self.data_tab_layout.addLayout(self.data_tab_button_layout)
+        # add the data table widget and button layouts to the data tab
+        self.data_tab_widget.tab_layout.addWidget(self.data_table_view)
+        self.data_tab_widget.tab_layout.addLayout(self.data_tab_button_layout)
 
+        # Admin Tab
+        self.admin_tab = gui_handlers.TabGenerator()
+        self.admin_tab.setup_new_tab("Admin")
+        self.admin_tab.tab_layout.addStretch()
+
+        # Add all tabs to the main tab widget
+        self.main_tabs.addTab(self.summary_tab_widget, "Summary")
+        self.main_tabs.addTab(self.report_tab, "Reports")
         self.main_tabs.addTab(self.data_tab_widget, "Data")
+        self.main_tabs.addTab(self.admin_tab, "Admin")
 
     def _reset_table(self):
-        new_data_dict = {
-            "Item": ["Alpha", "Beta", "Gamma"],
-            "Value": [1.1, 2.2, 3.3],
-            "Status": [True, True, False],
-        }
-        new_df = pd.DataFrame(new_data_dict)
-        self.data_table_model.update_table_from_dataframe(new_df)
-
-        # self.data_tab_widget = QWidget()
-        # self.data_tab_layout = QVBoxLayout(self.data_tab_widget)
-        # self.data_tab_label = QLabel("Data")
-        # self.data_tab_second_label = QLabel("Data 2")
-        # self.data_tab_layout.addWidget(self.data_tab_label)
-        # self.data_tab_layout.addWidget(self.data_tab_second_label)
-        # print(f"self.data_table_view is: {self.data_table_view}")
-        # self.data_tab_layout.addWidget(self.data_table_view)
-        # self.data_tab_layout.addStretch()
-        # self.main_tabs.addTab(self.data_tab_widget, "Data")
-
-        # Class Tabs below in theory work. creaitng new setup above to retest what the hell Im doing wrong
-
-        # # new class tab
-        # summary_tab = gui_handlers.TabGenerator()
-        # summary_tab.setup_new_tab("Summary")
-        # summary_tab.tab_layout.addStretch()
-        # self.main_tabs.addTab(summary_tab, "Summary")
-        # print(f"self.summary_tab.layout is: {self.summary_tab.layout()}")
-
-        # # Report Tab
-        # report_tab = gui_handlers.TabGenerator()
-        # report_tab.setup_new_tab("Reports")
-        # report_tab.tab_layout.addStretch()
-        # self.main_tabs.addTab(report_tab, "Reports")
-
-        # # Data Tab
-
-        # current class, blocked for internal testing
-        # self.data_tab = gui_handlers.TabGenerator()
-        # self.data_tab.setup_new_tab("Data")
-        # self.main_tabs.addTab(self.data_tab, "Data")
-
-        # # Brings in the pandas table
-        # self.data_table_model = handlers.RenderTableData("")
-        # temp shoehorn for validation
-        # self.data_table_model = handlers.PandasTableDataDisplay()
-        # self.data_table_model = handlers.PandasTableDataDisplay(blank_data)
-        ############### Here is the data table #######################################
-
-        # self.data_tab.tab_layout.addWidget(self.data_table_view)
-        # self.data_tab.tab_layout.addStretch()
-        # self.main_tabs.addTab(self.data_tab, "Data")
-
-        # # Updates Tab
-        # admin_tab = gui_handlers.TabGenerator()
-        # admin_tab.setup_new_tab("Admin")
-        # admin_tab.tab_layout.addStretch()
-        # self.main_tabs.addTab(admin_tab, "Admin")
-
-        # self.setCentralWidget(self.main_tabs)
+        blank_data = pd.DataFrame(
+            [
+                ["", "", "", "", ""],
+            ],
+            columns=["Charge Date", "Charge Name", "Charge Amount", "Tag", "Notes"],
+            index=["0"],
+        )
+        # new_data_dict = {
+        #     "Item": ["Alpha", "Beta", "Gamma"],
+        #     "Value": [1.1, 2.2, 3.3],
+        #     "Status": [True, True, False],
+        # }
+        # new_df = pd.DataFrame(new_data_dict)
+        self.data_table_model.update_table_from_dataframe(blank_data)
 
         # Setup menu and button functions
 
@@ -273,34 +234,17 @@ class MainWindow(QMainWindow):
                 # print(dir(self.data_table_model))
                 # print(type(self.data_table_model))
                 print("Data import complete")
-                data = pd.DataFrame(
-                    [
-                        [1, 9, 2],
-                        [1, 0, -1],
-                        [3, 5, 2],
-                        [3, 3, 2],
-                        [5, 8, 9],
-                    ],
-                    columns=["A", "B", "C"],
-                    index=["Row 1", "Row 2", "Row 3", "Row 4", "Row 5"],
-                )
+
                 try:
                     # self.data_table_model.update_table_from_dataframe(data)
                     self.data_table_model.update_table_from_dataframe(expenses)
+                    self.data_table_view.resizeColumnsToContents()
                 except Exception as e:
                     print(e)
                 print("table view updated with import...maybe?")
 
         except:
             pass
-
-    def create_data_table(self, data_frame=""):
-        self.model = PandasTableDataDisplay(data_frame)
-        # self.model = handlers.PandasTableDataDisplay(data_frame)
-        self.data_table_view = QTableView()
-        self.data_table_view.setModel(self.model)
-        self.data_table_view.resizeColumnsToContents()
-        return self.model
 
         # view_expenses_button = QPushButton(text="View Expense Summar", parent=self)
         # view_expenses_button.setFixedSize(200, 20)
