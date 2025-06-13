@@ -45,53 +45,6 @@ logger = LoggingHandler(str(os.path.basename(__file__))).log
 main_tab_list = ["Summary", "Data", "Imports", "Admin"]
 
 
-# class PandasTableDataDisplay(QAbstractTableModel):
-#     # moved from handlers for testing
-#     # https://www.pythonguis.com/tutorials/pyqt6-qtableview-modelviews-numpy-pandas/
-#     def __init__(self, data: pd.DataFrame, parent=None):
-#         super().__init__(parent)
-#         # self.name = __name__
-#         self.logger = LoggingHandler(__class__).log
-#         self._data = data
-
-#     def rowCount(self, index, parent=QModelIndex()):
-#         return self._data.shape[0]
-
-#     def columnCount(self, index, parent=QModelIndex()):
-#         return self._data.shape[1]
-
-#     def headerData(self, section, orientation, role):
-#         if role == Qt.ItemDataRole.DisplayRole:
-#             if orientation == Qt.Orientation.Horizontal:
-#                 return str(self._data.columns[section])
-
-#             if orientation == Qt.Orientation.Vertical:
-#                 return str(self._data.index[section])
-
-#     def data(self, index, role=Qt.ItemDataRole.DisplayRole):
-#         if not index.isValid():
-#             print("bad index")
-#             return None
-#         if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
-#             try:
-#                 value = self._data.iloc[index.row(), index.column()]
-#                 # print(f"data function got value: \n {value}")
-#             except Exception as e:
-#                 print(e)
-#             # print(f"The data function got the value:\n {value}")
-
-#             return str(value)
-#         return None
-
-#     def update_table_from_dataframe(self, new_dataframe: pd.DataFrame):
-#         # print(f"start reset function")
-#         # print(f"start reset function, dataframe contains:\n {new_dataframe}")
-#         self.beginResetModel()
-#         self._data = new_dataframe
-#         self.endResetModel()
-#         print("Model reset completely. beginResetModel/endResetModel emitted.")
-
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
