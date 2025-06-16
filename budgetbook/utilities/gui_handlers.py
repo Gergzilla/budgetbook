@@ -53,8 +53,7 @@ class TabGenerator(QTabWidget):
         self.tab_layout = QVBoxLayout()
 
     def setup_new_tab(self, label: str) -> QWidget:
-        self.tab_label = QLabel(label)
-        self.tab_layout.addWidget(self.tab_label)
-        # self.tab_layout.addStretch()
+        # self.tab_label = QLabel(label) placeholed not needed now
+        # self.tab_layout.addWidget(self.tab_label)
         self.setLayout(self.tab_layout)
         return self.tab_object, self.tab_layout

@@ -2,7 +2,10 @@ import pandas as pd
 import os
 import pymupdf
 import numpy as np
+import csv
 from dateutil.parser import parse as dateparse
+from datetime import datetime
+
 
 # this stuff below is only really needed for testing, not for prod
 from utilities.logger import (
@@ -118,74 +121,131 @@ class Page:
 ######## Begin import handler functions ########
 
 
-def cap_one_import(pdf_path):
-    # print("from:cap_one_import I got called")
-    # print(f"filepath is: {pdf_path}")
-    frame_list = []
-    all_imports = pd.DataFrame
-    pdf = pymupdf.open(pdf_path)
-    # I had this backwards before in the for section, not sure why it broke but likely due to object order
-    import_pages = [Page(page, page_num) for page_num, page in enumerate(pdf)]
-    # print("Got to: 107")
-    # print(len(import_pages))
-    for pages in import_pages:
-        imports = pages.import_cap_one_pdf()
-        if not imports.empty:
-            # print(imports)
-            frame_list.append(imports)
-            # print("Table parsed")
-        elif imports.empty:
-            # print("elif imports.empty")
-            pass
-        else:
-            # print("else pass")
-            pass
-        # print(dir(pages))
-    # print(frame_list)
-    # print("Got to: 114")
-    # Join all tables into one DataFrame and reset the index before cleanup
-    all_imports = pd.concat(frame_list)
-    all_imports = all_imports.reset_index(drop=True)
-    # valid rows should have a Date in the first column, removing ones that dont
-    for row in all_imports.itertuples():
+class file_import_handlers(object):
+    # these funcitons moved from handlers to consolidate all file import components to one module
+    def __init__(self):
+        self.__name__ = __name__
+        pass
+
+    @staticmethod
+    def dateCheck(datestring, fuzzy=False):
         try:
-            datecheck = dateparse(row[1], fuzzy=True)
-            # print(datecheck)
-            if datecheck:
-                pass
-                # print(f"{row[1]} is a valid date")
+            dateparse(datestring, fuzzy=fuzzy)
+            return True
+        except Exception as e:
+            # e isnt used but caught for proper handling, this just needs to evaluate as false if datestring is not a date
+            return False
+
+    @staticmethod
+    def csvImporter(inputFileName, year="2025"):
+        # Works perfectly!  results in a joined list of formatted data and converted to dataframe
+        joined_csv = []
+        try:
+            with open(inputFileName, newline="") as infile:
+                infilereader = csv.reader(
+                    filter(lambda line: line.strip(), infile), delimiter=","
+                )
+                for row in infilereader:
+                    parsedRow = file_import_handlers.parseCSV(row, year)
+                    joined_csv.append(parsedRow)
+            infile.close()
+            joined_df = pd.DataFrame(
+                joined_csv,
+                columns=[
+                    "transaction_date",
+                    "post_date",
+                    "transaction_name",
+                    "transaction_amount",
+                    "tags",
+                    "notes",
+                ],
+            )
+            return joined_df
+        except FileNotFoundError:
+            logger.critical("No valid file was found to import")
+
+    @staticmethod
+    def parseCSV(row, year):  # Works perfect!
+        expenses = []
+        i = 0
+        date, charge_name, expense, tag, notes = "", "", "", "", ""
+        while i < len(row):
+            if row[i] != "":
+                if file_import_handlers.dateCheck(row[i], fuzzy=False) is True:
+                    date = "'{}'".format(row[i])
+                    date = year + " " + str(date).strip("'")
+                    date = "{}".format(str(datetime.strptime(date, "%Y %b %d").date()))
+                    expenses.append(date)
+                elif "$" in row[i]:
+                    expense = row[i].replace("$", "").strip("\n")
+                    expenses.append(expense)
+                    # adds empty list elements to the end as placeholders
+                    expenses.append(tag)
+                    expenses.append(notes)
+                else:
+                    charge_name = "{}".format(row[i])
+                    # charge_name = "'{}'".format(row[i])
+                    expenses.append(charge_name)
+                i += 1
             else:
+                i += 1
+        return expenses
+
+    @staticmethod
+    def cap_one_import(pdf_path):
+        frame_list = []
+        all_imports = pd.DataFrame
+        pdf = pymupdf.open(pdf_path)
+        # I had this backwards before in the for section, not sure why it broke but likely due to object order
+        import_pages = [Page(page, page_num) for page_num, page in enumerate(pdf)]
+        for pages in import_pages:
+            imports = pages.import_cap_one_pdf()
+            if not imports.empty:
+                frame_list.append(imports)
+            elif imports.empty:
+                # print("DEBUG: elif imports.empty")
+                pass
+            else:
+                # print("DEBUG: else pass")
+                pass
+        # Join all tables into one DataFrame and reset the index before cleanup
+        all_imports = pd.concat(frame_list)
+        all_imports = all_imports.reset_index(drop=True)
+        # valid rows should have a Date in the first column, removing ones that dont
+        for row in all_imports.itertuples():
+            try:
+                datecheck = dateparse(row[1], fuzzy=True)
+                # print(datecheck)
+                if datecheck:
+                    pass
+                else:
+                    all_imports.drop(index=row[0], inplace=True)
+            except:
+                # any reason it is not a valid date should remove the row
                 all_imports.drop(index=row[0], inplace=True)
-        except:
-            # any reason it is not a valid date should remove the row
-            all_imports.drop(index=row[0], inplace=True)
-            pass
-    # print("Got to: 132")
-    # Now join col 2 and 3 due to pdf parsing issues and drop the old ones
-    all_imports["Col6"] = all_imports["Col2"].str.cat(all_imports["Col3"], sep=" ")
-    all_imports.drop(["Col2", "Col3"], axis=1, inplace=True)
-    # Reorder the dataframe
-    all_imports = all_imports[["Col1", "Col6", "Col4", "Col5"]]
-    # Relabel for clarity
-    all_imports.columns = [
-        "transaction_date",
-        "post_date",
-        "transaction_name",
-        "transaction_amount",
-    ]
-    # print("Got to: 145")
-    # check for missaligned columns, in testing it would happen where negative values greater than ###.## would lose
-    # the minus sign to the previous column, check for this trailing - and move it
-    for row in all_imports.itertuples():
-        if row[3][-1] == "-":
-            print(f"Minus sign found in charge_name at index {row[0]}")
-            all_imports.loc[row[0], "transaction_name"] = row[3][:-1].strip()
-            all_imports.loc[row[0], "transaction_amount"] = "- " + row[4]
-        else:
-            pass
-    # print("Got to: 155")
-    # print(all_imports)
-    return all_imports
+                pass
+        # Now join col 2 and 3 due to pdf parsing issues and drop the old ones
+        all_imports["Col6"] = all_imports["Col2"].str.cat(all_imports["Col3"], sep=" ")
+        all_imports.drop(["Col2", "Col3"], axis=1, inplace=True)
+        # Reorder the dataframe
+        all_imports = all_imports[["Col1", "Col6", "Col4", "Col5"]]
+        # Relabel for clarity
+        all_imports.columns = [
+            "transaction_date",
+            "post_date",
+            "transaction_name",
+            "transaction_amount",
+        ]
+        # check for missaligned columns, in testing it would happen where negative values greater than ###.## would lose
+        # the minus sign to the previous column, check for this trailing - and move it
+        for row in all_imports.itertuples():
+            if row[3][-1] == "-":
+                print(f"Minus sign found in charge_name at index {row[0]}")
+                all_imports.loc[row[0], "transaction_name"] = row[3][:-1].strip()
+                all_imports.loc[row[0], "transaction_amount"] = "- " + row[4]
+            else:
+                pass
+        return all_imports
 
 
 ######## End import handler functions ########
@@ -198,7 +258,7 @@ def main():
         pdf_path = os.path.join("statements", "2page-statement.pdf")
         csv_path = os.path.join("statements", "converted.csv")
         # pymu_pdf(pdf_path, csv_path) swapped to cap one function
-        cap_one_import(pdf_path)
+        file_import_handlers.cap_one_import(pdf_path)
     if selection == "2":
         print("Exiting...")
         quit()

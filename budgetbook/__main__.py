@@ -3,7 +3,7 @@
 import utilities.handlers as handlers
 import utilities.db_handlers as db_handlers
 import utilities.gui_handlers as gui_handlers
-import utilities.importers.pdf_importers as pdf_importers
+import utilities.importers.importers as importers
 import pandas as pd
 import os
 import sys
@@ -24,6 +24,7 @@ from PyQt6.QtWidgets import (
     QDialogButtonBox,
     QVBoxLayout,
     QHBoxLayout,
+    QComboBox,
     QLabel,
     QPushButton,
 )
@@ -42,7 +43,7 @@ except Exception:
 
 logger = LoggingHandler(str(os.path.basename(__file__))).log
 
-main_tab_list = ["Summary", "Data", "Imports", "Admin"]
+year_selector = ["2025", "2024", "2023", "2022", "2021", "2020", "All"]
 
 
 class MainWindow(QMainWindow):
@@ -52,7 +53,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Budget Book")
         self.setMinimumSize(QSize(1000, 800))
 
-        # Setup Menu Actions
+        # Setup Menu Menu Actions
 
         button_quit = QAction("&Quit", self)
         button_quit.setStatusTip("Exit Application")
@@ -81,12 +82,44 @@ class MainWindow(QMainWindow):
         # Summary Tab
         self.summary_tab_widget = gui_handlers.TabGenerator()
         self.summary_tab_widget.setup_new_tab("Summary")
+
+        self.summary_tab_button_layout = QHBoxLayout()
+        self.summary_tab_button_layout.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+        )
+        self.summary_tab_display_layout = QVBoxLayout()
+
+        self.summary_tab_main_label = QLabel("Main Label")
+        self.summary_tab_secondary_label = QLabel("Secondary Label")
+        self.summary_tab_year_select = QComboBox()
+        # trigger change when selection changes
+        self.summary_tab_year_select.currentTextChanged.connect(
+            self._summary_query_by_year
+        )
+        self.summary_tab_year_select.addItems(year_selector)
+        self.summary_tab_year_select.setFixedSize(100, 30)
+
+        self.summary_tab_refresh = QPushButton("Refresh")
+        self.summary_tab_refresh.setFixedSize(80, 30)
+
+        # add buttons and labels to their layouts
+        self.summary_tab_button_layout.addWidget(self.summary_tab_year_select)
+        self.summary_tab_button_layout.addWidget(self.summary_tab_refresh)
+        self.summary_tab_display_layout.addWidget(self.summary_tab_main_label)
+        self.summary_tab_display_layout.addWidget(self.summary_tab_secondary_label)
+        # add layouts to the tab
+        self.summary_tab_widget.tab_layout.addLayout(self.summary_tab_button_layout)
+        self.summary_tab_widget.tab_layout.addLayout(self.summary_tab_display_layout)
         self.summary_tab_widget.tab_layout.addStretch()
 
         # Report Tab
-        self.report_tab = gui_handlers.TabGenerator()
-        self.report_tab.setup_new_tab("Reports")
-        self.report_tab.tab_layout.addStretch()
+        self.report_tab_widget = gui_handlers.TabGenerator()
+        self.report_tab_widget.setup_new_tab("Reports")
+        self.report_tab_button_layout = QHBoxLayout()
+        self.report_tab_year_select = QComboBox()
+        self.report_tab_year_select.addItems(year_selector)
+
+        self.report_tab_widget.tab_layout.addStretch()
 
         # Data Tab
         self.data_tab_widget = gui_handlers.TabGenerator()
@@ -114,12 +147,15 @@ class MainWindow(QMainWindow):
         self.data_tab_button_layout = QHBoxLayout()
         self.import_data_button = QPushButton("Import File")
         self.import_data_button.clicked.connect(self.button_import_clicked)
-        # this triggered on launch because I connected it to the function call in the other class
+
+        self.save_to_db_button = QPushButton("Save to Database")
+        # self.save_to_db_button.clicked.connect(self.write_to_db)  #NYI
 
         self.data_tab_reset_table_button = QPushButton("Reset Table Data")
         self.data_tab_reset_table_button.clicked.connect(self._reset_table)
-        # add button widgets to the tabs laytout
+        # add button widgets to the tabs layout
         self.data_tab_button_layout.addWidget(self.import_data_button)
+        self.data_tab_button_layout.addWidget(self.save_to_db_button)
         self.data_tab_button_layout.addWidget(self.data_tab_reset_table_button)
 
         # add the data table widget and button layouts to the data tab
@@ -133,7 +169,7 @@ class MainWindow(QMainWindow):
 
         # Add all tabs to the main tab widget
         self.main_tabs.addTab(self.summary_tab_widget, "Summary")
-        self.main_tabs.addTab(self.report_tab, "Reports")
+        self.main_tabs.addTab(self.report_tab_widget, "Reports")
         self.main_tabs.addTab(self.data_tab_widget, "Data")
         self.main_tabs.addTab(self.admin_tab, "Admin")
 
@@ -167,31 +203,45 @@ class MainWindow(QMainWindow):
                 str("Expense files (*.csv *.pdf *.xls *.xlsx)"),
             )
             # folder is hardcoded for now for dev convenience
-
-            # print(type(import_filename))
-            # print(import_filename)
-            # print(import_filename[0])
-            # print(import_filename)
             if import_filename[0] == "":
                 return
             else:
                 self.main_tabs.setCurrentWidget(self.data_tab_widget)
-                expenses = pdf_importers.cap_one_import(import_filename[0])
-                # import works, there was an issue with the pdf parsing and column count in the pdf_importers module
-                # print(dir(self.data_table_model))
-                # print(type(self.data_table_model))
-                print("Data import complete")
+                # this dialogue should probably be its own window in order to validate the incoming data more easily
+                # and then it can be saved to the database and then viewed and edited further in the main window.
+                # we also need to add year selection combo box so the data is imported right.
+                # I need to break out the actual import processing to the handlers module, this is too cluttered
+                expenses = handlers.import_file_dialogue(import_filename[0])
 
+                # expenses = pdf_importers.cap_one_import(import_filename[0])
+                # import works, there was an issue with the pdf parsing and column count in the pdf_importers module
+                print("Data import complete")
                 try:
-                    # self.data_table_model.update_table_from_dataframe(data)
                     self.data_table_model.update_table_from_dataframe(expenses)
                     self.data_table_view.resizeColumnsToContents()
+                    self.data_table_view.setEditTriggers(
+                        QTableView.EditTrigger.DoubleClicked
+                        | QTableView.EditTrigger.AnyKeyPressed
+                    )  # this doesnt work here either
                 except Exception as e:
                     print(e)
-                print("table view updated with import...maybe?")
+                # print("table view updated with import...maybe?")
 
         except:
             pass
+
+    def _summary_query_by_year(self, year):
+        # pass through to call summary function against database
+        try:
+            print(f"year chosen was {year}")
+        except Exception as e:
+            print(f"oops {e}")
+
+    def _table_query_by_year(self, year):
+        try:
+            print(f"year chosen was {year}")
+        except Exception as e:
+            print(f"oops {e}")
 
         # buttons below were removed from main page for tab conversion, left to be used later as the functionality
         # is still needed in most cases and is a reference to the old UI layout but ported to PyQt6

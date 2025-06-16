@@ -2,21 +2,18 @@
 # This file is a copy of handlers.py but is being modified for django integration and testing
 import os
 import csv
-from PyQt6.QtWidgets import QLineEdit
+import pandas as pd
+from dateutil.parser import parse as dateparse
+from datetime import datetime
+
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtCore import Qt, QAbstractTableModel, QModelIndex
 from PyQt6.QtSql import QSqlQueryModel
-import pandas as pd
 
-# import itertools
-from tkinter import *
-from tkinter import ttk
-from tkinter import messagebox, filedialog
-from dateutil.parser import parse as dateparse
-from datetime import datetime
 import vars.settings as settings
 from utilities.logger import LoggingHandler
 import utilities.db_handlers as db_handlers
+import utilities.importers.importers as importers
 
 
 # try:
@@ -26,8 +23,6 @@ import utilities.db_handlers as db_handlers
 
 month_selector = settings.month_selector
 logger = LoggingHandler(str(os.path.basename(__file__))).log
-
-# the old TextBoxBuilder has been replaced with entry box handling because that is better.  The original POC is in its own file
 
 
 class PandasTableDataDisplay(QAbstractTableModel):
@@ -77,105 +72,40 @@ class PandasTableDataDisplay(QAbstractTableModel):
         print("Model reset completely. beginResetModel/endResetModel emitted.")
 
 
-class EntryBoxBuilder:
-    # this is being deprecated for PyQt6
-    # original test moved to TextBoxBuilder_test.py
-
-    def __init__(self, mainframe):
-        self.name = __name__
-        self.mainframe = mainframe
-        self.logger = LoggingHandler(__class__).log
-        # stringVar not currently used nor seems to be needed?
-        self.dateBoxValue = StringVar()
-        self.chargeBoxValue = StringVar()
-        self.amountBoxValue = StringVar()
-        self.tagBoxValue = StringVar()
-        self.noteBoxValue = StringVar()
-
-    def createEntryBoxRow(self, rowNumber):
-        # print(f"createEntryBoxRow was called with expensedata: {expenses} \n And rowNumber of: {rowNumber}")
-        BoxObjectList = []
-        self.BoxObjectList = BoxObjectList
-        dateBox = ttk.Entry(self.mainframe, width=12)
-        chargeBox = ttk.Entry(self.mainframe, width=35)
-        amountBox = ttk.Entry(self.mainframe, width=5)
-        tagBox = ttk.Entry(self.mainframe, width=13)
-        noteBox = ttk.Entry(self.mainframe, width=35)
-
-        for r in range(rowNumber):
-            rowSpacing = r + 1
-            # print(f"row number: {r} and rowcount var {rowNumber}")
-            dateBox.grid(column=1, row=rowSpacing, sticky=N, padx=1)
-            chargeBox.grid(column=2, row=rowSpacing, sticky=N, padx=1)
-            amountBox.grid(column=3, row=rowSpacing, sticky=N, padx=1)
-            tagBox.grid(column=4, row=rowSpacing, sticky=N, padx=1)
-            noteBox.grid(column=5, row=rowSpacing, sticky=N, padx=1)
-        BoxObjectList.append(dateBox)
-        BoxObjectList.append(chargeBox)
-        BoxObjectList.append(amountBox)
-        BoxObjectList.append(tagBox)
-        BoxObjectList.append(noteBox)
-        self.BoxObjectList = BoxObjectList
-
-    def createEntryBoxes(self, rowcount):
-        try:
-            # this is the sidestep to using the input box for testing and isnt needed for now
-            totalrows = int(rowcount.get())
-        except Exception:
-            totalrows = rowcount
-        self.GlobalBoxList = []
-        for row in range(totalrows):
-            rowID = row + 1
-            self.createEntryBoxRow(
-                rowID
-            )  # This works (forgot self.) and doesnt require input data
-            for o in self.BoxObjectList:
-                self.GlobalBoxList.append(o)
-        # print(f"inside makeBoxes GlobalBoxList contains: {self.GlobalBoxList}")
-        self.logger.debug(
-            f"inside makeBoxes GlobalBoxList contains: {self.GlobalBoxList}"
-        )
-        # return self.BoxObjectList
-        return self.GlobalBoxList
-
-    def updateTextBox(self, expenses, rowcount):
-        # Call createEntryBoxes which parses the imported file and creates enough rows for the data
-        BoxObjects = self.createEntryBoxes(rowcount)
-        # Call populateBoxes which populates each created box with the parsed data
-        self.populateBoxes(expenses, BoxObjects)
-
-    def populateBoxes(self, expenseList, boxList):
-        i = 0
-        while i < len(expenseList):
-            boxList[i].insert(0, expenseList[i])
-            i += 1
-
-    def getBoxContents(self):
-        self.GlobalExpenseData = []
-        try:
-            for contents in self.GlobalBoxList:
-                self.GlobalExpenseData.append(contents.get())
-                # print(contents.get())
-            return self.GlobalExpenseData
-        except AttributeError:
-            messagebox.showwarning(message="Error: No data has been loaded yet")
-            return
-
-
-# End EntryBoxBiulder Class ================================================
-
-
 ####### Misc utilities  #######
 def dateCheck(datestring, fuzzy=False):
     try:
         dateparse(datestring, fuzzy=fuzzy)
         return True
     except Exception as e:
-        # e isnt used but its caught for proper coding, this merely needs to return false if it cant parse the date for any reason
+        # e isnt used but caught for proper handling, this just needs to evaluate as false if it cant parse the date for any reason
         return False
 
 
 ####### File Handlers ########
+
+
+def import_file_dialogue(import_file_name):
+
+    try:
+        print(f"import file is: {import_file_name}")
+        # parse the file type of the import to try and select the right import method
+        file_type = str(import_file_name).split(".")[1]
+        # print(f"file_type is: {file_type}")
+        if "csv" in file_type:
+            # print("CSV file detected")
+            transaction_data = importers.file_import_handlers.csvImporter(
+                import_file_name
+            )
+        elif "pdf" in file_type:
+            # print(" file detected")
+            transaction_data = importers.file_import_handlers.cap_one_import(
+                import_file_name
+            )
+        return transaction_data
+    except Exception as e:
+        print(e)
+        return
 
 
 def csvImporter(inputFileName, year="2025"):
@@ -194,7 +124,7 @@ def csvImporter(inputFileName, year="2025"):
         infile.close()
         return joinedCsv, rowCount
     except FileNotFoundError:
-        logger.critical("No valid file was found to inport")
+        logger.critical("No valid file was found to import")
 
 
 ####### Parsers and Writers ########
@@ -246,7 +176,9 @@ def writeExpenseToDB(expenses):
     if result:
         logger.error(result)
     else:
-        messagebox.showinfo(message="All Entries saved to the Database")
+        print("messagebox.showinfo(message='All Entries saved to the Database')")
+        # tkinter removed, confirmation should be changed to pyqt
+
         # db_handlers.addExpenses(expense_batch, "2024")
 
 
