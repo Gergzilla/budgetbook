@@ -34,6 +34,13 @@ class PandasTableDataDisplay(QAbstractTableModel):
         self.logger = LoggingHandler(__class__).log
         self._data = data
 
+    def flags(self, index) -> Qt.ItemFlag:
+        return (
+            Qt.ItemFlag.ItemIsSelectable
+            | Qt.ItemFlag.ItemIsEnabled
+            | Qt.ItemFlag.ItemIsEditable
+        )
+
     def rowCount(self, index, parent=QModelIndex()):
         return self._data.shape[0]
 
@@ -63,13 +70,14 @@ class PandasTableDataDisplay(QAbstractTableModel):
             return str(value)
         return None
 
-    def update_table_from_dataframe(self, new_dataframe: pd.DataFrame):
+    def update_table_from_dataframe(self, new_dataframe: pd.DataFrame) -> None:
         # print(f"start reset function")
         # print(f"start reset function, dataframe contains:\n {new_dataframe}")
         self.beginResetModel()
         self._data = new_dataframe
         self.endResetModel()
-        print("Model reset completely. beginResetModel/endResetModel emitted.")
+
+        # print("Model reset completely. beginResetModel/endResetModel emitted.")
 
 
 ####### Misc utilities  #######
@@ -85,7 +93,7 @@ def dateCheck(datestring, fuzzy=False):
 ####### File Handlers ########
 
 
-def import_file_dialogue(import_file_name):
+def import_file_dialogue(import_file_name, import_year: int = 0):
 
     try:
         print(f"import file is: {import_file_name}")
@@ -95,12 +103,13 @@ def import_file_dialogue(import_file_name):
         if "csv" in file_type:
             # print("CSV file detected")
             transaction_data = importers.file_import_handlers.csvImporter(
-                import_file_name
+                import_file_name, import_year
             )
         elif "pdf" in file_type:
             # print(" file detected")
+            # hardcoded to capital one for now.  More advanced selection to be handled later
             transaction_data = importers.file_import_handlers.cap_one_import(
-                import_file_name
+                import_file_name, import_year
             )
         return transaction_data
     except Exception as e:
@@ -117,7 +126,7 @@ def expenseChunks(expenseList, chunkSize):
         yield expenseList[i : i + chunkSize]
 
 
-def writeExpenseToDB(expenses):
+def writeExpenseToDB(expenses) -> bool:
     """
     This should bring in all data provided to it in a list form, most likely from parsing the box contents
     and then prepare that data to be written to the sqlite database cleanly

@@ -45,6 +45,14 @@ class CustomOkCancelDialog(QDialog):
         self.setLayout(dialog_layout)
 
 
+class YearSelectDialogue(QDialog):  # not using yet, maybe never
+    def __init__(self, box_title: str, prompt_message: str):
+        super().__init__()
+        self.box_title = str(box_title)
+        self.prompt_message = str(prompt_message)
+        self.setWindowTitle(str(self.box_title))
+
+
 class TabGenerator(QTabWidget):
     def __init__(self):
         super().__init__()

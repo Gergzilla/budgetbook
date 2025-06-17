@@ -27,6 +27,7 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QLabel,
     QPushButton,
+    QInputDialog,
 )
 from tkinter import *
 from tkinter import ttk
@@ -43,7 +44,11 @@ except Exception:
 
 logger = LoggingHandler(str(os.path.basename(__file__))).log
 
-year_selector = ["2025", "2024", "2023", "2022", "2021", "2020", "All"]
+# List of years to use for various prompts
+year_list = ["2025", "2024", "2023", "2022", "2021", "2020"]
+# specific year selector for reports and summaries
+year_selector = year_list
+year_selector.append("All")
 
 
 class MainWindow(QMainWindow):
@@ -138,10 +143,9 @@ class MainWindow(QMainWindow):
         self.data_table_view = QTableView()
         self.data_table_view.setModel(self.data_table_model)
 
-        self.data_table_view.setEditTriggers(
-            QTableView.EditTrigger.DoubleClicked | QTableView.EditTrigger.AnyKeyPressed
-        )  # This doesnt currently work in my app but it did in testing.
-        # self.data_table_view.resizeColumnsToContents() # this isnt needed here when there is no data for now
+        # self.data_table_view.setEditTriggers(
+        #     QTableView.EditTrigger.DoubleClicked | QTableView.EditTrigger.AnyKeyPressed
+        # )  # This doesnt currently work in my app but it did in testing.
 
         # Data Tab Buttons
         self.data_tab_button_layout = QHBoxLayout()
@@ -173,7 +177,7 @@ class MainWindow(QMainWindow):
         self.main_tabs.addTab(self.data_tab_widget, "Data")
         self.main_tabs.addTab(self.admin_tab, "Admin")
 
-    def _reset_table(self):
+    def _reset_table(self) -> None:
         blank_data = pd.DataFrame(
             [
                 ["", "", "", "", ""],
@@ -185,7 +189,7 @@ class MainWindow(QMainWindow):
 
         # Setup menu and button functions
 
-    def button_quit_clicked(self):
+    def button_quit_clicked(self) -> None:
         confirm_quit = gui_handlers.CustomOkCancelDialog(
             "Quit?", "Are you sure you want to quit?"
         )
@@ -194,7 +198,18 @@ class MainWindow(QMainWindow):
         else:
             pass
 
-    def button_import_clicked(self):
+    def _choose_import_year(self) -> int:
+        import_year, ok = QInputDialog.getItem(
+            self, "What year is this data for?", "Select Year:", year_list, 0, False
+        )
+        if ok and import_year:
+            # print(f"Year selected was {import_year}")
+            return import_year
+
+    def button_import_clicked(self) -> None:
+        import_year = self._choose_import_year()
+        print(f"Year returned was {import_year}")
+
         try:
             import_filename = QFileDialog.getOpenFileName(
                 self,
@@ -209,11 +224,9 @@ class MainWindow(QMainWindow):
                 self.main_tabs.setCurrentWidget(self.data_tab_widget)
                 # this dialogue should probably be its own window in order to validate the incoming data more easily
                 # and then it can be saved to the database and then viewed and edited further in the main window.
-                # we also need to add year selection combo box so the data is imported right.
-                # I need to break out the actual import processing to the handlers module, this is too cluttered
-                expenses = handlers.import_file_dialogue(import_filename[0])
-
-                # expenses = pdf_importers.cap_one_import(import_filename[0])
+                expenses = handlers.import_file_dialogue(
+                    import_filename[0], import_year
+                )
                 # import works, there was an issue with the pdf parsing and column count in the pdf_importers module
                 print("Data import complete")
                 try:
@@ -222,23 +235,25 @@ class MainWindow(QMainWindow):
                     self.data_table_view.setEditTriggers(
                         QTableView.EditTrigger.DoubleClicked
                         | QTableView.EditTrigger.AnyKeyPressed
-                    )  # this doesnt work here either
+                    )  # this works now, missed flag function in table class
+                    # print(self.data_table_view.editTriggers())
                 except Exception as e:
                     print(e)
-                # print("table view updated with import...maybe?")
 
         except:
             pass
 
-    def _summary_query_by_year(self, year):
+    def _summary_query_by_year(self, year: int) -> pd.DataFrame:
         # pass through to call summary function against database
         try:
+            return
             print(f"year chosen was {year}")
         except Exception as e:
             print(f"oops {e}")
 
-    def _table_query_by_year(self, year):
+    def _table_query_by_year(self, year: int) -> pd.DataFrame:
         try:
+            return
             print(f"year chosen was {year}")
         except Exception as e:
             print(f"oops {e}")
@@ -290,19 +305,6 @@ class MainWindow(QMainWindow):
 #             messagebox.showwarning(message="Error: No data has been loaded yet")
 #             # print("Error: No data has been loaded yet")
 
-#     def openFileImporter(self):
-
-#         try:
-#             expenses, rowcount = FileImportWindow(self)
-#         except TypeError:
-#             # If the import is cancelled or contains no data set empty values
-#             expenses, rowcount = "", ""
-#         if expenses or rowcount == "":
-#             # If there is no data or if the user cancelled then do nothing
-#             return
-#         else:
-#             # the returned information from the popup should give back these items
-#             self.BoxMaking.updateTextBox(expenses, rowcount)
 
 #     def deleteDupes(self):
 #         db_handlers.removeDuplicates()
@@ -312,50 +314,6 @@ class MainWindow(QMainWindow):
 #             quit()
 #         except Exception as e:
 #             print(f"I have no idea how this failed but it was because of: {e}")
-
-
-class FileImportWindow(Toplevel):
-    # need to adapt this to PyQt6, currently tkinter method
-    # 6-13-2025 file import dialogue has been ported but the extra input variables need to be added for data sanity
-    def __init__(self, master, **kwargs):
-        super().__init__(master, **kwargs)
-        self.title("Select budget file to import")
-        self.geometry("400x400")
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
-        self.grid(column=0, columnspan=3, row=0, rowspan=3, sticky=(N, W, E, S))
-        self.yearChoice = ["2020", "2021", "2022", "2023", "2024", "2025"]
-        self.fileType = ["CSV", "PDF"]
-        self.importFilePrompt = StringVar()
-        self.fileTypeSelection = StringVar()
-        self.importYearSelection = StringVar()
-        # Drop down lists and button to choose import file go here
-        self.fileType = ttk.Combobox(
-            self, textvariable=self.fileTypeSelection, values=self.fileType
-        )
-        self.fileType.grid(column=1, row=1, sticky=(N, W))
-        self.importYear = ttk.Combobox(
-            self, self.importYearSelection, values=self.yearChoice
-        )
-        self.importYear.grid(column=2, row=1, sticky=(N, W))
-
-        # these are window controls to keep control to the popup dialogue window
-
-        self.transient(master)  # open on top of main window
-        self.grab_set()  # hijack all commands from master window
-        master.wait_window(self)  # pause anything on main window until this closes
-
-    def importFile(self):  # This works now, don't change it
-        self.importFilePrompt.set(
-            filedialog.askopenfilename(title="Select Expenses to Import")
-        )
-        importFile = self.importFilePrompt.get()
-        if importFile == "":
-            return
-        else:
-            expenses, rowcount = handlers.csvImporter(importFile)
-            # Passes processed row count and expense list to update textboxes
-            self.BoxMaking.updateTextBox(expenses, rowcount)
 
 
 def main():

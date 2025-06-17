@@ -128,6 +128,29 @@ class file_import_handlers(object):
         pass
 
     @staticmethod
+    def format_import_dataframe(import_frame: pd.DataFrame, import_year):
+        index_num = 0
+        row_count = len(import_frame)
+        print(f"Processing {row_count} rows.")
+        # fix the date format
+        while 0 <= index_num < row_count:
+            # print(row_count)
+            formated_transaction_date = file_import_handlers.format_date(
+                import_frame.iloc[index_num, 0], import_year
+            )
+            formated_post_date = file_import_handlers.format_date(
+                import_frame.iloc[index_num, 1], import_year
+            )
+
+            try:
+                import_frame.iloc[index_num, 0] = formated_transaction_date
+                import_frame.iloc[index_num, 1] = formated_post_date
+            except Exception as e:
+                print(e)
+            index_num += 1
+        return import_frame
+
+    @staticmethod
     def dateCheck(datestring, fuzzy=False):
         try:
             dateparse(datestring, fuzzy=fuzzy)
@@ -137,7 +160,16 @@ class file_import_handlers(object):
             return False
 
     @staticmethod
-    def csvImporter(inputFileName, year="2025"):
+    def format_date(datestring, year):
+        formated_date = "'{}'".format(datestring)
+        formated_date = year + " " + str(formated_date).strip("'")
+        formated_date = "{}".format(
+            str(datetime.strptime(formated_date, "%Y %b %d").date())
+        )
+        return formated_date
+
+    @staticmethod
+    def csvImporter(inputFileName, year: int = 2025):
         # Works perfectly!  results in a joined list of formatted data and converted to dataframe
         joined_csv = []
         try:
@@ -172,9 +204,10 @@ class file_import_handlers(object):
         while i < len(row):
             if row[i] != "":
                 if file_import_handlers.dateCheck(row[i], fuzzy=False) is True:
-                    date = "'{}'".format(row[i])
-                    date = year + " " + str(date).strip("'")
-                    date = "{}".format(str(datetime.strptime(date, "%Y %b %d").date()))
+                    date = file_import_handlers.format_date(row[i], year)
+                    # date = "'{}'".format(row[i])
+                    # date = year + " " + str(date).strip("'")
+                    # date = "{}".format(str(datetime.strptime(date, "%Y %b %d").date()))
                     expenses.append(date)
                 elif "$" in row[i]:
                     expense = row[i].replace("$", "").strip("\n")
@@ -192,7 +225,7 @@ class file_import_handlers(object):
         return expenses
 
     @staticmethod
-    def cap_one_import(pdf_path):
+    def cap_one_import(pdf_path, import_year):
         frame_list = []
         all_imports = pd.DataFrame
         pdf = pymupdf.open(pdf_path)
@@ -245,6 +278,9 @@ class file_import_handlers(object):
                 all_imports.loc[row[0], "transaction_amount"] = "- " + row[4]
             else:
                 pass
+        all_imports = file_import_handlers.format_import_dataframe(
+            all_imports, import_year
+        )
         return all_imports
 
 
