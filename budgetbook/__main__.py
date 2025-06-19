@@ -267,62 +267,11 @@ class MainWindow(QMainWindow):
         except Exception as e:
             print(f"oops {e}")
 
-        # buttons below were removed from main page for tab conversion, left to be used later as the functionality
-        # is still needed in most cases and is a reference to the old UI layout but ported to PyQt6
-
-        # view_expenses_button = QPushButton(text="View Expense Summar", parent=self)
-        # view_expenses_button.setFixedSize(200, 20)
-        # budget_report_button = QPushButton(text="View Budget Report", parent=self)
-        # budget_report_button.setFixedSize(200, 20)
-        # print_expenses_button = QPushButton(text="Print Expenses", parent=self)
-        # print_expenses_button.setFixedSize(200, 20)
-        # import_expenses_button = QPushButton(text="Import Expenses", parent=self)
-        # import_expenses_button.setFixedSize(200, 20)
-        # save_expenses_button = QPushButton(text="Save Expenses", parent=self)
-        # save_expenses_button.setFixedSize(200, 20)
+    def deleteDupes(self):
+        # left as a reminder, this function will be moved to the admin tab for obvious reasons.
+        db_handlers.removeDuplicates()
         # delete_duplicates_button = QPushButton(text="delete duplicates", parent=self)
         # delete_duplicates_button.setFixedSize(200, 20)
-        # quit_button = QPushButton(text="Quit", parent=self)
-        # quit_button.setFixedSize(200, 20)
-
-        # main_window_layout = QVBoxLayout()
-
-        # main_window_layout.addWidget(view_expenses_button)
-        # main_window_layout.addWidget(budget_report_button)
-        # main_window_layout.addWidget(print_expenses_button)
-        # main_window_layout.addWidget(import_expenses_button)
-        # main_window_layout.addWidget(save_expenses_button)
-        # main_window_layout.addWidget(delete_duplicates_button)
-        # main_window_layout.addWidget(quit_button)
-        # main_window_layout.addWidget(main_tabs)
-        # main_window_widget = QWidget()
-
-        # main_window_widget.setLayout(main_window_layout)
-        # self.setCentralWidget(main_window_widget)
-
-
-# class removed for cleanup, methods left for conversion reference
-#     def saveExpenses(self):
-#         expenses = self.BoxMaking.getBoxContents()
-#         handlers.writeExpenseToDB(expenses)
-
-#     def printBoxContents(self):
-#         try:
-#             print(self.BoxMaking.getBoxContents())
-#             # self.BoxMaking.print_box_data()
-#         except AttributeError:
-#             messagebox.showwarning(message="Error: No data has been loaded yet")
-#             # print("Error: No data has been loaded yet")
-
-
-#     def deleteDupes(self):
-#         db_handlers.removeDuplicates()
-
-#     def leave(self):
-#         try:
-#             quit()
-#         except Exception as e:
-#             print(f"I have no idea how this failed but it was because of: {e}")
 
 
 def main():
