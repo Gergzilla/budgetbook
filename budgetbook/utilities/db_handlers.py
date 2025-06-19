@@ -2,9 +2,10 @@
 # This file is a copy of db_handlers.py but is being modified for django integration and testing
 import sqlite3
 import os
+import pandas as pd
 import vars.settings as settings
+
 from utilities.logger import LoggingHandler
-import utilities.db_handlers as db_handlers
 
 # try:
 #     from utilities.logger import LoggingHandler
@@ -17,67 +18,84 @@ expenseTable = settings.expenseTable
 logger = LoggingHandler("db_handlers").log  # currenlty untested
 
 
-def createDB(expenseDB):
-    # can prompt for db name in the future, for now its hard set
-    if os.path.exists(expenseDB):
-        # print("File exists, establishing connection to " + expenseDB)
-        dbconnect = sqlite3.connect(expenseDB)
-    else:
-        print("File doesnt exist, creating file")
-        try:
+class DatabaseSetup(object):
+    def __init__(self):
+        self.name = __name__
+        self.logger = LoggingHandler(__class__).log
+        pass
+
+    def __str__(self):
+        return self.name
+
+    @staticmethod
+    def createDB(expenseDB: str = expenseDB):
+        # can prompt for db name in the future, for now its hard set
+        if os.path.exists(expenseDB):
+            # print("File exists, establishing connection to " + expenseDB)
             dbconnect = sqlite3.connect(expenseDB)
+        else:
+            print("Database File doesnt exist, creating file")
+            logger.info("Database File doesnt exist, creating file")
+            try:
+                dbconnect = sqlite3.connect(expenseDB)
+            except Exception:
+                print("could not create file for some reason at " + expenseDB)
+                logger.info("could not create file for some reason at " + expenseDB)
+                dbconnect = ""
+        return dbconnect
+
+    @staticmethod
+    def createBudgetTable(expenseDB: str = expenseDB) -> str:
+        # create expenses table if it doesnt exist
+        # this is disabled for now due to django integration
+        dbconn = sqlite3.connect(expenseDB)
+        writeCursor = dbconn.cursor()
+        tableCheck = DatabaseSetup.pollMasterTable(writeCursor)
+        print(tableCheck)
+        if tableCheck == False:
+            print("Table check is False, meaning table needs to be made")
+            # print("do nothing")
+            writeCursor.executescript(
+                "CREATE TABLE transactions (transaction_date TEXT, post_date TEXT, charge_name TEXT, amount REAL, tag TEXT, notes TEXT, UNIQUE(transaction_date,charge_name,amount))"
+            )
+            dbconn.commit()
+            if DatabaseSetup.pollMasterTable:
+                print("Table created")
+            else:
+                print("table still not found - something broke")
+        else:
+            print("Table check passed, nothing to do")
+            return
+
+    @staticmethod
+    def pollMasterTable(cur):
+        masterdblist = cur.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name='transactions'"
+        )
+        try:
+            checktables = masterdblist.fetchone()
         except Exception:
-            print("could not create file for some reason at " + expenseDB)
-            dbconnect = ""
-    return dbconnect
-
-
-def createBudgetTable(year="2024"):
-    # create expenses table if it doesnt exist
-    # this is disabled for now due to django integration
-    dbconn = sqlite3.connect(expenseDB)
-    writeCursor = dbconn.cursor()
-    tableCheck = pollMasterTable(writeCursor, year)
-    print(tableCheck)
-    if tableCheck == False:
-        print("Table check is False, meaning table needs to be made")
-        print("do nothing")
-        # writeCursor.executescript("CREATE TABLE database_budget(date TEXT, charge_name TEXT, expense REAL, tag TEXT, notes TEXT)")
-        # dbconn.commit()
-        # if pollMasterTable:
-        #     print("Table created")
-        # else:
-        #     print("table still not found - something broke")
-    else:
-        print("Table check passed, nothing to do")
-        return
-
-
-def pollMasterTable(cur, year="2024", expenseTable=expenseTable):
-    # checks the master table if our table exists
-    createtable = "SELECT name FROM sqlite_master WHERE name='{0}'".format(expenseTable)
-    masterdblist = cur.execute(createtable)
-    try:
-        checktables = masterdblist.fetchone()
-    except Exception:
-        checktables = None
-    if checktables is None:
-        return False
-    else:
-        return True
+            checktables = None
+        if checktables is None:
+            return False
+        else:
+            return True
 
 
 ##### Data add/remove functions  ######
 
 
-def saveExpensesToDB(expensdata, expenseTable=expenseTable, db=expenseDB):
+# def saveExpensesToDB(expensdata, expenseTable=expenseTable, db=expenseDB):
+def saveExpensesToDB(expensdata, db=expenseDB):
     # New and improved and working great!
-    # I need to modify this so that it either queries the DB for what is in there or empties out the boxes so you cant accidentally duplicate data
+    # save_dataframe_to_db() is the new proper function for saving to the DB with dataframes and not creating duplicates
     dbconn = sqlite3.connect(expenseDB)
     writeCursor = dbconn.cursor()
-    insertString = "INSERT INTO {0} (charge_date, charge_name, amount, tag_id, notes) VALUES (?,?,?,?,?)".format(
-        expenseTable
-    )
+    insertString = "INSERT INTO transactions (charge_date, charge_name, amount, tag, notes) VALUES (?,?,?,?,?)"
+    # )
+    # insertString = "INSERT INTO {0} (charge_date, charge_name, amount, tag_id, notes) VALUES (?,?,?,?,?)".format(
+    #     expenseTable
+    # )
     try:
         writeCursor.execute(insertString, expensdata)
         dbconn.commit()
@@ -88,6 +106,39 @@ def saveExpensesToDB(expensdata, expenseTable=expenseTable, db=expenseDB):
     except Exception as e:
         errorMessage = type(e).__name__, e
     return errorMessage
+
+
+def save_dataframe_to_db(input_frame: pd.DataFrame) -> None:
+    # THIS IS THE LIVE AND WORKING ONE
+    """
+    This should parse an input dataframe and save it to the sqlite3 database
+    """
+    dbconn = sqlite3.connect(expenseDB)
+    write_cursor = dbconn.cursor()
+    for index, row in input_frame.iterrows():
+        transaction_data = [
+            row["transaction_date"],
+            row["post_date"],
+            row["transaction_name"],
+            row["transaction_amount"],
+            row["tags"],
+            row["notes"],
+        ]
+        # this does create new entries without duplicates and allows for updates but if there are conflicts and data is empty it could overwrite
+        # for example if you import the same file and chang enothing and save, it wont create duplicates but any unprotected fields:
+        # aka post_date, tags, notes in the new conflicting data can overwrite/NULL the data already in the DB
+        write_cursor.execute(
+            "INSERT INTO transactions (transaction_date, post_date, charge_name, amount, tag, notes) VALUES (?,?,?,?,?,?) ON CONFLICT (transaction_date, charge_name, amount) DO UPDATE SET transaction_date = excluded.transaction_date, post_date = excluded.post_date, charge_name = excluded.charge_name, amount = excluded.amount, tag = excluded.tag, notes = excluded.notes",
+            transaction_data,
+        )
+
+    dbconn.commit()
+    # write_cursor.execute(
+    #     "SELECT rowid, * FROM transactions WHERE charge_name IS NOT NULL"
+    # )
+    # rowlist = write_cursor.fetchall()
+    # for row in rowlist:
+    #     print(row)
 
 
 def writeToExpenses(writedata="", expenseDB=expenseDB):
@@ -101,9 +152,11 @@ def writeToExpenses(writedata="", expenseDB=expenseDB):
     writeCursor.close()
 
 
-def addExpenses(expensedata, year="2024", expenseTable=expenseTable):
+# these last two functions need to be refactored because they are using the wrong SQL formatting AND need to update with hardcoded table name
+def addExpenses(expensedata, year="2024", expenseTable="transactions"):
     # this is the proper format for insertion and works to auto increment ROWID
     # otherwise you can get a 'table has x columns but y supplied' unless you specificy the ROWID as well which isnt needed
+
     insertString = "INSERT INTO {0} (charge_date, charge_name, amount, tag_id, notes) VALUES ({1})".format(
         expenseTable, expensedata
     )  # bad form, but used to work. changing to placeholders
@@ -111,7 +164,7 @@ def addExpenses(expensedata, year="2024", expenseTable=expenseTable):
     writeToExpenses(insertString)
 
 
-def addTag(expensdata, tag, year="2024", expenseTable=expenseTable):
+def addTag(expensdata, tag, year="2024", expenseTable="transactions"):
     # more learning, the for loop for a tuple doesnt work on a single item because there is nothing to iterate over
     # so here it is just a,b,c,y,z = tuple
     date, entity, charge, activetag, note = expensdata

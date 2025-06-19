@@ -9,6 +9,9 @@ from datetime import datetime
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtCore import Qt, QAbstractTableModel, QModelIndex
 from PyQt6.QtSql import QSqlQueryModel
+from PyQt6.QtGui import QColor, QFont, QPen
+from PyQt6.QtCharts import QChartView, QPieSeries, QChart, QPieSlice
+
 
 import vars.settings as settings
 from utilities.logger import LoggingHandler
@@ -25,7 +28,7 @@ month_selector = settings.month_selector
 logger = LoggingHandler(str(os.path.basename(__file__))).log
 
 
-class PandasTableDataDisplay(QAbstractTableModel):
+class PandasAbstractTable(QAbstractTableModel):
     # moved from handlers for testing
     # https://www.pythonguis.com/tutorials/pyqt6-qtableview-modelviews-numpy-pandas/
     def __init__(self, data: pd.DataFrame, parent=None):
@@ -70,6 +73,15 @@ class PandasTableDataDisplay(QAbstractTableModel):
             return str(value)
         return None
 
+    def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
+        if role == Qt.ItemDataRole.EditRole:
+            self._data.iloc[index.row(), index.column()] = value
+            # Emit the dataChanged signal to notify the view
+
+            self.dataChanged.emit(index, index, [role])
+            return True
+        return False
+
     def update_table_from_dataframe(self, new_dataframe: pd.DataFrame) -> None:
         # print(f"start reset function")
         # print(f"start reset function, dataframe contains:\n {new_dataframe}")
@@ -78,6 +90,15 @@ class PandasTableDataDisplay(QAbstractTableModel):
         self.endResetModel()
 
         # print("Model reset completely. beginResetModel/endResetModel emitted.")
+
+
+class QtPieChartSeries(QPieSeries):
+    # currently a placeholder while I figure out how I want to implement this
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.name = __name__
+        self.logger = LoggingHandler(__class__).log
+        self.setHoleSize(0.2)  # arbitrary, may change later
 
 
 ####### Misc utilities  #######
@@ -120,7 +141,14 @@ def import_file_dialogue(import_file_name, import_year: int = 0):
 ####### Parsers and Writers ########
 
 
+# The expenseChunks and writeExpenseToDB are probably not needed anynmore.  I am converting all data data sources into
+# pandas dataframes for better universal functionality and so there should not be a case where I need to parse massive lists
+# to write to the db anymore.  will deprecate in later versions
 def expenseChunks(expenseList, chunkSize):
+    print(
+        f"Deprecation warning, the function {__name__} is being deprecated, if you got this message check what is using \
+            it as it should be migrated to db_handlers.save_dataframe_to_db()"
+    )
     # this should take the list and return tuples of size chunkSize for all data sent to it
     for i in range(0, len(expenseList), chunkSize):
         yield expenseList[i : i + chunkSize]
@@ -131,6 +159,10 @@ def writeExpenseToDB(expenses) -> bool:
     This should bring in all data provided to it in a list form, most likely from parsing the box contents
     and then prepare that data to be written to the sqlite database cleanly
     """
+    print(
+        f"Deprecation warning, the function {__name__} is being deprecated, if you got this message check what is using \
+            it as it should be migrated to db_handlers.save_dataframe_to_db()"
+    )
     for expense_batch in expenseChunks(expenses, 5):
         # print(expense_batch)
         result = db_handlers.saveExpensesToDB(expense_batch)
@@ -141,31 +173,6 @@ def writeExpenseToDB(expenses) -> bool:
         # tkinter removed, confirmation should be changed to pyqt
 
         # db_handlers.addExpenses(expense_batch, "2024")
-
-
-def parseToSQL(rawimport, year="2025"):
-    # this was replaced by parseCSV, we need to create a new generic SQL prep function to write data to the DB
-    # parse input data to sql data and call writeToDB
-    i = 0
-    date, charge_name, expense = "", "", ""
-    csvline = rawimport.split("  ")
-    while i < len(csvline):
-        if csvline[i] != "":
-            if dateCheck(csvline[i], fuzzy=False) is True:
-                date = "'{}'".format(csvline[i])
-                date = year + " " + str(date).strip("'")
-                # Convert date to standard format for DB usage
-                date = "'{}'".format(str(datetime.strptime(date, "%Y %b %d").date()))
-                # print(date)
-            elif "$" in csvline[i]:
-                expense = csvline[i].replace("$", "")
-            else:
-                charge_name = "'{}'".format(csvline[i])
-            i = i + 1
-        else:
-            i = i + 1
-    # print(date + charge_name + expense)
-    writeExpenseToDB(date, charge_name, expense)
 
 
 def monthlyQueryBuilder():  # rewriting for error handling on bad input
@@ -194,23 +201,7 @@ def monthlyQueryBuilder():  # rewriting for error handling on bad input
 #         listByMonth = db_handlers.queryByMonth(month)
 #     return listByMonth
 
-
-def chooseExpenseToTag():
-    print("nothing here yet")
-
-
-def displayPrettyExpenses(queryresult):
-    os.system("cls" if os.name == "nt" else "clear")
-    i = 1
-    for date, entity, expense, tag, notes in queryresult:
-        print(i, date, entity, expense, tag, notes)
-        i = i + 1
-
-
-# def writeExpenseToDB(date, charge_name, expense, tag="' '", notes="' '"):
-#     expensedata = date + "," + charge_name + "," + expense + "," + tag + "," + notes
-#     print(expensedata)
-#     db_handlers.addExpenses(expensedata, "2024")
-
 if __name__ == "__main__":
-    print("I'm a collection of functions.  I dont think you meant to run this directly")
+    print(
+        "I'm a collection of handler functions.  I dont think you meant to run this directly"
+    )

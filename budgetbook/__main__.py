@@ -9,6 +9,8 @@ import os
 import sys
 
 
+from PyQt6.QtGui import QColor, QFont, QPen
+from PyQt6.QtCharts import QChartView, QPieSeries, QChart, QPieSlice
 from PyQt6.QtCore import QSize, Qt, QAbstractTableModel, QModelIndex, pyqtSignal
 from PyQt6.QtGui import QAction, QIcon, QColor
 from PyQt6.QtWidgets import (
@@ -139,7 +141,7 @@ class MainWindow(QMainWindow):
             index=["0"],
         )
         # Create pandas table object widget from handlers class
-        self.data_table_model = handlers.PandasTableDataDisplay(blank_data)
+        self.data_table_model = handlers.PandasAbstractTable(blank_data)
         self.data_table_view = QTableView()
         self.data_table_view.setModel(self.data_table_model)
 
@@ -153,10 +155,11 @@ class MainWindow(QMainWindow):
         self.import_data_button.clicked.connect(self.button_import_clicked)
 
         self.save_to_db_button = QPushButton("Save to Database")
-        # self.save_to_db_button.clicked.connect(self.write_to_db)  #NYI
+        self.save_to_db_button.clicked.connect(self._save_to_database)  # NYI
 
         self.data_tab_reset_table_button = QPushButton("Reset Table Data")
         self.data_tab_reset_table_button.clicked.connect(self._reset_table)
+
         # add button widgets to the tabs layout
         self.data_tab_button_layout.addWidget(self.import_data_button)
         self.data_tab_button_layout.addWidget(self.save_to_db_button)
@@ -177,6 +180,8 @@ class MainWindow(QMainWindow):
         self.main_tabs.addTab(self.data_tab_widget, "Data")
         self.main_tabs.addTab(self.admin_tab, "Admin")
 
+    # Menu and button functions
+
     def _reset_table(self) -> None:
         blank_data = pd.DataFrame(
             [
@@ -187,7 +192,9 @@ class MainWindow(QMainWindow):
         )
         self.data_table_model.update_table_from_dataframe(blank_data)
 
-        # Setup menu and button functions
+    def _save_to_database(self, current_table: pd.DataFrame):
+        print("Saving table contents to database")
+        db_handlers.save_dataframe_to_db(self.transaction_table)
 
     def button_quit_clicked(self) -> None:
         confirm_quit = gui_handlers.CustomOkCancelDialog(
@@ -224,13 +231,15 @@ class MainWindow(QMainWindow):
                 self.main_tabs.setCurrentWidget(self.data_tab_widget)
                 # this dialogue should probably be its own window in order to validate the incoming data more easily
                 # and then it can be saved to the database and then viewed and edited further in the main window.
-                expenses = handlers.import_file_dialogue(
+                self.transaction_table = handlers.import_file_dialogue(
                     import_filename[0], import_year
                 )
                 # import works, there was an issue with the pdf parsing and column count in the pdf_importers module
                 print("Data import complete")
                 try:
-                    self.data_table_model.update_table_from_dataframe(expenses)
+                    self.data_table_model.update_table_from_dataframe(
+                        self.transaction_table
+                    )
                     self.data_table_view.resizeColumnsToContents()
                     self.data_table_view.setEditTriggers(
                         QTableView.EditTrigger.DoubleClicked

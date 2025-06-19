@@ -124,8 +124,12 @@ class Page:
 class file_import_handlers(object):
     # these funcitons moved from handlers to consolidate all file import components to one module
     def __init__(self):
-        self.__name__ = __name__
+        self.name = __name__
+        self.logger = LoggingHandler(__class__).log
         pass
+
+    def __str__(self):
+        return self.name
 
     @staticmethod
     def format_import_dataframe(import_frame: pd.DataFrame, import_year):
@@ -269,6 +273,8 @@ class file_import_handlers(object):
             "transaction_name",
             "transaction_amount",
         ]
+        all_imports["tags"] = ""
+        all_imports["notes"] = ""
         # check for missaligned columns, in testing it would happen where negative values greater than ###.## would lose
         # the minus sign to the previous column, check for this trailing - and move it
         for row in all_imports.itertuples():

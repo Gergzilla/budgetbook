@@ -1,15 +1,11 @@
 #!/usr/bin/python
 
-import os
-import sys
-
+# TODO I need to add I think a button making class that will create buttons at a fixed height and dynamic width of the text
 
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import (
-    QApplication,
     QWidget,
-    QMainWindow,
     QTabWidget,
     QToolBar,
     QStatusBar,
@@ -19,7 +15,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QLabel,
     QPushButton,
-    QLineEdit,
 )
 
 
