@@ -3,6 +3,7 @@
 import pandas as pd
 import os
 import sys
+import random
 from dateutil.parser import parse as dateparse
 
 from PyQt6.QtGui import QColor, QFont, QPen
@@ -44,15 +45,37 @@ logger = LoggingHandler(str(os.path.basename(__file__))).log
 
 # List of years to use for various prompts
 year_list = ["2025", "2024", "2023", "2022", "2021", "2020"]
+month_dict = {
+    "Jan": "January",
+    "Feb": "February",
+    "Mar": "March",
+    "Apr": "April",
+    "May": "May",
+    "Jun": "June",
+    "Jul": "July",
+    "Aug": "August",
+    "Sep": "September",
+    "Oct": "October",
+    "Nov": "November",
+    "Dec": "December",
+}
 # specific year selector for reports and summaries
 year_selector = year_list
 year_selector.append("All")
 
 
+def random_color_gen() -> str:
+    R = random.randint(0, 255)
+    G = random.randint(0, 255)
+    B = random.randint(0, 255)
+    color_string = f"#{R:02x}{G:02x}{B:02x}"
+    return color_string
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-
+        self.logger = LoggingHandler(__class__).log
         self.setWindowTitle("Budget Book")
         self.setMinimumSize(QSize(1000, 800))
 
@@ -119,9 +142,67 @@ class MainWindow(QMainWindow):
         self.report_tab_widget = gui_handlers.TabGenerator()
         self.report_tab_widget.setup_new_tab("Reports")
         self.report_tab_button_layout = QHBoxLayout()
+        self.report_tab_content_layout = QVBoxLayout()
+
         self.report_tab_year_select = QComboBox()
         self.report_tab_year_select.addItems(year_selector)
+        self.report_tab_year_select.setFixedSize(100, 30)
+        self.report_tab_month_select = QComboBox()
+        self.report_tab_month_select.addItems(year_selector)
+        self.report_tab_month_select.setFixedSize(100, 30)
+        self.repor_tab_refresh_button = QPushButton("Refresh")
+        self.repor_tab_refresh_button.setFixedSize(80, 30)
 
+        self.report_tab_button_layout.addWidget(self.report_tab_year_select)
+        self.report_tab_button_layout.addWidget(self.report_tab_month_select)
+        self.report_tab_button_layout.addWidget(self.repor_tab_refresh_button)
+
+        self.report_tab_pie_series = QPieSeries()
+        self.report_tab_pie_series.setHoleSize(
+            0.2
+        )  # not required, left for visual testing
+
+        report_slice1 = self.report_tab_pie_series.append("Mortage 30 pct", 30)
+        report_slice2 = self.report_tab_pie_series.append("Utilies 5 pct", 5)
+        report_slice3 = self.report_tab_pie_series.append("Grocery 20 pct", 20)
+        report_slice4 = self.report_tab_pie_series.append("Restuarant 15 pct", 15)
+        report_slice5 = self.report_tab_pie_series.append("Clothing 10 pct", 10)
+        report_slice6 = self.report_tab_pie_series.append("Misc 20 pct", 20)
+
+        # color tags use random color gen for simplicity.
+        report_slice1.setBrush(QColor(random_color_gen()))
+        report_slice2.setBrush(QColor(random_color_gen()))
+        report_slice3.setBrush(QColor(random_color_gen()))
+        report_slice4.setBrush(QColor(random_color_gen()))
+        report_slice5.setBrush(QColor(random_color_gen()))
+        report_slice6.setBrush(QColor(random_color_gen()))
+
+        self.report_tab_pie_series.setLabelsVisible(True)
+        pie_labels_font = QFont("Arial", 22)
+        pie_labels_font.setBold(True)
+        # need to find if its possible to set the slice font for all of them at once
+
+        self.report_tab_chart = QChart()
+        # self.report_tab_chart.setFont(pie_labels_font)
+        self.report_tab_chart.addSeries(self.report_tab_pie_series)
+        self.report_tab_chart.setTitle("Expense Report Demo Chart")
+        self.report_tab_chart.setTitleFont(QFont("Arial", 16, QFont.Weight.Bold))
+        self.report_tab_chart.legend().setVisible(True)
+        # self.report_tab_chart.legend().setFont(font object) this sets legend font
+        self.report_tab_chart.legend().setAlignment(Qt.AlignmentFlag.AlignBottom)
+
+        # Hide axes as they are not typically used for pie charts
+        self.report_tab_chart.createDefaultAxes()  # Creates default axes first
+        # these are wrong
+        # self.report_tab_chart.axes(Qt.Orientation.Horizontal)[0].setVisible(False)
+        # self.report_tab_chart.axes(Qt.Orientation.Vertical)[0].setVisible(False)
+
+        self.report_tab_chart_view = QChartView(self.report_tab_chart)
+        # left this off for now self.report_tab_chart_view.setRenderHint(QPainter.RenderHint.Antialiasing) # For smoother rendering
+        self.report_tab_content_layout.addWidget(self.report_tab_chart_view)
+
+        self.report_tab_widget.tab_layout.addLayout(self.report_tab_button_layout)
+        self.report_tab_widget.tab_layout.addLayout(self.report_tab_content_layout)
         self.report_tab_widget.tab_layout.addStretch()
 
         # Data Tab
