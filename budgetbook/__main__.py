@@ -58,6 +58,7 @@ month_dict = {
     "Oct": "October",
     "Nov": "November",
     "Dec": "December",
+    "Whole Year": "All",
 }
 # specific year selector for reports and summaries
 year_selector = year_list
@@ -144,18 +145,23 @@ class MainWindow(QMainWindow):
         self.report_tab_button_layout = QHBoxLayout()
         self.report_tab_content_layout = QVBoxLayout()
 
+        report_tab_year_label = QLabel("Select Year")
         self.report_tab_year_select = QComboBox()
         self.report_tab_year_select.addItems(year_selector)
         self.report_tab_year_select.setFixedSize(100, 30)
+        report_tab_month_label = QLabel("Select Month")
         self.report_tab_month_select = QComboBox()
-        self.report_tab_month_select.addItems(year_selector)
+        self.report_tab_month_select.addItems(month_dict)
         self.report_tab_month_select.setFixedSize(100, 30)
         self.repor_tab_refresh_button = QPushButton("Refresh")
         self.repor_tab_refresh_button.setFixedSize(80, 30)
 
+        self.report_tab_button_layout.addWidget(report_tab_year_label)
         self.report_tab_button_layout.addWidget(self.report_tab_year_select)
+        self.report_tab_button_layout.addWidget(report_tab_month_label)
         self.report_tab_button_layout.addWidget(self.report_tab_month_select)
         self.report_tab_button_layout.addWidget(self.repor_tab_refresh_button)
+        self.report_tab_button_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         self.report_tab_pie_series = QPieSeries()
         self.report_tab_pie_series.setHoleSize(
