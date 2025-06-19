@@ -1,13 +1,9 @@
 #!/usr/bin/python
 
-import utilities.handlers as handlers
-import utilities.db_handlers as db_handlers
-import utilities.gui_handlers as gui_handlers
-import utilities.importers.importers as importers
 import pandas as pd
 import os
 import sys
-
+from dateutil.parser import parse as dateparse
 
 from PyQt6.QtGui import QColor, QFont, QPen
 from PyQt6.QtCharts import QChartView, QPieSeries, QChart, QPieSlice
@@ -31,12 +27,12 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QInputDialog,
 )
-from tkinter import *
-from tkinter import ttk
-from tkinter import messagebox, filedialog
-from dateutil.parser import parse as dateparse
 
-# from datetime import datetime
+import utilities.handlers as handlers
+import utilities.db_handlers as db_handlers
+import utilities.gui_handlers as gui_handlers
+
+# import utilities.importers.importers as importers
 
 try:
     # Required as if -h is passed the program should exit cleanly
