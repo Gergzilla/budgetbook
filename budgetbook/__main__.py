@@ -6,10 +6,9 @@ import sys
 import random
 from dateutil.parser import parse as dateparse
 
-from PyQt6.QtGui import QColor, QFont, QPen
 from PyQt6.QtCharts import QChartView, QPieSeries, QChart, QPieSlice
 from PyQt6.QtCore import QSize, Qt, QAbstractTableModel, QModelIndex, pyqtSignal
-from PyQt6.QtGui import QAction, QIcon, QColor
+from PyQt6.QtGui import QAction, QIcon, QColor, QFont, QFontMetrics
 from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
@@ -64,6 +63,16 @@ month_dict = {
 year_selector = year_list
 year_selector.append("All")
 
+# Dictionary to convert database columns to user readable strings for displaying expenses
+readable_columns = {
+    "transaction_date": "Charge Date",
+    "post_date": "Post Date",
+    "transaction_name": "Charge Name",
+    "transaction_amount": "Charge Amount",
+    "tags": "Tags",
+    "notes": "Notes",
+}
+
 
 def random_color_gen() -> str:
     R = random.randint(0, 255)
@@ -79,7 +88,8 @@ class MainWindow(QMainWindow):
         self.logger = LoggingHandler(__class__).log
         self.setWindowTitle("Budget Book")
         self.setMinimumSize(QSize(1000, 800))
-
+        current_font = self.font()
+        self.font_metrics = QFontMetrics(current_font)
         # Setup Menu Menu Actions
 
         button_quit = QAction("&Quit", self)
@@ -127,7 +137,7 @@ class MainWindow(QMainWindow):
         self.summary_tab_year_select.setFixedSize(100, 30)
 
         self.summary_tab_refresh = QPushButton("Refresh")
-        self.summary_tab_refresh.setFixedSize(80, 30)
+        self.summary_tab_refresh.setFixedSize(44, 30)
 
         # add buttons and labels to their layouts
         self.summary_tab_button_layout.addWidget(self.summary_tab_year_select)
@@ -153,14 +163,17 @@ class MainWindow(QMainWindow):
         self.report_tab_month_select = QComboBox()
         self.report_tab_month_select.addItems(month_dict)
         self.report_tab_month_select.setFixedSize(100, 30)
-        self.repor_tab_refresh_button = QPushButton("Refresh")
-        self.repor_tab_refresh_button.setFixedSize(80, 30)
+        # self.report_tab_refresh_button = gui_handlers.PushButtonGenerator(
+        #     ["Refresh", self.font_metrics.width("Refresh")]
+        # )
+        self.report_tab_refresh_button = QPushButton("Refresh")
+        self.report_tab_refresh_button.setFixedSize(80, 30)
 
         self.report_tab_button_layout.addWidget(report_tab_year_label)
         self.report_tab_button_layout.addWidget(self.report_tab_year_select)
         self.report_tab_button_layout.addWidget(report_tab_month_label)
         self.report_tab_button_layout.addWidget(self.report_tab_month_select)
-        self.report_tab_button_layout.addWidget(self.repor_tab_refresh_button)
+        self.report_tab_button_layout.addWidget(self.report_tab_refresh_button)
         self.report_tab_button_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         self.pie_dict = {
@@ -218,18 +231,13 @@ class MainWindow(QMainWindow):
         self.data_table_view = QTableView()
         self.data_table_view.setModel(self.data_table_model)
 
-        # self.data_table_view.setEditTriggers(
-        #     QTableView.EditTrigger.DoubleClicked | QTableView.EditTrigger.AnyKeyPressed
-        # )  # This doesnt currently work in my app but it did in testing.
-
         # Data Tab Buttons
         self.data_tab_button_layout = QHBoxLayout()
+
         self.import_data_button = QPushButton("Import File")
         self.import_data_button.clicked.connect(self.button_import_clicked)
-
         self.save_to_db_button = QPushButton("Save to Database")
         self.save_to_db_button.clicked.connect(self._save_to_database)  # NYI
-
         self.data_tab_reset_table_button = QPushButton("Reset Table Data")
         self.data_tab_reset_table_button.clicked.connect(self._reset_table)
 
@@ -256,16 +264,17 @@ class MainWindow(QMainWindow):
     # Menu and button functions
 
     def _reset_table(self) -> None:
-        blank_data = pd.DataFrame(
+        transaction_table = pd.DataFrame(
             [
                 ["", "", "", "", ""],
             ],
             columns=["Charge Date", "Charge Name", "Charge Amount", "Tag", "Notes"],
             index=["0"],
         )
-        self.data_table_model.update_table_from_dataframe(blank_data)
+        self.data_table_model.update_table_from_dataframe(transaction_table)
 
     def _save_to_database(self, current_table: pd.DataFrame):
+        # I need to rework the default view because if you attempt manual entry without import it fails.
         print("Saving table contents to database")
         db_handlers.save_dataframe_to_db(self.transaction_table)
 
@@ -310,6 +319,7 @@ class MainWindow(QMainWindow):
                 # import works, there was an issue with the pdf parsing and column count in the pdf_importers module
                 print("Data import complete")
                 try:
+                    # I need to add a formatter to make the column names look nice and pretty without impacting the DB
                     self.data_table_model.update_table_from_dataframe(
                         self.transaction_table
                     )
