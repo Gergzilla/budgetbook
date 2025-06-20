@@ -3,6 +3,7 @@
 import os
 import csv
 import pandas as pd
+import random
 from dateutil.parser import parse as dateparse
 from datetime import datetime
 
@@ -94,11 +95,33 @@ class PandasAbstractTable(QAbstractTableModel):
 
 class QtPieChartSeries(QPieSeries):
     # currently a placeholder while I figure out how I want to implement this
-    def __init__(self, parent=None):
+    def __init__(self, pie_dict: dict = {}, parent=None):
         super().__init__(parent)
         self.name = __name__
         self.logger = LoggingHandler(__class__).log
         self.setHoleSize(0.2)  # arbitrary, may change later
+
+        self.report_tab_pie_series = QPieSeries()
+        self.report_tab_pie_series.setHoleSize(
+            0.2
+        )  # not required, left for visual testing
+
+        self.report_slice1 = self.append("Mortage 30 pct", 30)
+        self.report_slice2 = self.append("Utilies 5 pct", 5)
+        self.report_slice3 = self.append("Grocery 20 pct", 20)
+        self.report_slice4 = self.append("Restuarant 15 pct", 15)
+        self.report_slice5 = self.append("Clothing 10 pct", 10)
+        self.report_slice6 = self.append("Misc 20 pct", 20)
+
+        # color tags use random color gen for simplicity.
+        self.report_slice1.setBrush(QColor(random_color_gen()))
+        self.report_slice2.setBrush(QColor(random_color_gen()))
+        self.report_slice3.setBrush(QColor(random_color_gen()))
+        self.report_slice4.setBrush(QColor(random_color_gen()))
+        self.report_slice5.setBrush(QColor(random_color_gen()))
+        self.report_slice6.setBrush(QColor(random_color_gen()))
+
+        self.setLabelsVisible(True)
 
 
 ####### Misc utilities  #######
@@ -109,6 +132,14 @@ def dateCheck(datestring, fuzzy=False):
     except Exception as e:
         # e isnt used but caught for proper handling, this just needs to evaluate as false if it cant parse the date for any reason
         return False
+
+
+def random_color_gen() -> str:
+    R = random.randint(0, 255)
+    G = random.randint(0, 255)
+    B = random.randint(0, 255)
+    color_string = f"#{R:02x}{G:02x}{B:02x}"
+    return color_string
 
 
 ####### File Handlers ########
