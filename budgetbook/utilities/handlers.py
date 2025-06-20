@@ -99,27 +99,15 @@ class QtPieChartSeries(QPieSeries):
         super().__init__(parent)
         self.name = __name__
         self.logger = LoggingHandler(__class__).log
+        self.pie_dict = pie_dict
         self.setHoleSize(0.2)  # arbitrary, may change later
 
-        self.report_tab_pie_series = QPieSeries()
-        self.report_tab_pie_series.setHoleSize(
-            0.2
-        )  # not required, left for visual testing
-
-        self.report_slice1 = self.append("Mortage 30 pct", 30)
-        self.report_slice2 = self.append("Utilies 5 pct", 5)
-        self.report_slice3 = self.append("Grocery 20 pct", 20)
-        self.report_slice4 = self.append("Restuarant 15 pct", 15)
-        self.report_slice5 = self.append("Clothing 10 pct", 10)
-        self.report_slice6 = self.append("Misc 20 pct", 20)
-
-        # color tags use random color gen for simplicity.
-        self.report_slice1.setBrush(QColor(random_color_gen()))
-        self.report_slice2.setBrush(QColor(random_color_gen()))
-        self.report_slice3.setBrush(QColor(random_color_gen()))
-        self.report_slice4.setBrush(QColor(random_color_gen()))
-        self.report_slice5.setBrush(QColor(random_color_gen()))
-        self.report_slice6.setBrush(QColor(random_color_gen()))
+        for category, value in self.pie_dict.items():
+            self.value = value
+            self.pie_label = str(category.split(" ")[0]) + " $" + str(self.value)
+            self.slice = self.pie_label.split(" ")[0]
+            self.slice = self.append(self.pie_label, self.value)
+            self.slice.setBrush(QColor(random_color_gen()))
 
         self.setLabelsVisible(True)
 

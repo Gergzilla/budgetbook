@@ -163,26 +163,15 @@ class MainWindow(QMainWindow):
         self.report_tab_button_layout.addWidget(self.repor_tab_refresh_button)
         self.report_tab_button_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
-        # self.report_tab_pie_series = QPieSeries()
-        # self.report_tab_pie_series.setHoleSize(
-        #     0.2
-        # )  # not required, left for visual testing
-
-        # report_slice1 = self.report_tab_pie_series.append("Mortage 30 pct", 30)
-        # report_slice2 = self.report_tab_pie_series.append("Utilies 5 pct", 5)
-        # report_slice3 = self.report_tab_pie_series.append("Grocery 20 pct", 20)
-        # report_slice4 = self.report_tab_pie_series.append("Restuarant 15 pct", 15)
-        # report_slice5 = self.report_tab_pie_series.append("Clothing 10 pct", 10)
-        # report_slice6 = self.report_tab_pie_series.append("Misc 20 pct", 20)
-
-        # # color tags use random color gen for simplicity.
-        # report_slice1.setBrush(QColor(random_color_gen()))
-        # report_slice2.setBrush(QColor(random_color_gen()))
-        # report_slice3.setBrush(QColor(random_color_gen()))
-        # report_slice4.setBrush(QColor(random_color_gen()))
-        # report_slice5.setBrush(QColor(random_color_gen()))
-        # report_slice6.setBrush(QColor(random_color_gen()))
-        self.report_tab_pie_series = handlers.QtPieChartSeries()
+        self.pie_dict = {
+            "Mortage 30 pct": 180,
+            "Utilies 5 pct": 5,
+            "Grocery 20 pct": 20,
+            "Restuarant 15 pct": 15,
+            "Clothing 10 pct": 10,
+            "Misc 20 pct": 20,
+        }
+        self.report_tab_pie_series = handlers.QtPieChartSeries(self.pie_dict)
 
         # self.report_tab_pie_series.setLabelsVisible(True)
         pie_labels_font = QFont("Arial", 22)
