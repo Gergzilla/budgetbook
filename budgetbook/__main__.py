@@ -219,15 +219,23 @@ class MainWindow(QMainWindow):
         self.data_tab_widget.setup_new_tab("Data")
 
         # empty frame to just show standard columns for Data
-        blank_data = pd.DataFrame(
+        self.blank_table = pd.DataFrame(
             [
-                ["", "", "", "", ""],
+                ["", "", "", "", "", ""],
             ],
-            columns=["Charge Date", "Charge Name", "Charge Amount", "Tag", "Notes"],
+            columns=[
+                "Transaction Date",
+                "Post Date",
+                "Charge Name",
+                "Charge Amount",
+                "Tags",
+                "Notes",
+            ],
             index=["0"],
         )
+        self.transaction_table = self.blank_table
         # Create pandas table object widget from handlers class
-        self.data_table_model = handlers.PandasAbstractTable(blank_data)
+        self.data_table_model = handlers.PandasAbstractTable(self.transaction_table)
         self.data_table_view = QTableView()
         self.data_table_view.setModel(self.data_table_model)
 
@@ -264,14 +272,9 @@ class MainWindow(QMainWindow):
     # Menu and button functions
 
     def _reset_table(self) -> None:
-        transaction_table = pd.DataFrame(
-            [
-                ["", "", "", "", ""],
-            ],
-            columns=["Charge Date", "Charge Name", "Charge Amount", "Tag", "Notes"],
-            index=["0"],
-        )
-        self.data_table_model.update_table_from_dataframe(transaction_table)
+        # Set the table to the empty dataframe and reset the view
+        self.transaction_table = self.blank_table
+        self.data_table_model.update_table_from_dataframe(self.transaction_table)
 
     def _save_to_database(self, current_table: pd.DataFrame):
         # I need to rework the default view because if you attempt manual entry without import it fails.

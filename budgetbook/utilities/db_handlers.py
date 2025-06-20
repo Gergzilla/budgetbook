@@ -56,7 +56,8 @@ class DatabaseSetup(object):
             print("Table check is False, meaning table needs to be made")
             # print("do nothing")
             writeCursor.executescript(
-                "CREATE TABLE transactions (transaction_date TEXT, post_date TEXT, charge_name TEXT, amount REAL, tag TEXT, notes TEXT, UNIQUE(transaction_date,charge_name,amount))"
+                "CREATE TABLE transactions ('Transaction Date' TEXT, 'Post Date' TEXT, 'Charge Name' TEXT, 'Charge Amount' REAL, Tags TEXT, Notes TEXT, "
+                "UNIQUE('Transaction Date','Charge Name','Charge Amount'))"
             )
             dbconn.commit()
             if DatabaseSetup.pollMasterTable:
@@ -85,29 +86,6 @@ class DatabaseSetup(object):
 ##### Data add/remove functions  ######
 
 
-# def saveExpensesToDB(expensdata, expenseTable=expenseTable, db=expenseDB):
-def saveExpensesToDB(expensdata, db=expenseDB):
-    # New and improved and working great!
-    # save_dataframe_to_db() is the new proper function for saving to the DB with dataframes and not creating duplicates
-    dbconn = sqlite3.connect(expenseDB)
-    writeCursor = dbconn.cursor()
-    insertString = "INSERT INTO transactions (charge_date, charge_name, amount, tag, notes) VALUES (?,?,?,?,?)"
-    # )
-    # insertString = "INSERT INTO {0} (charge_date, charge_name, amount, tag_id, notes) VALUES (?,?,?,?,?)".format(
-    #     expenseTable
-    # )
-    try:
-        writeCursor.execute(insertString, expensdata)
-        dbconn.commit()
-        errorMessage = False
-        print(writeCursor.lastrowid)
-    # except TypeError:
-    #     print("error in batch data format:")
-    except Exception as e:
-        errorMessage = type(e).__name__, e
-    return errorMessage
-
-
 def save_dataframe_to_db(input_frame: pd.DataFrame) -> None:
     # THIS IS THE LIVE AND WORKING ONE
     """
@@ -117,18 +95,22 @@ def save_dataframe_to_db(input_frame: pd.DataFrame) -> None:
     write_cursor = dbconn.cursor()
     for index, row in input_frame.iterrows():
         transaction_data = [
-            row["transaction_date"],
-            row["post_date"],
-            row["transaction_name"],
-            row["transaction_amount"],
-            row["tags"],
-            row["notes"],
+            row["Transaction Date"],
+            row["Post Date"],
+            row["Charge Name"],
+            row["Charge Amount"],
+            row["Tags"],
+            row["Notes"],
         ]
         # this does create new entries without duplicates and allows for updates but if there are conflicts and data is empty it could overwrite
         # for example if you import the same file and chang enothing and save, it wont create duplicates but any unprotected fields:
         # aka post_date, tags, notes in the new conflicting data can overwrite/NULL the data already in the DB
         write_cursor.execute(
-            "INSERT INTO transactions (transaction_date, post_date, charge_name, amount, tag, notes) VALUES (?,?,?,?,?,?) ON CONFLICT (transaction_date, charge_name, amount) DO UPDATE SET transaction_date = excluded.transaction_date, post_date = excluded.post_date, charge_name = excluded.charge_name, amount = excluded.amount, tag = excluded.tag, notes = excluded.notes",
+            "INSERT INTO transactions ('Transaction Date', 'Post Date', 'Charge Name', 'Charge Amount', Tags, Notes)"
+            " VALUES (?,?,?,?,?,?) "
+            'ON CONFLICT ("Transaction Date","Charge Name","Charge Amount") '
+            "DO UPDATE SET 'Transaction Date' = excluded.'Transaction Date', 'Post Date' = excluded.'Post Date', 'Charge Name' = excluded.'Charge Name', "
+            "'Charge Amount' = excluded.'Charge Amount', Tags = excluded.Tags, Notes = excluded.Notes",
             transaction_data,
         )
 

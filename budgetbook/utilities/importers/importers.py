@@ -188,12 +188,12 @@ class file_import_handlers(object):
             joined_df = pd.DataFrame(
                 joined_csv,
                 columns=[
-                    "transaction_date",
-                    "post_date",
-                    "transaction_name",
-                    "transaction_amount",
-                    "tags",
-                    "notes",
+                    "Transaction Date",
+                    "Post Date",
+                    "Charge Name",
+                    "Charge Amount",
+                    "Tags",
+                    "Notes",
                 ],
             )
             return joined_df
@@ -268,20 +268,20 @@ class file_import_handlers(object):
         all_imports = all_imports[["Col1", "Col6", "Col4", "Col5"]]
         # Relabel for clarity
         all_imports.columns = [
-            "transaction_date",
-            "post_date",
-            "transaction_name",
-            "transaction_amount",
+            "Transaction Date",
+            "Post Date",
+            "Charge Name",
+            "Charge Amount",
         ]
-        all_imports["tags"] = ""
-        all_imports["notes"] = ""
+        all_imports["Tags"] = ""
+        all_imports["Notes"] = ""
         # check for missaligned columns, in testing it would happen where negative values greater than ###.## would lose
         # the minus sign to the previous column, check for this trailing - and move it
         for row in all_imports.itertuples():
             if row[3][-1] == "-":
                 print(f"Minus sign found in charge_name at index {row[0]}")
-                all_imports.loc[row[0], "transaction_name"] = row[3][:-1].strip()
-                all_imports.loc[row[0], "transaction_amount"] = "- " + row[4]
+                all_imports.loc[row[0], "Charge Name"] = row[3][:-1].strip()
+                all_imports.loc[row[0], "Charge Amount"] = "- " + row[4]
             else:
                 pass
         all_imports = file_import_handlers.format_import_dataframe(
