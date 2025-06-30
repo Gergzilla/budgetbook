@@ -15,7 +15,7 @@ from utilities.logger import LoggingHandler
 #### Database Setup Functions #####
 expenseDB = settings.expenseDB
 expenseTable = settings.expenseTable
-logger = LoggingHandler("db_handlers").log  # currenlty untested
+logger = LoggingHandler("db_handlers").log  # currently untested
 
 
 class DatabaseSetup(object):

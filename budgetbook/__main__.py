@@ -8,7 +8,7 @@ from dateutil.parser import parse as dateparse
 
 from PyQt6.QtCharts import QChartView, QPieSeries, QChart, QPieSlice
 from PyQt6.QtCore import QSize, Qt, QAbstractTableModel, QModelIndex, pyqtSignal
-from PyQt6.QtGui import QAction, QIcon, QColor, QFont, QFontMetrics
+from PyQt6.QtGui import QAction, QIcon, QColor, QFont, QFontMetrics, QPainter
 from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
@@ -94,13 +94,28 @@ class MainWindow(QMainWindow):
 
         button_quit = QAction("&Quit", self)
         button_quit.setStatusTip("Exit Application")
-        button_quit.triggered.connect(self.button_quit_clicked)
+        button_quit.triggered.connect(self._button_quit_clicked)
 
         button_import = QAction("&Import", self)
         button_import.setStatusTip("Import Expense File")
         button_import.triggered.connect(self.button_import_clicked)
         # file_menu.addAction(button_quit)
+        # empty frame to just show standard columns for Data
 
+        self.blank_table = pd.DataFrame(
+            [
+                ["", "", "", "", "", ""],
+            ],
+            columns=[
+                "Transaction Date",
+                "Post Date",
+                "Charge Name",
+                "Charge Amount",
+                "Tags",
+                "Notes",
+            ],
+            index=["0"],
+        )
         # Setup Main Menu
         self.setStatusBar(QStatusBar(self))
 
@@ -137,7 +152,7 @@ class MainWindow(QMainWindow):
         self.summary_tab_year_select.setFixedSize(100, 30)
 
         self.summary_tab_refresh = QPushButton("Refresh")
-        self.summary_tab_refresh.setFixedSize(44, 30)
+        self.summary_tab_refresh.setFixedSize(80, 30)
 
         # add buttons and labels to their layouts
         self.summary_tab_button_layout.addWidget(self.summary_tab_year_select)
@@ -166,14 +181,15 @@ class MainWindow(QMainWindow):
         # self.report_tab_refresh_button = gui_handlers.PushButtonGenerator(
         #     ["Refresh", self.font_metrics.width("Refresh")]
         # )
-        self.report_tab_refresh_button = QPushButton("Refresh")
-        self.report_tab_refresh_button.setFixedSize(80, 30)
+        self.report_tab_run_report_button = QPushButton("Run Report")
+        self.report_tab_run_report_button.setFixedSize(80, 30)
+        self.report_tab_run_report_button.clicked.connect(self._generate_report_chart)
 
         self.report_tab_button_layout.addWidget(report_tab_year_label)
         self.report_tab_button_layout.addWidget(self.report_tab_year_select)
         self.report_tab_button_layout.addWidget(report_tab_month_label)
         self.report_tab_button_layout.addWidget(self.report_tab_month_select)
-        self.report_tab_button_layout.addWidget(self.report_tab_refresh_button)
+        self.report_tab_button_layout.addWidget(self.report_tab_run_report_button)
         self.report_tab_button_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         self.pie_dict = {
@@ -193,22 +209,23 @@ class MainWindow(QMainWindow):
 
         self.report_tab_chart = QChart()
         # self.report_tab_chart.setFont(pie_labels_font)
-        self.report_tab_chart.addSeries(self.report_tab_pie_series)
+        # the addSeries is the component we will modify with the generate report button
+        # self.report_tab_chart.addSeries(self.report_tab_pie_series)
         self.report_tab_chart.setTitle("Expense Report Demo Chart")
         self.report_tab_chart.setTitleFont(QFont("Arial", 16, QFont.Weight.Bold))
         self.report_tab_chart.legend().setVisible(True)
         # self.report_tab_chart.legend().setFont(font object) this sets legend font
         self.report_tab_chart.legend().setAlignment(Qt.AlignmentFlag.AlignBottom)
 
-        # Hide axes as they are not typically used for pie charts
         self.report_tab_chart.createDefaultAxes()  # Creates default axes first
-        # these are wrong
-        # self.report_tab_chart.axes(Qt.Orientation.Horizontal)[0].setVisible(False)
-        # self.report_tab_chart.axes(Qt.Orientation.Vertical)[0].setVisible(False)
 
         self.report_tab_chart_view = QChartView(self.report_tab_chart)
-        # left this off for now self.report_tab_chart_view.setRenderHint(QPainter.RenderHint.Antialiasing) # For smoother rendering
+        # left this off for now
+        self.report_tab_chart_view.setRenderHint(
+            QPainter.RenderHint.Antialiasing
+        )  # For smoother rendering
         self.report_tab_content_layout.addWidget(self.report_tab_chart_view)
+        # I will be adding a small table display to view the data the pie chart uses for reference later.
 
         self.report_tab_widget.tab_layout.addLayout(self.report_tab_button_layout)
         self.report_tab_widget.tab_layout.addLayout(self.report_tab_content_layout)
@@ -218,21 +235,6 @@ class MainWindow(QMainWindow):
         self.data_tab_widget = gui_handlers.TabGenerator()
         self.data_tab_widget.setup_new_tab("Data")
 
-        # empty frame to just show standard columns for Data
-        self.blank_table = pd.DataFrame(
-            [
-                ["", "", "", "", "", ""],
-            ],
-            columns=[
-                "Transaction Date",
-                "Post Date",
-                "Charge Name",
-                "Charge Amount",
-                "Tags",
-                "Notes",
-            ],
-            index=["0"],
-        )
         self.transaction_table = self.blank_table
         # Create pandas table object widget from handlers class
         self.data_table_model = handlers.PandasAbstractTable(self.transaction_table)
@@ -281,14 +283,19 @@ class MainWindow(QMainWindow):
         print("Saving table contents to database")
         db_handlers.save_dataframe_to_db(self.transaction_table)
 
-    def button_quit_clicked(self) -> None:
-        confirm_quit = gui_handlers.CustomOkCancelDialog(
-            "Quit?", "Are you sure you want to quit?"
+    def _generate_report_chart(self):
+        print(f"Generating report from _year_ and _month_")
+        # so we need to call the report handler we will create in db_hanglers, and get the value of the month and year selector
+        # and pass those to the function
+        chosen_year = self.report_tab_year_select.itemText(
+            self.report_tab_year_select.currentIndex()
         )
-        if confirm_quit.exec():
-            sys.exit(0)
-        else:
-            pass
+        chosen_month = self.report_tab_month_select.itemText(1)
+        print(f"chosen year is: {chosen_year} and chosen month is  {chosen_month}")
+        # need to insert DB call to update the chart with.
+        self.report_tab_pie_series = handlers.QtPieChartSeries(self.pie_dict)
+        self.report_tab_chart.removeAllSeries()  # overwrites the one currently there
+        self.report_tab_chart.addSeries(self.report_tab_pie_series)
 
     def _choose_import_year(self) -> int:
         import_year, ok = QInputDialog.getItem(
@@ -346,12 +353,14 @@ class MainWindow(QMainWindow):
         except Exception as e:
             print(f"oops {e}")
 
-    def _table_query_by_year(self, year: int) -> pd.DataFrame:
-        try:
-            return
-            print(f"year chosen was {year}")
-        except Exception as e:
-            print(f"oops {e}")
+    def _button_quit_clicked(self) -> None:
+        confirm_quit = gui_handlers.CustomOkCancelDialog(
+            "Quit?", "Are you sure you want to quit?"
+        )
+        if confirm_quit.exec():
+            sys.exit(0)
+        else:
+            pass
 
     def deleteDupes(self):
         # left as a reminder, this function will be moved to the admin tab for obvious reasons.
