@@ -19,6 +19,8 @@ logger = LoggingHandler("db_handlers").log  # currently untested
 
 
 class DatabaseSetup(object):
+    """my doc is my string, verify me"""
+
     def __init__(self):
         self.name = __name__
         self.logger = LoggingHandler(__class__).log
@@ -29,6 +31,7 @@ class DatabaseSetup(object):
 
     @staticmethod
     def createDB(expenseDB: str = expenseDB):
+        """my doc is my string, verify me"""
         # can prompt for db name in the future, for now its hard set
         if os.path.exists(expenseDB):
             # print("File exists, establishing connection to " + expenseDB)
@@ -46,6 +49,7 @@ class DatabaseSetup(object):
 
     @staticmethod
     def createBudgetTable(expenseDB: str = expenseDB) -> str:
+        """my doc is my string, verify me"""
         # create expenses table if it doesnt exist
         # this is disabled for now due to django integration
         dbconn = sqlite3.connect(expenseDB)
@@ -71,6 +75,7 @@ class DatabaseSetup(object):
 
     @staticmethod
     def pollMasterTable(cur):
+        """my doc is my string, verify me"""
         masterdblist = cur.execute(
             "SELECT name FROM sqlite_master WHERE type = 'table' AND name='transactions'"
         )
@@ -127,6 +132,7 @@ def save_dataframe_to_db(input_frame: pd.DataFrame) -> None:
 
 
 def writeToExpenses(writedata="", expenseDB=expenseDB):
+    """my doc is my string, verify me"""
     dbconn = sqlite3.connect(expenseDB)
     writeCursor = dbconn.cursor()
     try:
@@ -140,6 +146,7 @@ def writeToExpenses(writedata="", expenseDB=expenseDB):
 # these last two functions need to be refactored because they are using the wrong SQL formatting
 # AND need to update with hardcoded table name
 def addExpenses(expensedata, year="2024", expenseTable="transactions"):
+    """my doc is my string, verify me"""
     # this is the proper format for insertion and works to auto increment ROWID
     # otherwise you can get a 'table has x columns but y supplied' unless you specificy the ROWID
     # as well which isnt needed
@@ -152,6 +159,7 @@ def addExpenses(expensedata, year="2024", expenseTable="transactions"):
 
 
 def addTag(expensdata, tag, year="2024", expenseTable="transactions"):
+    """my doc is my string, verify me"""
     # more learning, the for loop for a tuple doesnt work on a single item because there is
     # nothing to iterate over so here it is just a,b,c,y,z = tuple
     date, entity, charge, activetag, note = expensdata
@@ -167,6 +175,7 @@ def addTag(expensdata, tag, year="2024", expenseTable="transactions"):
 
 
 def queryByMonth(month, year="2024", expenseDB=expenseDB, expenseTable=expenseTable):
+    """my doc is my string, verify me"""
     dbconn = sqlite3.connect(expenseDB)
     readCursor = dbconn.cursor()
     monthQuery = "SELECT date, charge_name, amount, tag_id, notes FROM {0} WHERE date LIKE '{1}%'".format(
@@ -183,6 +192,7 @@ def queryByMonth(month, year="2024", expenseDB=expenseDB, expenseTable=expenseTa
 
 
 def queryByYearlyTable(expenseTable=expenseTable, year="2024", expenseDB=expenseDB):
+    """my doc is my string, verify me"""
     dbconn = sqlite3.connect(expenseDB)
     readCursor = dbconn.cursor()
     # Specify exact columns so you always know what you are getting back and dont get 'too many values' errors
@@ -206,6 +216,7 @@ def queryByYearlyTable(expenseTable=expenseTable, year="2024", expenseDB=expense
 def removeDuplicates(
     expenseDB=expenseDB, expenseTable=expenseTable, year="2024"
 ):  # Not currently used
+    """my doc is my string, verify me"""
     dbconn = sqlite3.connect(expenseDB)
     writeCursor = dbconn.cursor()
     rowquery = (

@@ -15,10 +15,11 @@ import pprint
 
 # import matplotlib.pyplot as plt
 
-# Class is fully functional as is joining all discovered tables for the following institutions: Capital One
-# future insitutions will be added as I need them but the core functions should be universal in general
-# Also planning to create a helper file for adding new institutions with functions as well
-# helper file in import_template_tool.py
+# Class is fully functional as is joining all discovered tables for the following institutions:
+# Capital One, Other
+# Future insitutions will be added as I need them but the core functions should be universal in
+# general.  A helper file has also been created to guide future importer creation.
+# Helper File: import_template_tool.py
 logger = LoggingHandler(str(os.path.basename(__file__))).log
 
 
@@ -28,8 +29,10 @@ class Page:
         self.page = page
         self.page_number = page_number
         self.logger = LoggingHandler(__class__).log
+        self.clip_y1 = 0
 
     def find_transaction_table(self, needle):
+        """my doc is my string, verify me"""
         end_of_table = self.get_rect(needle)  # for capitalOne only
         if end_of_table:
             self.logger.debug("rect of needle: {end_of_table}")
@@ -38,22 +41,25 @@ class Page:
             return False
 
     def find_table_end(self, needle):
+        """my doc is my string, verify me"""
         # print(f"Page: {self.page.number} into the find_table_end function?")
-        self.clip_y1 = 0
         end_of_table = self.get_rect(needle)
         if end_of_table:
             self.clip_y1 = round(end_of_table[0].y1, 0) - 5
-            # this sets the rectable up a few units to avoid including the end of table keyword in the rectangle
+            # this sets the rectable up a few units to avoid including the end of table keyword
+            # in the rectangle
             return self.clip_y1
         else:
             self.logger.debug("Table end not found on page")
             return self.clip_y1
 
     def get_rect(self, needle):
+        """my doc is my string, verify me"""
         found_rect = self.page.search_for(needle)
         return found_rect
 
     def parse_transaction_table(self, new_clip):
+        """my doc is my string, verify me"""
         tabs = self.page.find_tables(
             clip=new_clip, strategy="text", join_x_tolerance=3, text_x_tolerance=5
         )
@@ -62,8 +68,8 @@ class Page:
             # print(f"Page: {self.page.number} if tabs.tables in function?")
             df = tabs[0].to_pandas()
             # print(df)
-            # there is an error handling issue here, if the function incorrectly identifies a table it can have the wrong number
-            # of columns which causes the next part to fail/hang
+            # there is an error handling issue here, if the function incorrectly identifies a table
+            # it can have the wrong number of columns which causes the next part to fail/hang
             # TODO I need to make column relabelling dynamic later
             # print(len(df.columns))
             if len(df.columns) != 5:
@@ -83,14 +89,15 @@ class Page:
             return df
 
     def import_cap_one_pdf(self):
-        # print("Did I get here each time?")
-        # This is specific to capital One credit card PDF statements which is what the needles and rect reference
+        """my doc is my string, verify me"""
+        # This is specific to capital One credit card PDF statements which is what the needles
+        # and rect reference
         table_title = "Trans Date"
         end_of_trans_needle = "Total Transactions for This Period"
         self.parsed_dataframe = pd.DataFrame()
         default_clip = (30, 100, 600, 740)
         alt_clip = (30, 85, 600, 740)
-        if alt_clip == ():
+        if not alt_clip:
             alt_clip = default_clip
         if self.find_transaction_table(table_title):
             # print(f"Page: {self.page.number} into the find transaction loop?")
@@ -133,6 +140,7 @@ class file_import_handlers(object):
 
     @staticmethod
     def format_import_dataframe(import_frame: pd.DataFrame, import_year):
+        """my doc is my string, verify me"""
         index_num = 0
         row_count = len(import_frame)
         print(f"Processing {row_count} rows.")
@@ -156,6 +164,7 @@ class file_import_handlers(object):
 
     @staticmethod
     def dateCheck(datestring, fuzzy=False):
+        """my doc is my string, verify me"""
         try:
             dateparse(datestring, fuzzy=fuzzy)
             return True
@@ -165,6 +174,7 @@ class file_import_handlers(object):
 
     @staticmethod
     def format_date(datestring, year):
+        """my doc is my string, verify me"""
         formated_date = "'{}'".format(datestring)
         formated_date = year + " " + str(formated_date).strip("'")
         formated_date = "{}".format(
@@ -174,6 +184,7 @@ class file_import_handlers(object):
 
     @staticmethod
     def csvImporter(inputFileName, year: int = 2025):
+        """my doc is my string, verify me"""
         # Works perfectly!  results in a joined list of formatted data and converted to dataframe
         joined_csv = []
         try:
@@ -202,6 +213,7 @@ class file_import_handlers(object):
 
     @staticmethod
     def parseCSV(row, year):  # Works perfect!
+        """my doc is my string, verify me"""
         expenses = []
         i = 0
         date, charge_name, expense, tag, notes = "", "", "", "", ""
@@ -230,6 +242,7 @@ class file_import_handlers(object):
 
     @staticmethod
     def cap_one_import(pdf_path, import_year):
+        """my doc is my string, verify me"""
         frame_list = []
         all_imports = pd.DataFrame
         pdf = pymupdf.open(pdf_path)

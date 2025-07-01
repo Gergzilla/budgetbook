@@ -39,6 +39,7 @@ class PandasAbstractTable(QAbstractTableModel):
         self._data = data
 
     def flags(self, index) -> Qt.ItemFlag:
+        """my doc is my string, verify me"""
         return (
             Qt.ItemFlag.ItemIsSelectable
             | Qt.ItemFlag.ItemIsEnabled
@@ -46,12 +47,15 @@ class PandasAbstractTable(QAbstractTableModel):
         )
 
     def rowCount(self, index, parent=QModelIndex()):
+        """my doc is my string, verify me"""
         return self._data.shape[0]
 
     def columnCount(self, index, parent=QModelIndex()):
+        """my doc is my string, verify me"""
         return self._data.shape[1]
 
     def headerData(self, section, orientation, role):
+        """my doc is my string, verify me"""
         if role == Qt.ItemDataRole.DisplayRole:
             if orientation == Qt.Orientation.Horizontal:
                 return str(self._data.columns[section])
@@ -60,6 +64,7 @@ class PandasAbstractTable(QAbstractTableModel):
                 return str(self._data.index[section])
 
     def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+        """my doc is my string, verify me"""
         if not index.isValid():
             print("bad index")
             return None
@@ -75,6 +80,7 @@ class PandasAbstractTable(QAbstractTableModel):
         return None
 
     def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
+        """my doc is my string, verify me"""
         if role == Qt.ItemDataRole.EditRole:
             self._data.iloc[index.row(), index.column()] = value
             # Emit the dataChanged signal to notify the view
@@ -84,6 +90,7 @@ class PandasAbstractTable(QAbstractTableModel):
         return False
 
     def update_table_from_dataframe(self, new_dataframe: pd.DataFrame) -> None:
+        """my doc is my string, verify me"""
         # print(f"start reset function")
         # print(f"start reset function, dataframe contains:\n {new_dataframe}")
         self.beginResetModel()
@@ -94,6 +101,8 @@ class PandasAbstractTable(QAbstractTableModel):
 
 
 class QtPieChartSeries(QPieSeries):
+    """my doc is my string, verify me"""
+
     # currently a placeholder while I figure out how I want to implement this
     def __init__(self, pie_dict: dict = {}, parent=None):
         super().__init__(parent)
@@ -114,6 +123,7 @@ class QtPieChartSeries(QPieSeries):
 
 ####### Misc utilities  #######
 def dateCheck(datestring, fuzzy=False):
+    """my doc is my string, verify me"""
     try:
         dateparse(datestring, fuzzy=fuzzy)
         return True
@@ -124,6 +134,7 @@ def dateCheck(datestring, fuzzy=False):
 
 
 def random_color_gen() -> str:
+    """my doc is my string, verify me"""
     r = random.randint(0, 255)
     g = random.randint(0, 255)
     b = random.randint(0, 255)
@@ -135,7 +146,7 @@ def random_color_gen() -> str:
 
 
 def import_file_dialogue(import_file_name, import_year: int = 0):
-
+    """my doc is my string, verify me"""
     try:
         print(f"import file is: {import_file_name}")
         # parse the file type of the import to try and select the right import method
@@ -166,6 +177,7 @@ def import_file_dialogue(import_file_name, import_year: int = 0):
 # should not be a case where I need to parse massive lists to write to the db anymore.  will
 # deprecate in later versions
 def expense_chunks(expenseList, chunkSize):
+    """my doc is my string, verify me"""
     print(
         f"Deprecation warning, the function {__name__} is being deprecated, if you got this message\
             Check what is using it as it should be migrated to db_handlers.save_dataframe_to_db()"
@@ -197,6 +209,7 @@ def writeExpenseToDB(expenses) -> bool:
 
 
 def monthlyQueryBuilder():  # rewriting for error handling on bad input
+    """my doc is my string, verify me"""
     # not currently used in the UI
     month = ""
     month = input("Enter the name of the Month to modify: ").capitalize()

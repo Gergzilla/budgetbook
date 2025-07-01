@@ -20,6 +20,8 @@ from PyQt6.QtWidgets import (
 
 
 class CustomOkCancelDialog(QDialog):
+    """my doc is my string, verify me"""
+
     def __init__(self, box_title: str, prompt_message: str):
         super().__init__()
         self.box_title = str(box_title)
@@ -42,6 +44,8 @@ class CustomOkCancelDialog(QDialog):
 
 
 class YearSelectDialogue(QDialog):  # not using yet, maybe never
+    """my doc is my string, verify me"""
+
     def __init__(self, box_title: str, prompt_message: str):
         super().__init__()
         self.box_title = str(box_title)
@@ -50,6 +54,8 @@ class YearSelectDialogue(QDialog):  # not using yet, maybe never
 
 
 class TabGenerator(QTabWidget):
+    """my doc is my string, verify me"""
+
     def __init__(self):
         super().__init__()
         self.__name__ = __name__
