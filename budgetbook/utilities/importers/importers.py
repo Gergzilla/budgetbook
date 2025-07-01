@@ -16,6 +16,7 @@ from utilities.logger import (
 
 # import matplotlib.pyplot as plt
 
+"""my doc is my string, verify me"""
 # Class is fully functional as is joining all discovered tables for the following institutions:
 # Capital One, Other
 # Future insitutions will be added as I need them but the core functions should be universal in
@@ -31,6 +32,8 @@ class Page:
         self.page_number = page_number
         self.logger = LoggingHandler(__class__).log
         self.clip_y1 = 0
+        self.parsed_dataframe = pd.DataFrame()
+        # moved this for lint, havent tested
 
     def find_transaction_table(self, needle):
         """my doc is my string, verify me"""
@@ -38,8 +41,7 @@ class Page:
         if end_of_table:
             self.logger.debug("rect of needle: {end_of_table}")
             return True
-        else:
-            return False
+        return False
 
     def find_table_end(self, needle):
         """my doc is my string, verify me"""
@@ -50,9 +52,8 @@ class Page:
             # this sets the rectable up a few units to avoid including the end of table keyword
             # in the rectangle
             return self.clip_y1
-        else:
-            self.logger.debug("Table end not found on page")
-            return self.clip_y1
+        self.logger.debug("Table end not found on page")
+        return self.clip_y1
 
     def get_rect(self, needle):
         """my doc is my string, verify me"""
@@ -95,7 +96,7 @@ class Page:
         # and rect reference
         table_title = "Trans Date"
         end_of_trans_needle = "Total Transactions for This Period"
-        self.parsed_dataframe = pd.DataFrame()
+        # self.parsed_dataframe = pd.DataFrame()
         default_clip = (30, 100, 600, 740)
         alt_clip = (30, 85, 600, 740)
         if not alt_clip:
@@ -115,10 +116,9 @@ class Page:
                 self.logger.debug("parsed alt_clip is {alt_clip}")
                 self.parsed_dataframe = self.parse_transaction_table(alt_clip)
             return self.parsed_dataframe
-        else:
-            # df = pd.DataFrame()
-            # print(f"Page: {self.page.number} into the else for empty table?")
-            return self.parsed_dataframe
+        # df = pd.DataFrame()
+        # print(f"Page: {self.page.number} into the else for empty table?")
+        return self.parsed_dataframe
 
     # Add more bank specific functions here
 
@@ -170,7 +170,10 @@ class file_import_handlers(object):
             dateparse(datestring, fuzzy=fuzzy)
             return True
         except Exception as e:
-            # e isnt used but caught for proper handling, this just needs to evaluate as false if datestring is not a date
+            # ValueError?
+            logger.debug(e)
+            # e isnt technically used but caught for proper handling, this just needs to evaluate
+            # as false if datestring is not a date
             return False
 
     @staticmethod
@@ -184,12 +187,12 @@ class file_import_handlers(object):
         return formated_date
 
     @staticmethod
-    def csvImporter(inputFileName, year: int = 2025):
+    def csvImporter(input_file_name, year: int = 2025):
         """my doc is my string, verify me"""
         # Works perfectly!  results in a joined list of formatted data and converted to dataframe
         joined_csv = []
         try:
-            with open(inputFileName, newline="") as infile:
+            with open(input_file_name, newline="") as infile:
                 infilereader = csv.reader(
                     filter(lambda line: line.strip(), infile), delimiter=","
                 )
@@ -247,7 +250,8 @@ class file_import_handlers(object):
         frame_list = []
         all_imports = pd.DataFrame
         pdf = pymupdf.open(pdf_path)
-        # I had this backwards before in the for section, not sure why it broke but likely due to object order
+        # I had this backwards before in the for section, not sure why it
+        # broke but likely due to object order
         import_pages = [Page(page, page_num) for page_num, page in enumerate(pdf)]
         for pages in import_pages:
             imports = pages.import_cap_one_pdf()
@@ -289,8 +293,9 @@ class file_import_handlers(object):
         ]
         all_imports["Tags"] = ""
         all_imports["Notes"] = ""
-        # check for missaligned columns, in testing it would happen where negative values greater than ###.## would lose
-        # the minus sign to the previous column, check for this trailing - and move it
+        # check for missaligned columns, in testing it would happen where negative values greater
+        # than ###.## would lose the minus sign to the previous column, check for this trailing
+        # minus sign (-) and move it to the right column
         for row in all_imports.itertuples():
             if row[3][-1] == "-":
                 print(f"Minus sign found in charge_name at index {row[0]}")

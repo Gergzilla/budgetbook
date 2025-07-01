@@ -24,6 +24,7 @@ jobs:
         pip install python-dateutil
         pip install pymupdf
         pip install matplotlib
+        pip install requests
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files '*.py')
