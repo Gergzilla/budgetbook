@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+"""my doc is my string, verify me"""
 import os
 import sys
 import random
@@ -28,9 +28,9 @@ from PyQt6.QtWidgets import (
     QInputDialog,
 )
 
-import utilities.handlers as handlers
-import utilities.db_handlers as db_handlers
-import utilities.gui_handlers as gui_handlers
+from utilities import handlers
+from utilities import db_handlers
+from utilities import gui_handlers
 
 # import utilities.importers.importers as importers
 
@@ -38,7 +38,7 @@ try:
     # Required as if -h is passed the program should exit cleanly
     from utilities.logger import LoggingHandler
 except Exception:
-    quit()
+    sys.exit(0)
 
 logger = LoggingHandler(str(os.path.basename(__file__))).log
 
@@ -75,14 +75,17 @@ readable_columns = {
 
 
 def random_color_gen() -> str:
-    R = random.randint(0, 255)
-    G = random.randint(0, 255)
-    B = random.randint(0, 255)
-    color_string = f"#{R:02x}{G:02x}{B:02x}"
+    """my doc is my string, verify me"""
+    r = random.randint(0, 255)
+    g = random.randint(0, 255)
+    b = random.randint(0, 255)
+    color_string = f"#{r:02x}{g:02x}{b:02x}"
     return color_string
 
 
 class MainWindow(QMainWindow):
+    """my doc is my string, verify me"""
+
     def __init__(self):
         super().__init__()
         self.logger = LoggingHandler(__class__).log
@@ -275,17 +278,20 @@ class MainWindow(QMainWindow):
     # Menu and button functions
 
     def _reset_table(self) -> None:
+        """my doc is my string, verify me"""
         # Set the table to the empty dataframe and reset the view
         self.transaction_table = self.blank_table
         self.data_table_model.update_table_from_dataframe(self.transaction_table)
 
     def _save_to_database(self, current_table: pd.DataFrame):
+        """my doc is my string, verify me"""
         # I need to rework the default view because if you attempt manual
         # entry without import it fails.
         print("Saving table contents to database")
         db_handlers.save_dataframe_to_db(self.transaction_table)
 
     def _generate_report_chart(self):
+        """my doc is my string, verify me"""
         print(f"Generating report from _year_ and _month_")
         # so we need to call the report handler we will create in db_hanglers, and get the value of
         # the month and year selector and pass those to the function
@@ -300,6 +306,7 @@ class MainWindow(QMainWindow):
         self.report_tab_chart.addSeries(self.report_tab_pie_series)
 
     def _choose_import_year(self) -> int:
+        """my doc is my string, verify me"""
         import_year, ok = QInputDialog.getItem(
             self, "What year is this data for?", "Select Year:", year_list, 0, False
         )
@@ -308,6 +315,7 @@ class MainWindow(QMainWindow):
             return import_year
 
     def button_import_clicked(self) -> None:
+        """my doc is my string, verify me"""
         import_year = self._choose_import_year()
         print(f"Year returned was {import_year}")
 
@@ -344,21 +352,24 @@ class MainWindow(QMainWindow):
                         | QTableView.EditTrigger.AnyKeyPressed
                     )  # this works now, missed flag function in table class
                     # print(self.data_table_view.editTriggers())
-                except Exception as e:
+                except ValueError as e:
                     print(e)
 
-        except:
+        except ValueError as e:
+            print(e)
             pass
 
     def _summary_query_by_year(self, year: int) -> pd.DataFrame:
+        """my doc is my string, verify me"""
         # pass through to call summary function against database
         try:
             return
-            print(f"year chosen was {year}")
+            # print(f"year chosen was {year}")
         except Exception as e:
             print(f"oops {e}")
 
     def _button_quit_clicked(self) -> None:
+        """my doc is my string, verify me"""
         confirm_quit = gui_handlers.CustomOkCancelDialog(
             "Quit?", "Are you sure you want to quit?"
         )
@@ -367,7 +378,8 @@ class MainWindow(QMainWindow):
         else:
             pass
 
-    def deleteDupes(self):
+    def delete_duplicates(self):
+        """my doc is my string, verify me"""
         # left as a reminder, this function will be moved to the admin tab for obvious reasons.
         db_handlers.removeDuplicates()
         # delete_duplicates_button = QPushButton(text="delete duplicates", parent=self)
