@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
-import pandas as pd
 import os
 import sys
 import random
 from dateutil.parser import parse as dateparse
+import pandas as pd
 
 from PyQt6.QtCharts import QChartView, QPieSeries, QChart, QPieSlice
 from PyQt6.QtCore import QSize, Qt, QAbstractTableModel, QModelIndex, pyqtSignal
@@ -225,7 +225,8 @@ class MainWindow(QMainWindow):
             QPainter.RenderHint.Antialiasing
         )  # For smoother rendering
         self.report_tab_content_layout.addWidget(self.report_tab_chart_view)
-        # I will be adding a small table display to view the data the pie chart uses for reference later.
+        # I will be adding a small table display to view the data the pie chart uses for reference
+        # later.
 
         self.report_tab_widget.tab_layout.addLayout(self.report_tab_button_layout)
         self.report_tab_widget.tab_layout.addLayout(self.report_tab_content_layout)
@@ -279,14 +280,15 @@ class MainWindow(QMainWindow):
         self.data_table_model.update_table_from_dataframe(self.transaction_table)
 
     def _save_to_database(self, current_table: pd.DataFrame):
-        # I need to rework the default view because if you attempt manual entry without import it fails.
+        # I need to rework the default view because if you attempt manual
+        # entry without import it fails.
         print("Saving table contents to database")
         db_handlers.save_dataframe_to_db(self.transaction_table)
 
     def _generate_report_chart(self):
         print(f"Generating report from _year_ and _month_")
-        # so we need to call the report handler we will create in db_hanglers, and get the value of the month and year selector
-        # and pass those to the function
+        # so we need to call the report handler we will create in db_hanglers, and get the value of
+        # the month and year selector and pass those to the function
         chosen_year = self.report_tab_year_select.itemText(
             self.report_tab_year_select.currentIndex()
         )
@@ -321,15 +323,18 @@ class MainWindow(QMainWindow):
                 return
             else:
                 self.main_tabs.setCurrentWidget(self.data_tab_widget)
-                # this dialogue should probably be its own window in order to validate the incoming data more easily
-                # and then it can be saved to the database and then viewed and edited further in the main window.
+                # this dialogue should probably be its own window in order to validate the incoming
+                # data more easily and then it can be saved to the database and then viewed and
+                # edited further in the main window.
                 self.transaction_table = handlers.import_file_dialogue(
                     import_filename[0], import_year
                 )
-                # import works, there was an issue with the pdf parsing and column count in the pdf_importers module
+                # import works, there was an issue with the pdf parsing and column count in the
+                # pdf_importers module
                 print("Data import complete")
                 try:
-                    # I need to add a formatter to make the column names look nice and pretty without impacting the DB
+                    # I need to add a formatter to make the column names look nice and pretty
+                    # without impacting the DB
                     self.data_table_model.update_table_from_dataframe(
                         self.transaction_table
                     )

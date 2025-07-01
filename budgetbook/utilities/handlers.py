@@ -14,10 +14,10 @@ from PyQt6.QtGui import QColor, QFont, QPen
 from PyQt6.QtCharts import QChartView, QPieSeries, QChart, QPieSlice
 
 
-import vars.settings as settings
+from vars import settings
 from utilities.logger import LoggingHandler
-import utilities.db_handlers as db_handlers
-import utilities.importers.importers as importers
+from utilities import db_handlers
+from utilities import importers
 
 
 # try:
@@ -118,15 +118,16 @@ def dateCheck(datestring, fuzzy=False):
         dateparse(datestring, fuzzy=fuzzy)
         return True
     except Exception as e:
-        # e isnt used but caught for proper handling, this just needs to evaluate as false if it cant parse the date for any reason
+        # e isnt used but caught for proper handling, this just needs to
+        # evaluate as false if it cant parse the date for any reason
         return False
 
 
 def random_color_gen() -> str:
-    R = random.randint(0, 255)
-    G = random.randint(0, 255)
-    B = random.randint(0, 255)
-    color_string = f"#{R:02x}{G:02x}{B:02x}"
+    r = random.randint(0, 255)
+    g = random.randint(0, 255)
+    b = random.randint(0, 255)
+    color_string = f"#{r:02x}{g:02x}{b:02x}"
     return color_string
 
 
@@ -160,13 +161,14 @@ def import_file_dialogue(import_file_name, import_year: int = 0):
 ####### Parsers and Writers ########
 
 
-# The expenseChunks and writeExpenseToDB are probably not needed anynmore.  I am converting all data data sources into
-# pandas dataframes for better universal functionality and so there should not be a case where I need to parse massive lists
-# to write to the db anymore.  will deprecate in later versions
-def expenseChunks(expenseList, chunkSize):
+# The expenseChunks and writeExpenseToDB are probably not needed anynmore.  I am converting all
+# data data sources into pandas dataframes for better universal functionality and so there
+# should not be a case where I need to parse massive lists to write to the db anymore.  will
+# deprecate in later versions
+def expense_chunks(expenseList, chunkSize):
     print(
-        f"Deprecation warning, the function {__name__} is being deprecated, if you got this message check what is using \
-            it as it should be migrated to db_handlers.save_dataframe_to_db()"
+        f"Deprecation warning, the function {__name__} is being deprecated, if you got this message\
+            Check what is using it as it should be migrated to db_handlers.save_dataframe_to_db()"
     )
     # this should take the list and return tuples of size chunkSize for all data sent to it
     for i in range(0, len(expenseList), chunkSize):
@@ -175,14 +177,14 @@ def expenseChunks(expenseList, chunkSize):
 
 def writeExpenseToDB(expenses) -> bool:
     """
-    This should bring in all data provided to it in a list form, most likely from parsing the box contents
-    and then prepare that data to be written to the sqlite database cleanly
+    This should bring in all data provided to it in a list form, most likely from parsing the box
+    contents and then prepare that data to be written to the sqlite database cleanly
     """
     print(
-        f"Deprecation warning, the function {__name__} is being deprecated, if you got this message check what is using \
-            it as it should be migrated to db_handlers.save_dataframe_to_db()"
+        f"Deprecation warning, the function {__name__} is being deprecated, if you got this message\
+            check what is using it as it should be migrated to db_handlers.save_dataframe_to_db()"
     )
-    for expense_batch in expenseChunks(expenses, 5):
+    for expense_batch in expense_chunks(expenses, 5):
         # print(expense_batch)
         result = db_handlers.saveExpensesToDB(expense_batch)
     if result:

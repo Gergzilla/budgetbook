@@ -56,7 +56,8 @@ class DatabaseSetup(object):
             print("Table check is False, meaning table needs to be made")
             # print("do nothing")
             writeCursor.executescript(
-                "CREATE TABLE transactions ('Transaction Date' TEXT, 'Post Date' TEXT, 'Charge Name' TEXT, 'Charge Amount' REAL, Tags TEXT, Notes TEXT, "
+                "CREATE TABLE transactions ('Transaction Date' TEXT, 'Post Date' TEXT, "
+                "'Charge Name' TEXT, 'Charge Amount' REAL, Tags TEXT, Notes TEXT, "
                 "UNIQUE('Transaction Date','Charge Name','Charge Amount'))"
             )
             dbconn.commit()
@@ -102,9 +103,11 @@ def save_dataframe_to_db(input_frame: pd.DataFrame) -> None:
             row["Tags"],
             row["Notes"],
         ]
-        # this does create new entries without duplicates and allows for updates but if there are conflicts and data is empty it could overwrite
-        # for example if you import the same file and chang enothing and save, it wont create duplicates but any unprotected fields:
-        # aka post_date, tags, notes in the new conflicting data can overwrite/NULL the data already in the DB
+        # this does create new entries without duplicates and allows for updates but if there are
+        # conflicts and data is empty it could overwrite for example if you import the same file
+        # and chang enothing and save, it wont create duplicates but any unprotected fields: aka
+        # post_date, tags, notes in the new conflicting data can overwrite/NULL the data
+        # already in the DB
         write_cursor.execute(
             "INSERT INTO transactions ('Transaction Date', 'Post Date', 'Charge Name', 'Charge Amount', Tags, Notes)"
             " VALUES (?,?,?,?,?,?) "
@@ -134,10 +137,12 @@ def writeToExpenses(writedata="", expenseDB=expenseDB):
     writeCursor.close()
 
 
-# these last two functions need to be refactored because they are using the wrong SQL formatting AND need to update with hardcoded table name
+# these last two functions need to be refactored because they are using the wrong SQL formatting
+# AND need to update with hardcoded table name
 def addExpenses(expensedata, year="2024", expenseTable="transactions"):
     # this is the proper format for insertion and works to auto increment ROWID
-    # otherwise you can get a 'table has x columns but y supplied' unless you specificy the ROWID as well which isnt needed
+    # otherwise you can get a 'table has x columns but y supplied' unless you specificy the ROWID
+    # as well which isnt needed
 
     insertString = "INSERT INTO {0} (charge_date, charge_name, amount, tag_id, notes) VALUES ({1})".format(
         expenseTable, expensedata
@@ -147,8 +152,8 @@ def addExpenses(expensedata, year="2024", expenseTable="transactions"):
 
 
 def addTag(expensdata, tag, year="2024", expenseTable="transactions"):
-    # more learning, the for loop for a tuple doesnt work on a single item because there is nothing to iterate over
-    # so here it is just a,b,c,y,z = tuple
+    # more learning, the for loop for a tuple doesnt work on a single item because there is
+    # nothing to iterate over so here it is just a,b,c,y,z = tuple
     date, entity, charge, activetag, note = expensdata
     # activetag and note not needed here but allocated anyways to prevent ValueError
     tagUpdate = "UPDATE {0} SET tag='{1}' WHERE date='{2}' AND charge_name='{3}' AND amount={4}".format(
@@ -222,5 +227,5 @@ def removeDuplicates(
 if __name__ == "__main__":
 
     print(
-        "I'm a library of database functions.  I dont think you meant to run this directly"
+        "I'm a library of database functions.  I dont think you meant to run this directly."
     )

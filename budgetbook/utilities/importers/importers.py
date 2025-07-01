@@ -1,10 +1,10 @@
-import pandas as pd
 import os
+from datetime import datetime
+import csv
 import pymupdf
 import numpy as np
-import csv
+import pandas as pd
 from dateutil.parser import parse as dateparse
-from datetime import datetime
 
 
 # this stuff below is only really needed for testing, not for prod
