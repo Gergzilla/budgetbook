@@ -23,7 +23,7 @@ jobs:
         pip install numpy
         pip install python-dateutil
         pip install pymupdf
-        pip install matplotlib.pyplot
+        pip install matplotlib
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files '*.py')

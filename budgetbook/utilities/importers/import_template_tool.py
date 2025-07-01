@@ -73,8 +73,8 @@ that it can do more than that currently.
 
 """
 
-import pymupdf
 import os
+import pymupdf
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np

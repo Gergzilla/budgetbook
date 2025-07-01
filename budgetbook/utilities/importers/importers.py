@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 import csv
+import pprint
 import pymupdf
 import numpy as np
 import pandas as pd
@@ -11,7 +12,7 @@ from dateutil.parser import parse as dateparse
 from utilities.logger import (
     LoggingHandler,
 )  # temporary local utilities until packaging later
-import pprint
+
 
 # import matplotlib.pyplot as plt
 
