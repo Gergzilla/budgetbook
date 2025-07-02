@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# This file is a copy of db_handlers.py but is being modified for django integration and testing
+"""This module is handler functions and classes related to interacting with the SQLite database"""
+
 import sqlite3
 import os
 import pandas as pd
@@ -86,12 +87,11 @@ class DatabaseSetup:
         )
         try:
             checktables = masterdblist.fetchone()
-        except Exception:
+        except IndexError:
             checktables = None
         if checktables is None:
             return False
-        else:
-            return True
+        return True
 
 
 ##### Data add/remove functions  ######
@@ -187,7 +187,7 @@ def add_tags(expensdata, tag, expenses_table="transactions"):
 ##### read-only database functions  ########
 
 
-def queryByMonth(
+def query_by_month(
     month,
     year="2024",
     live_expense_database=default_database,
@@ -210,7 +210,7 @@ def queryByMonth(
     return monthlyExpenses
 
 
-def queryByYearlyTable(
+def query_by_yearly_table(
     expenses_table=expenseTable, year="2024", live_expense_database=default_database
 ):
     """my doc is my string, verify me"""

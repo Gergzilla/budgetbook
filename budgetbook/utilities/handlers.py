@@ -24,7 +24,7 @@ from utilities import importers
 #     import utilities.db_handlers as db_handlers
 # except Exception:
 #     import db_handlers as db_handlers
-
+file_import_handler = importers.file_import_handlers()
 month_selector = settings.month_selector
 logger = LoggingHandler(str(os.path.basename(__file__))).log
 
@@ -147,6 +147,7 @@ def random_color_gen() -> str:
 
 def import_file_dialogue(import_file_name, import_year: int = 0):
     """my doc is my string, verify me"""
+    # I need to check if this is still used, because the importer function call is wrong
     try:
         print(f"import file is: {import_file_name}")
         # parse the file type of the import to try and select the right import method
@@ -154,13 +155,13 @@ def import_file_dialogue(import_file_name, import_year: int = 0):
         # print(f"file_type is: {file_type}")
         if "csv" in file_type:
             # print("CSV file detected")
-            transaction_data = importers.file_import_handlers.csvImporter(
+            transaction_data = file_import_handler.csvImporter(
                 import_file_name, import_year
             )
         elif "pdf" in file_type:
             # print(" file detected")
             # hardcoded to capital one for now.  More advanced selection to be handled later
-            transaction_data = importers.file_import_handlers.cap_one_import(
+            transaction_data = file_import_handler.cap_one_import(
                 import_file_name, import_year
             )
         return transaction_data
@@ -187,7 +188,7 @@ def expense_chunks(expenseList, chunkSize):
         yield expenseList[i : i + chunkSize]
 
 
-def writeExpenseToDB(expenses) -> bool:
+def write_expense_to_db(expenses) -> bool:
     """
     This should bring in all data provided to it in a list form, most likely from parsing the box
     contents and then prepare that data to be written to the sqlite database cleanly
@@ -198,7 +199,7 @@ def writeExpenseToDB(expenses) -> bool:
     )
     for expense_batch in expense_chunks(expenses, 5):
         # print(expense_batch)
-        result = db_handlers.saveExpensesToDB(expense_batch)
+        result = db_handlers.write_to_expenses(expense_batch)
     if result:
         logger.error(result)
     else:
@@ -208,7 +209,7 @@ def writeExpenseToDB(expenses) -> bool:
         # db_handlers.addExpenses(expense_batch, "2024")
 
 
-def monthlyQueryBuilder():  # rewriting for error handling on bad input
+def create_query_by_month():  # rewriting for error handling on bad input
     """my doc is my string, verify me"""
     # not currently used in the UI
     month = ""
