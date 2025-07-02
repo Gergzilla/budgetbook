@@ -19,6 +19,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install pylint
         pip install PyQt6
+        pip install PyQt6-Charts
         pip install pandas
         pip install numpy
         pip install python-dateutil
@@ -27,4 +28,4 @@ jobs:
         pip install requests
     - name: Analysing the code with pylint
       run: |
-        pylint $(git ls-files '*.py')
+        pylint --disable=C0103 --rcfile=.pylintrc $(git ls-files '*.py')

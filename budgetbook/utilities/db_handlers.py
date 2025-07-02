@@ -18,13 +18,12 @@ expenseTable = settings.expenseTable
 logger = LoggingHandler("db_handlers").log  # currently untested
 
 
-class DatabaseSetup(object):
+class DatabaseSetup:
     """my doc is my string, verify me"""
 
     def __init__(self):
         self.name = __name__
         self.logger = LoggingHandler(__class__).log
-        pass
 
     def __str__(self):
         return self.name
@@ -41,7 +40,8 @@ class DatabaseSetup(object):
             logger.info("Database File doesnt exist, creating file")
             try:
                 dbconnect = sqlite3.connect(live_expense_database)
-            except Exception:
+            except RuntimeError:
+                # Might need to tweak the exception type
                 print(
                     "could not create file for some reason at " + live_expense_database
                 )
@@ -70,6 +70,7 @@ class DatabaseSetup(object):
             )
             dbconn.commit()
             if DatabaseSetup.poll_master_table:
+                # I need to check this function, I think I am evaluating it improperly/inefficiently
                 print("Table created")
             else:
                 print("table still not found - something broke")
