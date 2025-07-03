@@ -28,4 +28,9 @@ jobs:
         pip install requests
     - name: Analysing the code with pylint
       run: |
-        pylint --disable=C0103 --rcfile=.pylintrc $(git ls-files '*.py')
+        pylint --disable=C0103 --rcfile=.pylintrc $(git ls-files '*.py') --output=lint.txt || true
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: lint.txt
