@@ -85,3 +85,6 @@ class LoggingHandler:
 
     def __str__(self):
         return self.name
+
+    def show_level(self):
+        return f"current Debug Level: {level})"

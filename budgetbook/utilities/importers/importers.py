@@ -179,7 +179,9 @@ class file_import_handlers(object):
         """my doc is my string, verify me"""
         formated_date = f"'{datestring}'"
         formated_date = year + " " + str(formated_date).strip("'")
-        formated_date = f"{str(datetime.strptime(formated_date, "%Y %b %d").date())}"
+
+        date_to_string = str(datetime.strptime(formated_date, "%Y %b %d").date())
+        formated_date = f"{date_to_string}"
         return formated_date
 
     @staticmethod

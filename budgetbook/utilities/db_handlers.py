@@ -193,10 +193,8 @@ def query_by_month(
     """my doc is my string, verify me"""
     dbconn = sqlite3.connect(live_expense_database)
     readCursor = dbconn.cursor()
-    monthQuery = (
-        "SELECT date, charge_name, amount, tag_id, notes FROM {0} WHERE "
-        "date LIKE '{1}%'".format(expenses_table, month)
-    )
+    monthQuery = f"SELECT date, charge_name, amount, tag_id, notes FROM {expenses_table} WHERE\
+        date LIKE '{month}%'"
     try:
         readCursor.execute(monthQuery)
         monthlyExpenses = readCursor.fetchall()

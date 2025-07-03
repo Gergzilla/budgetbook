@@ -48,7 +48,8 @@ def parseCSV(row, year):  # Works perfect!
                 date = f"'{row[i]}'"
                 date = year + " " + str(date).strip("'")
                 # date = year + " " + str(date).strip("'")
-                date = f"'{str(datetime.strptime(date, "%Y %b %d").date())}'"
+                date_to_string = str(datetime.strptime(date, "%Y %b %d").date())
+                date = f"'{date_to_string}'"
                 # date = "'{}'".format(str(datetime.strptime(date, "%Y %b %d").date()))
                 expenses.append(date)
             elif "$" in row[i]:
