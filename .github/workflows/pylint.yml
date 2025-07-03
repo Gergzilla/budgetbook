@@ -28,10 +28,11 @@ jobs:
         pip install requests
     - name: Analysing the code with pylint
       run: |
-        pylint --disable=C0103 --rcfile=.pylintrc $(git ls-files '*.py') --output=lint-${{ matrix.python-version }}.txt || true
+        pylint --disable=C0103 --rcfile=.pylintrc $(git ls-files '*.py') 
+      # --output=lint-${{ matrix.python-version }}.txt || true
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: lint-${{ matrix.python-version }}.txt
-        path: lint-${{ matrix.python-version }}.txt
+    # - name: Upload Artifact
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: lint-${{ matrix.python-version }}.txt
+    #     path: lint-${{ matrix.python-version }}.txt
