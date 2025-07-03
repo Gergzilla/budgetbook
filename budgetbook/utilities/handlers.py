@@ -1,17 +1,20 @@
 #!/usr/bin/python
-# This file is a copy of handlers.py but is being modified for django integration and testing
-import os
-import csv
-import pandas as pd
-import random
-from dateutil.parser import parse as dateparse
-from datetime import datetime
+"""my doc is my string, verify me"""
 
-from PyQt6 import QtCore, QtGui, QtWidgets
+import os
+import random
+
+# import csv
+from dateutil.parser import parse as dateparse
+import pandas as pd
+
+# from datetime import datetime
+# from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtCore import Qt, QAbstractTableModel, QModelIndex
-from PyQt6.QtSql import QSqlQueryModel
-from PyQt6.QtGui import QColor, QFont, QPen
-from PyQt6.QtCharts import QChartView, QPieSeries, QChart, QPieSlice
+
+# from PyQt6.QtSql import QSqlQueryModel
+from PyQt6.QtGui import QColor
+from PyQt6.QtCharts import QPieSeries
 
 
 from vars import settings
@@ -72,7 +75,7 @@ class PandasAbstractTable(QAbstractTableModel):
             try:
                 value = self._data.iloc[index.row(), index.column()]
                 # print(f"data function got value: \n {value}")
-            except Exception as e:
+            except ValueError as e:
                 print(e)
             # print(f"The data function got the value:\n {value}")
 
@@ -220,9 +223,8 @@ def create_query_by_month():  # rewriting for error handling on bad input
         ).capitalize()
         month = "" + month[0:3]
         # print(month)
-    else:
-        print("looks fine, calling query")
-        listByMonth = db_handlers.queryByMonth(month)
+    print("looks fine, calling query")
+    listByMonth = db_handlers.query_by_month(month)
     return listByMonth
 
 

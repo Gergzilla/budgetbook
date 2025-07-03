@@ -84,11 +84,14 @@ pdf_path = os.path.join("relative", "path", "to", "pdf")
 
 
 class Page:
+    """my doc is my string, verify me"""
+
     def __init__(self, page: pymupdf.Page, page_number):
         self.name = __name__
         self.page = page
         self.page_number = page_number
-        self.logger = logger
+        self.logger = logger()
+        self.parsed_dataframe = pd.DataFrame()
         self.clip_y1 = 0
 
     def find_transaction_table(self, needle):
@@ -97,8 +100,7 @@ class Page:
         if end_of_table:
             self.logger.DEBUG("rect of needle: {end_of_table}")
             return True
-        else:
-            return False
+        return False
 
     def find_table_end(self, needle):
         """my doc is my string, verify me"""
@@ -108,9 +110,8 @@ class Page:
             # This sets the rectable up a few units to avoid including the end of table keyword in
             # the rectangle, you may need to adjust this depending on your specific import files.
             return self.clip_y1
-        else:
-            self.logger.DEBUG("Table end not found on page")
-            return self.clip_y1
+        self.logger.DEBUG("Table end not found on page")
+        return self.clip_y1
 
     def get_rect(self, needle):
         """my doc is my string, verify me"""
@@ -138,8 +139,7 @@ class Page:
         )
         default_clip = ()
         alt_clip = ()
-
-        self.parsed_dataframe = pd.DataFrame()  # empty dataframe for processing
+        # empty dataframe for processing
         if not alt_clip:
             alt_clip = default_clip
         if self.find_transaction_table(table_title_needle):
@@ -150,8 +150,7 @@ class Page:
                 alt_clip[3] = new_clip_y1
                 self.parsed_dataframe = self.parse_transaction_table(alt_clip)
             return self.parsed_dataframe
-        else:
-            return self.parsed_dataframe
+        return self.parsed_dataframe
 
 
 #### End boilerplate class####
@@ -161,7 +160,6 @@ def test_boilerplate(pdf_path):
     all_imports = pd.DataFrame
     pdf = pymupdf.open(pdf_path)
     import_pages = [Page(page, page_num) for page_num, page in enumerate(pdf)]
-
     for pages in import_pages:
         imports = pages.import_pdf_boilerplate()
         if not imports.empty:

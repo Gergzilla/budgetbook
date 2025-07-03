@@ -6,20 +6,16 @@ import random
 from dateutil.parser import parse as dateparse
 import pandas as pd
 
-from PyQt6.QtCharts import QChartView, QPieSeries, QChart, QPieSlice
-from PyQt6.QtCore import QSize, Qt, QAbstractTableModel, QModelIndex, pyqtSignal
-from PyQt6.QtGui import QAction, QIcon, QColor, QFont, QFontMetrics, QPainter
+from PyQt6.QtCharts import QChartView, QChart
+from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtGui import QAction, QFont, QFontMetrics, QPainter
 from PyQt6.QtWidgets import (
     QApplication,
-    QWidget,
     QMainWindow,
     QTabWidget,
-    QToolBar,
     QStatusBar,
-    QDialog,
     QFileDialog,
     QTableView,
-    QDialogButtonBox,
     QVBoxLayout,
     QHBoxLayout,
     QComboBox,
@@ -292,7 +288,7 @@ class MainWindow(QMainWindow):
 
     def _generate_report_chart(self):
         """my doc is my string, verify me"""
-        print(f"Generating report from _year_ and _month_")
+        print("Generating report from _year_ and _month_")
         # so we need to call the report handler we will create in db_hanglers, and get the value of
         # the month and year selector and pass those to the function
         chosen_year = self.report_tab_year_select.itemText(
@@ -313,6 +309,7 @@ class MainWindow(QMainWindow):
         if ok and import_year:
             # print(f"Year selected was {import_year}")
             return import_year
+        return None
 
     def button_import_clicked(self) -> None:
         """my doc is my string, verify me"""
@@ -365,7 +362,7 @@ class MainWindow(QMainWindow):
         try:
             return
             # print(f"year chosen was {year}")
-        except Exception as e:
+        except ValueError as e:
             print(f"oops {e}")
 
     def _button_quit_clicked(self) -> None:
@@ -390,7 +387,7 @@ def main():
     try:
         with open("gui_style.css", "r") as f:
             stylesheet = f.read()
-    except:
+    except FileNotFoundError:
         stylesheet = ""
 
     main_app = QApplication(sys.argv)

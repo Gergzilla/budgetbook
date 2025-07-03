@@ -70,7 +70,8 @@ class DatabaseSetup:
                 "UNIQUE('Transaction Date','Charge Name','Charge Amount'))"
             )
             dbconn.commit()
-            if DatabaseSetup.poll_master_table:
+            if table_check:
+                # if DatabaseSetup.poll_master_table:
                 # I need to check this function, I think I am evaluating it improperly/inefficiently
                 print("Table created")
             else:
@@ -159,10 +160,9 @@ def add_expenses(expensedata, expenses_table="transactions"):
     # otherwise you can get a 'table has x columns but y supplied' unless you specificy the ROWID
     # as well which isnt needed
 
-    insertString = (
-        "INSERT INTO {0} (charge_date, charge_name,"
-        " amount, tag_id, notes) VALUES ({1})".format(expenses_table, expensedata)
-    )  # bad form, but used to work. changing to placeholders
+    insertString = f"INSERT INTO {expenses_table} (charge_date, charge_name, amount, tag_id, \
+                    notes) VALUES ({expensedata})"
+    # bad form, but used to work. changing to placeholders
     print(insertString)
     write_to_expenses(insertString)
 
@@ -176,10 +176,8 @@ def add_tags(expensdata, tag, expenses_table="transactions"):
         # activetag and note not needed here but allocated anyways to prevent ValueError
         print(f"{activetag} - {note}")
 
-    tagUpdate = (
-        "UPDATE {0} SET tag='{1}' WHERE date='{2}' AND charge_name='{3}' AND"
-        " amount={4}".format(expenses_table, tag, date, entity, charge)
-    )
+    tagUpdate = f"UPDATE {expenses_table} SET tag='{tag}' WHERE date='{date}' AND \
+                 charge_name='{entity}' AND amount={charge}"
     result = write_to_expenses(tagUpdate)
     return result
 
@@ -189,7 +187,6 @@ def add_tags(expensdata, tag, expenses_table="transactions"):
 
 def query_by_month(
     month,
-    year="2024",
     live_expense_database=default_database,
     expenses_table=expenseTable,
 ):
@@ -203,7 +200,7 @@ def query_by_month(
     try:
         readCursor.execute(monthQuery)
         monthlyExpenses = readCursor.fetchall()
-    except Exception as e:
+    except SyntaxError as e:
         print("Unable to execute for for reason: ", e)
         monthlyExpenses = e
     readCursor.close()
@@ -211,7 +208,7 @@ def query_by_month(
 
 
 def query_by_yearly_table(
-    expenses_table=expenseTable, year="2024", live_expense_database=default_database
+    expenses_table=expenseTable, live_expense_database=default_database
 ):
     """my doc is my string, verify me"""
     dbconn = sqlite3.connect(live_expense_database)
@@ -241,15 +238,9 @@ def removeDuplicates(
     """my doc is my string, verify me"""
     dbconn = sqlite3.connect(expenseDB)
     writeCursor = dbconn.cursor()
-    rowquery = (
-        "SELECT MIN(rowid) FROM {0} group by charge_date, charge_name, amount".format(
-            expenseTable
-        )
-    )
+    rowquery = f"SELECT MIN(rowid) FROM {expenseTable} group by charge_date, charge_name, amount"
     print(rowquery)
-    deletedupes = "DELETE FROM {0} WHERE rowid not in({1})".format(
-        expenseTable, rowquery
-    )
+    deletedupes = f"DELETE FROM {expenseTable} WHERE rowid not in({rowquery})"
     print(deletedupes)
     removalResult = writeCursor.execute(deletedupes)
     print(removalResult)

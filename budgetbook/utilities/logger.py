@@ -8,6 +8,7 @@ import os
 import sys
 import argparse
 import requests
+import urllib3
 
 
 # the following line is responsible for suppressing the warning.
@@ -20,7 +21,7 @@ logfilename = os.path.abspath(
 #     print("yay")
 # else:
 #     print("cant find it")
-requests.packages.urllib3.disable_warnings()
+urllib3.disable_warnings()
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -39,7 +40,7 @@ parser.add_argument(
 )
 try:
     options = parser.parse_args()
-except Exception as e:
+except ValueError as e:
     print(f"Logger module exiting with exception: {e}")
     sys.exit(1)
 
@@ -76,7 +77,11 @@ console.setFormatter(formatter)
 
 class LoggingHandler:
     def __init__(self, name):
+        self.name = __name__
         self.log = logging.getLogger(str(name))
         if showconsole:
             self.log.addHandler(console)
         # logging.getLogger(self.log)
+
+    def __str__(self):
+        return self.name

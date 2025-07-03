@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 import csv
-import pprint
+import sys
 import pymupdf
 import numpy as np
 import pandas as pd
@@ -86,9 +86,8 @@ class Page:
             # print(4)
             # print(f"Page: {self.page.number} end of parse_transaction_table function?")
             return df
-        else:
-            df = ""
-            return df
+        df = ""
+        return df
 
     def import_cap_one_pdf(self):
         """my doc is my string, verify me"""
@@ -134,7 +133,6 @@ class file_import_handlers(object):
     def __init__(self):
         self.name = __name__
         self.logger = LoggingHandler(__class__).log
-        pass
 
     def __str__(self):
         return self.name
@@ -158,7 +156,7 @@ class file_import_handlers(object):
             try:
                 import_frame.iloc[index_num, 0] = formated_transaction_date
                 import_frame.iloc[index_num, 1] = formated_post_date
-            except Exception as e:
+            except IndexError as e:
                 print(e)
             index_num += 1
         return import_frame
@@ -169,7 +167,7 @@ class file_import_handlers(object):
         try:
             dateparse(datestring, fuzzy=fuzzy)
             return True
-        except Exception as e:
+        except TypeError as e:
             # ValueError?
             logger.debug(e)
             # e isnt technically used but caught for proper handling, this just needs to evaluate
@@ -179,11 +177,9 @@ class file_import_handlers(object):
     @staticmethod
     def format_date(datestring, year):
         """my doc is my string, verify me"""
-        formated_date = "'{}'".format(datestring)
+        formated_date = f"'{datestring}'"
         formated_date = year + " " + str(formated_date).strip("'")
-        formated_date = "{}".format(
-            str(datetime.strptime(formated_date, "%Y %b %d").date())
-        )
+        formated_date = f"{str(datetime.strptime(formated_date, "%Y %b %d").date())}"
         return formated_date
 
     @staticmethod
@@ -236,7 +232,7 @@ class file_import_handlers(object):
                     expenses.append(tag)
                     expenses.append(notes)
                 else:
-                    charge_name = "{}".format(row[i])
+                    charge_name = f"{row[i]}"
                     # charge_name = "'{}'".format(row[i])
                     expenses.append(charge_name)
                 i += 1
@@ -275,10 +271,9 @@ class file_import_handlers(object):
                     pass
                 else:
                     all_imports.drop(index=row[0], inplace=True)
-            except:
+            except TypeError:
                 # any reason it is not a valid date should remove the row
                 all_imports.drop(index=row[0], inplace=True)
-                pass
         # Now join col 2 and 3 due to pdf parsing issues and drop the old ones
         all_imports["Col6"] = all_imports["Col2"].str.cat(all_imports["Col3"], sep=" ")
         all_imports.drop(["Col2", "Col3"], axis=1, inplace=True)
@@ -322,7 +317,7 @@ def main():
         file_import_handlers.cap_one_import(pdf_path)
     if selection == "2":
         print("Exiting...")
-        quit()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

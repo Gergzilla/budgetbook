@@ -1,20 +1,22 @@
 #!/usr/bin/python
+"""my doc is my string, verify me"""
 import csv
-import datetime
+from datetime import datetime
 from dateutil.parser import parse as dateparse
-import logging
 
 
 # copy pasted from handler, no changes made yet
 def dateCheck(datestring, fuzzy=False):
+    """my doc is my string, verify me"""
     try:
         dateparse(datestring, fuzzy=fuzzy)
         return True
-    except:
+    except TypeError:
         return False
 
 
 def csvImporter(inputFileName, year="2025"):
+    """my doc is my string, verify me"""
     # Works perfectly!  results in a joined list of formatted data
     joinedCsv = []
     # For now we hardcode tab delim, need to do better handling later
@@ -34,6 +36,7 @@ def csvImporter(inputFileName, year="2025"):
 
 
 def parseCSV(row, year):  # Works perfect!
+    """my doc is my string, verify me"""
     # New function to parse the csv one row at a time and reformat the data into a list of strings
     expenses = []
     i = 0
@@ -41,9 +44,12 @@ def parseCSV(row, year):  # Works perfect!
     while i < len(row):
         if row[i] != "":
             if dateCheck(row[i], fuzzy=False) is True:
-                date = "'{}'".format(row[i])
+                # date = "'{}'".format(row[i])
+                date = f"'{row[i]}'"
                 date = year + " " + str(date).strip("'")
-                date = "'{}'".format(str(datetime.strptime(date, "%Y %b %d").date()))
+                # date = year + " " + str(date).strip("'")
+                date = f"'{str(datetime.strptime(date, "%Y %b %d").date())}'"
+                # date = "'{}'".format(str(datetime.strptime(date, "%Y %b %d").date()))
                 expenses.append(date)
             elif "$" in row[i]:
                 expense = row[i].replace("$", "").strip("\n")
@@ -52,7 +58,7 @@ def parseCSV(row, year):  # Works perfect!
                 expenses.append(tag)
                 expenses.append(notes)
             else:
-                charge_name = "'{}'".format(row[i])
+                charge_name = f"'{row[i]}'"
                 expenses.append(charge_name)
             i += 1
         else:
