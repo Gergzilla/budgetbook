@@ -31,6 +31,6 @@ jobs:
         pylint --disable=C0103 --rcfile=.pylintrc $(git ls-files '*.py') --output=lint.txt || true
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: lint.txt
