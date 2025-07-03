@@ -49,11 +49,11 @@ class PandasAbstractTable(QAbstractTableModel):
             | Qt.ItemFlag.ItemIsEditable
         )
 
-    def rowCount(self, index, parent=QModelIndex()):
+    def rowCount(self, index):
         """my doc is my string, verify me"""
         return self._data.shape[0]
 
-    def columnCount(self, index, parent=QModelIndex()):
+    def columnCount(self, index):
         """my doc is my string, verify me"""
         return self._data.shape[1]
 
@@ -107,7 +107,9 @@ class QtPieChartSeries(QPieSeries):
     """my doc is my string, verify me"""
 
     # currently a placeholder while I figure out how I want to implement this
-    def __init__(self, pie_dict: dict = {}, parent=None):
+    def __init__(self, pie_dict: dict = None, parent=None):
+        if not pie_dict:
+            pie_dict = {}
         super().__init__(parent)
         self.name = __name__
         self.logger = LoggingHandler(__class__).log
@@ -117,11 +119,15 @@ class QtPieChartSeries(QPieSeries):
         for category, value in self.pie_dict.items():
             self.value = value
             self.pie_label = str(category.split(" ")[0]) + " $" + str(self.value)
-            self.slice = self.pie_label.split(" ")[0]
+            self.slice = self.pie_label.split(" ", maxsplit=1)[0]
             self.slice = self.append(self.pie_label, self.value)
             self.slice.setBrush(QColor(random_color_gen()))
 
         self.setLabelsVisible(True)
+
+    # mostly placeholders to fill out class, more will come later but the class is required.
+    def __str__(self):
+        return self.name
 
 
 ####### Misc utilities  #######
@@ -130,7 +136,7 @@ def dateCheck(datestring, fuzzy=False):
     try:
         dateparse(datestring, fuzzy=fuzzy)
         return True
-    except Exception as e:
+    except TypeError:
         # e isnt used but caught for proper handling, this just needs to
         # evaluate as false if it cant parse the date for any reason
         return False
@@ -151,6 +157,7 @@ def random_color_gen() -> str:
 def import_file_dialogue(import_file_name, import_year: int = 0):
     """my doc is my string, verify me"""
     # I need to check if this is still used, because the importer function call is wrong
+    transaction_data = None
     try:
         print(f"import file is: {import_file_name}")
         # parse the file type of the import to try and select the right import method
@@ -168,7 +175,7 @@ def import_file_dialogue(import_file_name, import_year: int = 0):
                 import_file_name, import_year
             )
         return transaction_data
-    except Exception as e:
+    except FileNotFoundError as e:
         print(e)
         return
 

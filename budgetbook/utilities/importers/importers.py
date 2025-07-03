@@ -5,7 +5,9 @@ import sys
 import pymupdf
 import numpy as np
 import pandas as pd
-from dateutil.parser import parse as dateparse
+import dateutil.parser as dateparser
+
+# from dateutil.parser import parse as dateparse
 
 
 # this stuff below is only really needed for testing, not for prod
@@ -164,11 +166,11 @@ class file_import_handlers(object):
     @staticmethod
     def dateCheck(datestring, fuzzy=False):
         """my doc is my string, verify me"""
+        print(f"datestring in dateCheck() method: {datestring}")
         try:
-            dateparse(datestring, fuzzy=fuzzy)
+            dateparser.parse(datestring, fuzzy=fuzzy)
             return True
-        except TypeError as e:
-            # ValueError?
+        except dateparser.ParserError as e:
             logger.debug(e)
             # e isnt technically used but caught for proper handling, this just needs to evaluate
             # as false if datestring is not a date
@@ -178,10 +180,13 @@ class file_import_handlers(object):
     def format_date(datestring, year):
         """my doc is my string, verify me"""
         formated_date = f"'{datestring}'"
+        print(f"1: formated_date in format_date: {formated_date}")
         formated_date = year + " " + str(formated_date).strip("'")
-
+        print(f"2: formated_date in format_date: {formated_date}")
         date_to_string = str(datetime.strptime(formated_date, "%Y %b %d").date())
+        print(f"Did this break? {date_to_string}")
         formated_date = f"{date_to_string}"
+        print(f"3: formated_date in format_date: {formated_date}")
         return formated_date
 
     @staticmethod
@@ -222,19 +227,25 @@ class file_import_handlers(object):
         while i < len(row):
             if row[i] != "":
                 if file_import_handlers.dateCheck(row[i], fuzzy=False) is True:
-                    date = file_import_handlers.format_date(row[i], year)
+                    date = file_import_handlers.format_date(
+                        row[i], year
+                    )  # this is shitting itself somewhere
+                    print(f"date in parseCSV(): {date}")
+                    print(f"loop count is: {i}")
                     # date = "'{}'".format(row[i])
                     # date = year + " " + str(date).strip("'")
                     # date = "{}".format(str(datetime.strptime(date, "%Y %b %d").date()))
                     expenses.append(date)
                 elif "$" in row[i]:
                     expense = row[i].replace("$", "").strip("\n")
+                    print(f"expense in parseCSV(): {expense}")
                     expenses.append(expense)
                     # adds empty list elements to the end as placeholders
                     expenses.append(tag)
                     expenses.append(notes)
                 else:
                     charge_name = f"{row[i]}"
+                    print(f"charge_name in parseCSV(): {charge_name}")
                     # charge_name = "'{}'".format(row[i])
                     expenses.append(charge_name)
                 i += 1
@@ -267,7 +278,7 @@ class file_import_handlers(object):
         # valid rows should have a Date in the first column, removing ones that dont
         for row in all_imports.itertuples():
             try:
-                datecheck = dateparse(row[1], fuzzy=True)
+                datecheck = dateparser.parse(row[1], fuzzy=True)
                 # print(datecheck)
                 if datecheck:
                     pass

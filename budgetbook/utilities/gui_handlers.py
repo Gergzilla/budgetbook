@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+"""my doc is my string, verify me"""
 # TODO I need to add I think a button making class that will
 # create buttons at a fixed height and dynamic width of the text
 
@@ -62,13 +62,16 @@ class TabGenerator(QTabWidget):
 
     def __init__(self):
         super().__init__()
-        self.__name__ = __name__
+        self.name = __name__
         self.tab_object = QWidget()
         self.tab_layout = QVBoxLayout()
 
-    def setup_new_tab(self, label: str) -> QWidget:
+    def setup_new_tab(self) -> QWidget:
         """my doc is my string, verify me"""
         # self.tab_label = QLabel(label) placeholed not needed now
         # self.tab_layout.addWidget(self.tab_label)
         self.setLayout(self.tab_layout)
         return self.tab_object, self.tab_layout
+
+    def __str__(self):
+        return self.name

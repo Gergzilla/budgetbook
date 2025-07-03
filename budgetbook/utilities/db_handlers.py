@@ -78,7 +78,6 @@ class DatabaseSetup:
                 print("table still not found - something broke")
         else:
             print("Table check passed, nothing to do")
-            return
 
     @staticmethod
     def poll_master_table(cur):
@@ -147,7 +146,7 @@ def write_to_expenses(writedata="", live_expense_database=default_database):
     try:
         writeCursor.execute(writedata)
         dbconn.commit()
-    except Exception as e:
+    except SyntaxError as e:
         print("Error executing query: ", e)
     writeCursor.close()
 
@@ -179,7 +178,7 @@ def add_tags(expensdata, tag, expenses_table="transactions"):
     tagUpdate = f"UPDATE {expenses_table} SET tag='{tag}' WHERE date='{date}' AND \
                  charge_name='{entity}' AND amount={charge}"
     result = write_to_expenses(tagUpdate)
-    return result
+    # return result return currently is meaningless
 
 
 ##### read-only database functions  ########
@@ -213,14 +212,14 @@ def query_by_yearly_table(
     readCursor = dbconn.cursor()
     # Specify exact columns so you always know what you are getting back and dont get
     # 'too many values' errors
-    recordquery = "SELECT date, charge_name, amount, tag_id, notes FROM {0}".format(
-        expenses_table
+    recordquery = (
+        f"SELECT date, charge_name, amount, tag_id, notes FROM {expenses_table}"
     )
     # print(recordquery)
     try:
         readCursor.execute(recordquery)
         fulltable = readCursor.fetchall()
-    except Exception as e:
+    except SyntaxError as e:
         print("unable to execute query for reason: ", repr(e))
         fulltable = e
     readCursor.close()
@@ -231,14 +230,16 @@ def query_by_yearly_table(
 
 
 def removeDuplicates(
-    expenseDB=default_database, expenseTable=expenseTable, year="2024"
-):  # Not currently used
+    expenseDB=default_database,
+    expenses_table=expenseTable,
+):
+    # Not currently used
     """my doc is my string, verify me"""
     dbconn = sqlite3.connect(expenseDB)
     writeCursor = dbconn.cursor()
-    rowquery = f"SELECT MIN(rowid) FROM {expenseTable} group by charge_date, charge_name, amount"
+    rowquery = f"SELECT MIN(rowid) FROM {expenses_table} group by charge_date, charge_name, amount"
     print(rowquery)
-    deletedupes = f"DELETE FROM {expenseTable} WHERE rowid not in({rowquery})"
+    deletedupes = f"DELETE FROM {expenses_table} WHERE rowid not in({rowquery})"
     print(deletedupes)
     removalResult = writeCursor.execute(deletedupes)
     print(removalResult)

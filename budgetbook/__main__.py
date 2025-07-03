@@ -3,7 +3,8 @@
 import os
 import sys
 import random
-from dateutil.parser import parse as dateparse
+
+# from dateutil.parser import parse as dateparse
 import pandas as pd
 
 from PyQt6.QtCharts import QChartView, QChart
@@ -33,7 +34,7 @@ from utilities import gui_handlers
 try:
     # Required as if -h is passed the program should exit cleanly
     from utilities.logger import LoggingHandler
-except Exception:
+except ImportError:
     sys.exit(0)
 
 logger = LoggingHandler(str(os.path.basename(__file__))).log
@@ -132,7 +133,7 @@ class MainWindow(QMainWindow):
 
         # Summary Tab
         self.summary_tab_widget = gui_handlers.TabGenerator()
-        self.summary_tab_widget.setup_new_tab("Summary")
+        self.summary_tab_widget.setup_new_tab()
 
         self.summary_tab_button_layout = QHBoxLayout()
         self.summary_tab_button_layout.setAlignment(
@@ -165,7 +166,7 @@ class MainWindow(QMainWindow):
 
         # Report Tab
         self.report_tab_widget = gui_handlers.TabGenerator()
-        self.report_tab_widget.setup_new_tab("Reports")
+        self.report_tab_widget.setup_new_tab()
         self.report_tab_button_layout = QHBoxLayout()
         self.report_tab_content_layout = QVBoxLayout()
 
@@ -233,7 +234,7 @@ class MainWindow(QMainWindow):
 
         # Data Tab
         self.data_tab_widget = gui_handlers.TabGenerator()
-        self.data_tab_widget.setup_new_tab("Data")
+        self.data_tab_widget.setup_new_tab()
 
         self.transaction_table = self.blank_table
         # Create pandas table object widget from handlers class
@@ -262,7 +263,7 @@ class MainWindow(QMainWindow):
 
         # Admin Tab
         self.admin_tab = gui_handlers.TabGenerator()
-        self.admin_tab.setup_new_tab("Admin")
+        self.admin_tab.setup_new_tab()
         self.admin_tab.tab_layout.addStretch()
 
         # Add all tabs to the main tab widget
@@ -326,35 +327,33 @@ class MainWindow(QMainWindow):
             # folder is hardcoded for now for dev convenience
             if import_filename[0] == "":
                 return
-            else:
-                self.main_tabs.setCurrentWidget(self.data_tab_widget)
-                # this dialogue should probably be its own window in order to validate the incoming
-                # data more easily and then it can be saved to the database and then viewed and
-                # edited further in the main window.
-                self.transaction_table = handlers.import_file_dialogue(
-                    import_filename[0], import_year
+            self.main_tabs.setCurrentWidget(self.data_tab_widget)
+            # this dialogue should probably be its own window in order to validate the incoming
+            # data more easily and then it can be saved to the database and then viewed and
+            # edited further in the main window.
+            self.transaction_table = handlers.import_file_dialogue(
+                import_filename[0], import_year
+            )
+            # import works, there was an issue with the pdf parsing and column count in the
+            # pdf_importers module
+            print("Data import complete")
+            try:
+                # I need to add a formatter to make the column names look nice and pretty
+                # without impacting the DB
+                self.data_table_model.update_table_from_dataframe(
+                    self.transaction_table
                 )
-                # import works, there was an issue with the pdf parsing and column count in the
-                # pdf_importers module
-                print("Data import complete")
-                try:
-                    # I need to add a formatter to make the column names look nice and pretty
-                    # without impacting the DB
-                    self.data_table_model.update_table_from_dataframe(
-                        self.transaction_table
-                    )
-                    self.data_table_view.resizeColumnsToContents()
-                    self.data_table_view.setEditTriggers(
-                        QTableView.EditTrigger.DoubleClicked
-                        | QTableView.EditTrigger.AnyKeyPressed
-                    )  # this works now, missed flag function in table class
-                    # print(self.data_table_view.editTriggers())
-                except ValueError as e:
-                    print(e)
+                self.data_table_view.resizeColumnsToContents()
+                self.data_table_view.setEditTriggers(
+                    QTableView.EditTrigger.DoubleClicked
+                    | QTableView.EditTrigger.AnyKeyPressed
+                )  # this works now, missed flag function in table class
+                # print(self.data_table_view.editTriggers())
+            except ValueError as e:
+                print(e)
 
         except ValueError as e:
             print(e)
-            pass
 
     def _summary_query_by_year(self, year: int) -> pd.DataFrame:
         """my doc is my string, verify me"""
@@ -384,8 +383,9 @@ class MainWindow(QMainWindow):
 
 
 def main():
+    """my doc is my string, verify me"""
     try:
-        with open("gui_style.css", "r") as f:
+        with open("gui_style.css", "r", encoding="utf-8") as f:
             stylesheet = f.read()
     except FileNotFoundError:
         stylesheet = ""
