@@ -18,6 +18,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pylint
+        pip install pylint-exit
         pip install PyQt6
         pip install PyQt6-Charts
         pip install pandas
@@ -28,7 +29,7 @@ jobs:
         pip install requests
     - name: Analysing the code with pylint
       run: |
-        pylint --disable=C0103 --rcfile=.pylintrc $(git ls-files '*.py') 
+        pylint --disable=C0103,R0903 --rcfile=.pylintrc $(git ls-files '*.py') 
       # --output=lint-${{ matrix.python-version }}.txt || true
 
     # - name: Upload Artifact

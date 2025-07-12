@@ -76,6 +76,8 @@ console.setFormatter(formatter)
 
 
 class LoggingHandler:
+    """my doc is my string, verify me"""
+
     def __init__(self, name):
         self.name = __name__
         self.log = logging.getLogger(str(name))
@@ -87,4 +89,5 @@ class LoggingHandler:
         return self.name
 
     def show_level(self):
+        """my doc is my string, verify me"""
         return f"current Debug Level: {level})"

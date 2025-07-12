@@ -254,7 +254,10 @@ class file_import_handlers(object):
         return expenses
 
     @staticmethod
-    def cap_one_import(pdf_path, import_year):
+    def cap_one_import(pdf_path: str, import_year: int):
+        print(
+            "This is lightly broken due to the dateparse change, check the CSV one for the fix"
+        )
         """my doc is my string, verify me"""
         frame_list = []
         all_imports = pd.DataFrame
