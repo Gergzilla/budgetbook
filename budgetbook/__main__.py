@@ -295,7 +295,10 @@ class MainWindow(QMainWindow):
         chosen_year = self.report_tab_year_select.itemText(
             self.report_tab_year_select.currentIndex()
         )
-        chosen_month = self.report_tab_month_select.itemText(1)
+        chosen_month = self.report_tab_month_select.itemText(
+            self.report_tab_month_select.currentIndex()
+        )
+        # current selection is finished, future change is dynamic update chart when selection changes
         print(f"chosen year is: {chosen_year} and chosen month is  {chosen_month}")
         # need to insert DB call to update the chart with.
         self.report_tab_pie_series = handlers.QtPieChartSeries(self.pie_dict)

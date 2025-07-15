@@ -131,7 +131,7 @@ class Page:
 
 
 class file_import_handlers(object):
-    # these funcitons moved from handlers to consolidate all file import components to one module
+    # these functions moved from handlers to consolidate all file import components to one module
     def __init__(self):
         self.name = __name__
         self.logger = LoggingHandler(__class__).log
@@ -255,9 +255,6 @@ class file_import_handlers(object):
 
     @staticmethod
     def cap_one_import(pdf_path: str, import_year: int):
-        print(
-            "This is lightly broken due to the dateparse change, check the CSV one for the fix"
-        )
         """my doc is my string, verify me"""
         frame_list = []
         all_imports = pd.DataFrame
@@ -281,9 +278,7 @@ class file_import_handlers(object):
         # valid rows should have a Date in the first column, removing ones that dont
         for row in all_imports.itertuples():
             try:
-                datecheck = dateparser.parse(row[1], fuzzy=True)
-                # print(datecheck)
-                if datecheck:
+                if file_import_handlers.dateCheck(row[1], fuzzy=False) is True:
                     pass
                 else:
                     all_imports.drop(index=row[0], inplace=True)
