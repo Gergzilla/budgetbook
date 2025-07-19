@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QPushButton,
     QInputDialog,
+    QDialog,
 )
 
 from utilities import handlers
@@ -40,6 +41,7 @@ except ImportError:
 logger = LoggingHandler(str(os.path.basename(__file__))).log
 
 # List of years to use for various prompts
+# further note, these should be unified somewhere in vars file later
 year_list = ["2025", "2024", "2023", "2022", "2021", "2020"]
 month_dict = {
     "Jan": "January",
@@ -192,7 +194,7 @@ class MainWindow(QMainWindow):
         self.report_tab_button_layout.addWidget(self.report_tab_run_report_button)
         self.report_tab_button_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
-        self.pie_dict = {
+        self.pie_dict = {  # temp static data for chart generation
             "Mortage 30 pct": 180,
             "Utilies 5 pct": 5,
             "Grocery 20 pct": 20,
@@ -247,13 +249,16 @@ class MainWindow(QMainWindow):
 
         self.import_data_button = QPushButton("Import File")
         self.import_data_button.clicked.connect(self.button_import_clicked)
+        self.load_data_button = QPushButton("Load Month from Database")
+        self.load_data_button.clicked.connect(self.button_load_from_db_clicked)
         self.save_to_db_button = QPushButton("Save to Database")
-        self.save_to_db_button.clicked.connect(self._save_to_database)  # NYI
+        self.save_to_db_button.clicked.connect(self._save_to_database)
         self.data_tab_reset_table_button = QPushButton("Reset Table Data")
         self.data_tab_reset_table_button.clicked.connect(self._reset_table)
 
         # add button widgets to the tabs layout
         self.data_tab_button_layout.addWidget(self.import_data_button)
+        self.data_tab_button_layout.addWidget(self.load_data_button)
         self.data_tab_button_layout.addWidget(self.save_to_db_button)
         self.data_tab_button_layout.addWidget(self.data_tab_reset_table_button)
 
@@ -305,7 +310,9 @@ class MainWindow(QMainWindow):
         self.report_tab_chart.removeAllSeries()  # overwrites the one currently there
         self.report_tab_chart.addSeries(self.report_tab_pie_series)
 
-    def _choose_import_year(self) -> int:
+    def _choose_date_range(self, type) -> int:
+        # currently deprecated
+        # This was moved to a custom dialog class to handle both month and year as needed
         """my doc is my string, verify me"""
         import_year, ok = QInputDialog.getItem(
             self, "What year is this data for?", "Select Year:", year_list, 0, False
@@ -317,8 +324,12 @@ class MainWindow(QMainWindow):
 
     def button_import_clicked(self) -> None:
         """my doc is my string, verify me"""
-        import_year = self._choose_import_year()
-        print(f"Year returned was {import_year}")
+        import_year_dialog = gui_handlers.CustomDateRangeDialogue(self)
+        import_year_dialog.set_dialog_type("year_only")
+        import_year_range = import_year_dialog.exec()
+        if import_year_range == QDialog.DialogCode.Accepted:
+            import_year = import_year_dialog.year
+            print(f"chosen year is: {import_year}")
 
         try:
             import_filename = QFileDialog.getOpenFileName(
@@ -357,6 +368,16 @@ class MainWindow(QMainWindow):
 
         except ValueError as e:
             print(e)
+
+    def button_load_from_db_clicked(self) -> None:
+        print("did you click load data?")
+        load_date_dialog = gui_handlers.CustomDateRangeDialogue(self)
+        load_date_dialog.set_dialog_type("month_and_year")
+        load_date_range = load_date_dialog.exec()
+        if load_date_range == QDialog.DialogCode.Accepted:
+            load_year = load_date_dialog.year
+            load_month = load_date_dialog.month
+            print(f"chosen year is: {load_year} and chosen month is  {load_month}")
 
     def _summary_query_by_year(self, year: int) -> pd.DataFrame:
         """my doc is my string, verify me"""
