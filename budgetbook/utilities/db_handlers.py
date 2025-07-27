@@ -21,7 +21,9 @@ logger = LoggingHandler("db_handlers").log  # currently untested
 
 
 class DatabaseSetup:
-    """my doc is my string, verify me"""
+    """This is the initial database and table setup, it is currently done manually in an ugly way
+    I need to integrate this into a startup or setup type function for a quote new user case
+    But for now they are just collected together in a proper method class"""
 
     def __init__(self):
         self.name = __name__
@@ -116,9 +118,9 @@ def save_dataframe_to_db(input_frame: pd.DataFrame) -> None:
         ]
         # this does create new entries without duplicates and allows for updates but if there are
         # conflicts and data is empty it could overwrite for example if you import the same file
-        # and chang enothing and save, it wont create duplicates but any unprotected fields: aka
+        # and change nothing and save, it wont create duplicates but any unprotected fields: aka
         # post_date, tags, notes in the new conflicting data can overwrite/NULL the data
-        # already in the DB
+        # already in the DB.  I need better data integrity handling somehow
         write_cursor.execute(
             "INSERT INTO transactions ('Transaction Date', 'Post Date', 'Charge Name',"
             " 'Charge Amount', Tags, Notes)"
@@ -141,6 +143,7 @@ def save_dataframe_to_db(input_frame: pd.DataFrame) -> None:
 
 
 def load_db_to_dataframe(load_query: dict) -> pd.DataFrame:
+    # THIS IS THE LIVE AND WORKING ONE
     """
     This should run a query using year and/or year and month against the expenses table and return
     the contents as a pandas dataframe.

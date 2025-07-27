@@ -1,5 +1,6 @@
 #!/usr/bin/python
-"""my doc is my string, verify me"""
+"""This module is classes and functions relating to managin the gui and it's unique elements.
+Such as creating tabs and handling custom dialog boxes for various things"""
 # TODO I need to add I think a button making class that will
 # create buttons at a fixed height and dynamic width of the text
 
@@ -87,17 +88,17 @@ class CustomDateRangeDialogue(QDialog):
         self.month = ""
         # print(f"chosen dialoge type is: {self.dialog_type}")
 
-    def set_dialog_type(self, dialog_type):
+    def set_dialog_type(self, dialog_type: str = "year_only"):
         self.dialog_type = dialog_type
         if self.dialog_type == "year_only":
-            print(f"you chose {dialog_type}")
+            # print(f"you chose {dialog_type}")
             self.year_layout.addWidget(QLabel("Select Year: "))
             self.chosen_year.addItems(year_selector)
             self.year_layout.addWidget(self.chosen_year)
             self.date_dialog_layout.addLayout(self.year_layout)
 
         elif self.dialog_type == "month_and_year":
-            print(f"you chose {dialog_type}")
+            # print(f"you chose {dialog_type}")
             self.year_layout.addWidget(QLabel("Select Year: "))
             self.chosen_year.addItems(year_selector)
             self.year_layout.addWidget(self.chosen_year)
@@ -125,20 +126,6 @@ class CustomDateRangeDialogue(QDialog):
             self.month = self.chosen_month.itemText(self.chosen_month.currentIndex())
             self.year = self.chosen_year.itemText(self.chosen_year.currentIndex())
         super().accept()
-
-    def __str__(self):
-        return self.name
-
-
-class YearSelectDialogue(QDialog):  # not using yet, maybe never
-    """my doc is my string, verify me"""
-
-    def __init__(self, box_title: str, prompt_message: str):
-        super().__init__()
-        self.name = __name__
-        self.box_title = str(box_title)
-        self.prompt_message = str(prompt_message)
-        self.setWindowTitle(str(self.box_title))
 
     def __str__(self):
         return self.name
