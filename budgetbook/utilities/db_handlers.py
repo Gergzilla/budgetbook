@@ -184,36 +184,6 @@ def write_to_expenses(writedata="", live_expense_database=default_database):
     writeCursor.close()
 
 
-# these last two functions need to be refactored because they are using the wrong SQL formatting
-# AND need to update with hardcoded table name
-def add_expenses(expensedata, expenses_table="transactions"):
-    """my doc is my string, verify me"""
-    # this is the proper format for insertion and works to auto increment ROWID
-    # otherwise you can get a 'table has x columns but y supplied' unless you specificy the ROWID
-    # as well which isnt needed
-
-    insertString = f"INSERT INTO {expenses_table} (charge_date, charge_name, amount, tag_id, \
-                    notes) VALUES ({expensedata})"
-    # bad form, but used to work. changing to placeholders
-    print(insertString)
-    write_to_expenses(insertString)
-
-
-def add_tags(expensdata, tag, expenses_table="transactions"):
-    """my doc is my string, verify me"""
-    # more learning, the for loop for a tuple doesnt work on a single item because there is
-    # nothing to iterate over so here it is just a,b,c,y,z = tuple
-    date, entity, charge, activetag, note = expensdata
-    if activetag and note:
-        # activetag and note not needed here but allocated anyways to prevent ValueError
-        print(f"{activetag} - {note}")
-
-    tagUpdate = f"UPDATE {expenses_table} SET tag='{tag}' WHERE date='{date}' AND \
-                 charge_name='{entity}' AND amount={charge}"
-    result = write_to_expenses(tagUpdate)
-    # return result return currently is meaningless
-
-
 ##### read-only database functions  ########
 
 
