@@ -149,19 +149,17 @@ def load_db_to_dataframe(load_query: dict) -> pd.DataFrame:
     the contents as a pandas dataframe.
     """
     dbconn = sqlite3.connect(default_database)
-    read_cursor = dbconn.cursor()
-    year_choice = load_query["year"]
-    year_match = f"{year_choice}"
+    if "All" in load_query["year"]:
+        year_match = "-"
+    else:
+        year_match = load_query["year"]
     if "Whole" in load_query["month"]:
         # If whole year is selected then the query matches just the year in both cases
         month_match = year_match
     else:
         # else converts the month to the standard two digit month and the query uses both
-        month_choice = load_query["month"]
-        month_match = datetime.strptime(month_choice, "%b").strftime("%m")
+        month_match = datetime.strptime(load_query["month"], "%b").strftime("%m")
         month_match = f"-{month_match}-"
-    # print(month_choice)
-    # print(month_match)
     db_query = """
     SELECT *
     FROM transactions WHERE INSTR("Transaction Date", :year) > 0

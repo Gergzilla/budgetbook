@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
 
 # List of years to use for various prompts
 # further note, these should be unified somewhere in vars file later
+# also the years should probably be dynamic in some way and editable especially for imports
 year_list = ["2025", "2024", "2023", "2022", "2021", "2020"]
 month_dict = {
     "Jan": "January",
