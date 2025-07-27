@@ -69,7 +69,7 @@ class CustomOkCancelDialog(QDialog):
 
 
 class CustomDateRangeDialogue(QDialog):
-    """This creates a customer input dialog to choose year or month and year for various date selections"""
+    """This creates a custome input dialog to choose year or month and year for various date selections"""
 
     # this doesnt actually open a window for some reason
     def __init__(self, dialog_type, parent=None):
@@ -79,34 +79,31 @@ class CustomDateRangeDialogue(QDialog):
         self.setWindowTitle("Choose Data Range")
 
         self.date_dialog_layout = QVBoxLayout()
+        self.year_layout = QHBoxLayout()
+        self.month_layout = QHBoxLayout()
+        self.chosen_year = QComboBox()
+        self.chosen_month = QComboBox()
+        self.year = ""
+        self.month = ""
         # print(f"chosen dialoge type is: {self.dialog_type}")
 
     def set_dialog_type(self, dialog_type):
         self.dialog_type = dialog_type
         if self.dialog_type == "year_only":
             print(f"you chose {dialog_type}")
-            self.year_layout = QHBoxLayout()
             self.year_layout.addWidget(QLabel("Select Year: "))
-            self.chosen_year = QComboBox()
             self.chosen_year.addItems(year_selector)
             self.year_layout.addWidget(self.chosen_year)
-
             self.date_dialog_layout.addLayout(self.year_layout)
 
         elif self.dialog_type == "month_and_year":
             print(f"you chose {dialog_type}")
-            self.year_layout = QHBoxLayout()
             self.year_layout.addWidget(QLabel("Select Year: "))
-            self.chosen_year = QComboBox()
             self.chosen_year.addItems(year_selector)
             self.year_layout.addWidget(self.chosen_year)
-
-            self.month_layout = QHBoxLayout()
             self.month_layout.addWidget(QLabel("Select Year: "))
-            self.chosen_month = QComboBox()
             self.chosen_month.addItems(month_dict)
             self.month_layout.addWidget(self.chosen_month)
-
             self.date_dialog_layout.addLayout(self.year_layout)
             self.date_dialog_layout.addLayout(self.month_layout)
 

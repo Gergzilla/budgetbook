@@ -3,6 +3,7 @@
 
 import sqlite3
 import os
+from datetime import datetime
 import pandas as pd
 from vars import settings
 
@@ -139,7 +140,38 @@ def save_dataframe_to_db(input_frame: pd.DataFrame) -> None:
     #     print(row)
 
 
+def load_db_to_dataframe(load_query: dict) -> pd.DataFrame:
+    """
+    This should run a query using year and/or year and month against the expenses table and return
+    the contents as a pandas dataframe.
+    """
+    dbconn = sqlite3.connect(default_database)
+    read_cursor = dbconn.cursor()
+    year_choice = load_query["year"]
+    year_match = f"{year_choice}"
+    if "Whole" in load_query["month"]:
+        # If whole year is selected then the query matches just the year in both cases
+        month_match = year_match
+    else:
+        # else converts the month to the standard two digit month and the query uses both
+        month_choice = load_query["month"]
+        month_match = datetime.strptime(month_choice, "%b").strftime("%m")
+        month_match = f"-{month_match}-"
+    # print(month_choice)
+    # print(month_match)
+    db_query = """
+    SELECT *
+    FROM transactions WHERE INSTR("Transaction Date", :year) > 0
+    AND INSTR("Transaction Date", :month) > 0 ;
+    """
+    loaded_frame = pd.read_sql(
+        db_query, dbconn, params={"year": year_match, "month": month_match}
+    )
+    print(loaded_frame)
+
+
 def write_to_expenses(writedata="", live_expense_database=default_database):
+    # I dont think this is currently used anymore
     """my doc is my string, verify me"""
     dbconn = sqlite3.connect(live_expense_database)
     writeCursor = dbconn.cursor()

@@ -250,7 +250,7 @@ class MainWindow(QMainWindow):
         self.import_data_button = QPushButton("Import File")
         self.import_data_button.clicked.connect(self.button_import_clicked)
         self.load_data_button = QPushButton("Load Month from Database")
-        self.load_data_button.clicked.connect(self.button_load_from_db_clicked)
+        self.load_data_button.clicked.connect(self._button_load_from_db_clicked)
         self.save_to_db_button = QPushButton("Save to Database")
         self.save_to_db_button.clicked.connect(self._save_to_database)
         self.data_tab_reset_table_button = QPushButton("Reset Table Data")
@@ -295,7 +295,7 @@ class MainWindow(QMainWindow):
     def _generate_report_chart(self):
         """my doc is my string, verify me"""
         print("Generating report from _year_ and _month_")
-        # so we need to call the report handler we will create in db_hanglers, and get the value of
+        # so we need to call the report handler we will create in db_handlers, and get the value of
         # the month and year selector and pass those to the function
         chosen_year = self.report_tab_year_select.itemText(
             self.report_tab_year_select.currentIndex()
@@ -369,15 +369,19 @@ class MainWindow(QMainWindow):
         except ValueError as e:
             print(e)
 
-    def button_load_from_db_clicked(self) -> None:
-        print("did you click load data?")
+    def _button_load_from_db_clicked(self) -> None:
+        # print("did you click load data?")
         load_date_dialog = gui_handlers.CustomDateRangeDialogue(self)
         load_date_dialog.set_dialog_type("month_and_year")
         load_date_range = load_date_dialog.exec()
         if load_date_range == QDialog.DialogCode.Accepted:
-            load_year = load_date_dialog.year
-            load_month = load_date_dialog.month
-            print(f"chosen year is: {load_year} and chosen month is  {load_month}")
+            load_query = {}
+            load_query["year"] = load_date_dialog.year
+            load_query["month"] = load_date_dialog.month
+            print(load_query)
+            # Next we call a DB query
+            loaded_frame = db_handlers.load_db_to_dataframe(load_query)
+            # print(f"chosen year is: {load_year} and chosen month is  {load_month}")
 
     def _summary_query_by_year(self, year: int) -> pd.DataFrame:
         """my doc is my string, verify me"""
