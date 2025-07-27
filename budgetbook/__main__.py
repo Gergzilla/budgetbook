@@ -323,7 +323,8 @@ class MainWindow(QMainWindow):
         return None
 
     def button_import_clicked(self) -> None:
-        """my doc is my string, verify me"""
+        """Initiates the file import process to select, parse and import transactions from
+        external files into the application to then be saved to the database"""
         import_year_dialog = gui_handlers.CustomDateRangeDialogue(self)
         import_year_dialog.set_dialog_type("year_only")
         import_year_range = import_year_dialog.exec()
@@ -380,8 +381,22 @@ class MainWindow(QMainWindow):
             load_query["month"] = load_date_dialog.month
             print(load_query)
             # Next we call a DB query
-            loaded_frame = db_handlers.load_db_to_dataframe(load_query)
-            # print(f"chosen year is: {load_year} and chosen month is  {load_month}")
+            self.transaction_table = db_handlers.load_db_to_dataframe(load_query)
+            print("Data Loading complete")
+            try:
+                # I need to add a formatter to make the column names look nice and pretty
+                # without impacting the DB
+                self.data_table_model.update_table_from_dataframe(
+                    self.transaction_table
+                )
+                self.data_table_view.resizeColumnsToContents()
+                self.data_table_view.setEditTriggers(
+                    QTableView.EditTrigger.DoubleClicked
+                    | QTableView.EditTrigger.AnyKeyPressed
+                )  # this works now, missed flag function in table class
+                # print(self.data_table_view.editTriggers())
+            except ValueError as e:
+                print(e)
 
     def _summary_query_by_year(self, year: int) -> pd.DataFrame:
         """my doc is my string, verify me"""

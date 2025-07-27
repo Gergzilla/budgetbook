@@ -180,13 +180,13 @@ class file_import_handlers(object):
     def format_date(datestring, year):
         """my doc is my string, verify me"""
         formated_date = f"'{datestring}'"
-        print(f"1: formated_date in format_date: {formated_date}")
+        # print(f"1: formated_date in format_date: {formated_date}")
         formated_date = year + " " + str(formated_date).strip("'")
-        print(f"2: formated_date in format_date: {formated_date}")
+        # print(f"2: formated_date in format_date: {formated_date}")
         date_to_string = str(datetime.strptime(formated_date, "%Y %b %d").date())
-        print(f"Did this break? {date_to_string}")
+        # print(f"Did this break? {date_to_string}")
         formated_date = f"{date_to_string}"
-        print(f"3: formated_date in format_date: {formated_date}")
+        # print(f"3: formated_date in format_date: {formated_date}")
         return formated_date
 
     @staticmethod

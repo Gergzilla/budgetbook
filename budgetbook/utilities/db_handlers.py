@@ -167,7 +167,8 @@ def load_db_to_dataframe(load_query: dict) -> pd.DataFrame:
     loaded_frame = pd.read_sql(
         db_query, dbconn, params={"year": year_match, "month": month_match}
     )
-    print(loaded_frame)
+    # print(loaded_frame)
+    return loaded_frame
 
 
 def write_to_expenses(writedata="", live_expense_database=default_database):
