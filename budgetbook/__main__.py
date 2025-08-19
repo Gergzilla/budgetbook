@@ -331,6 +331,10 @@ class MainWindow(QMainWindow):
         # entry without import it fails.
         print("Saving table contents to database")
         db_handlers.save_dataframe_to_db(self.transaction_table)
+        check_msg = QMessageBox()
+        check_msg.setWindowTitle("Transactions Saved")
+        check_msg.setText(f"Saved current transactions to database.")
+        check_msg.exec()
 
     def button_import_clicked(self) -> None:
         """Initiates the file import process to select, parse and import transactions from
@@ -411,7 +415,7 @@ class MainWindow(QMainWindow):
     # Report Functions
     def _generate_report_chart(self):
         """my doc is my string, verify me"""
-        print("Generating report from _year_ and _month_")
+        self.logger.debug("Generating report from _year_ and _month_")
         # so we need to call the report handler we will create in db_handlers, and get the value of
         # the month and year selector and pass those to the function
         chosen_year = self.report_tab_year_select.itemText(
@@ -421,7 +425,9 @@ class MainWindow(QMainWindow):
             self.report_tab_month_select.currentIndex()
         )
         # current selection is finished, future change is dynamic update chart when selection changes
-        print(f"chosen year is: {chosen_year} and chosen month is  {chosen_month}")
+        self.logger.debug(
+            f"chosen year is: {chosen_year} and chosen month is  {chosen_month}"
+        )
         # need to insert DB call to update the chart with.
         self.report_tab_pie_series = handlers.QtPieChartSeries(self.pie_dict)
         self.report_tab_chart.removeAllSeries()  # overwrites the one currently there
@@ -435,19 +441,7 @@ class MainWindow(QMainWindow):
             return
             # print(f"year chosen was {year}")
         except ValueError as e:
-            print(f"oops {e}")
-
-    # def _choose_date_range(self, type) -> int:
-    #     # currently deprecated
-    #     # This was moved to a custom dialog class to handle both month and year as needed
-    #     """my doc is my string, verify me"""
-    #     import_year, ok = QInputDialog.getItem(
-    #         self, "What year is this data for?", "Select Year:", year_list, 0, False
-    #     )
-    #     if ok and import_year:
-    #         # print(f"Year selected was {import_year}")
-    #         return import_year
-    #     return None
+            print(f"oops? {e}")
 
     # Database Management Functions
     def button_check_db_clicked(self) -> None:
@@ -469,14 +463,12 @@ class MainWindow(QMainWindow):
         check_msg.exec()
 
     def button_create_database_clicked(self) -> None:
-        db_transaction_table_creation = db_handlers.DatabaseSetup.create_database()
+        db_transaction_table_creation, status_msg = (
+            db_handlers.DatabaseSetup.create_database()
+        )
         check_msg = QMessageBox()
-        if db_transaction_table_creation:
-            check_msg.setText("Database was created successfully!")
-        else:
-            check_msg.setText(
-                "Database could not be created, check permissions or log files for more information"
-            )
+        check_msg.setWindowTitle("Database Status")
+        check_msg.setText(status_msg)
         check_msg.exec()
 
     def button_delete_duplicates_clicked(self):

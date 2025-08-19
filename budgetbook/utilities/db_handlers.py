@@ -47,30 +47,30 @@ class DatabaseSetup:
         """my doc is my string, verify me"""
         # can prompt for db name in the future, for now its hard set
         if os.path.exists(DatabaseSetup.live_expense_database):
-            print(
-                "File exists, establishing connection to "
+            status_msg = (
+                "Database already exists, connected to "
                 + DatabaseSetup.live_expense_database
             )
-            dbconnect = sqlite3.connect(DatabaseSetup.live_expense_database)
-            return True
+            print(status_msg)
+            logger.info(status_msg)
+            return True, status_msg
         else:
-            print("Database File doesnt exist, creating file")
-            logger.info("Database File doesnt exist, creating file")
+            status_msg = "Database File doesnt exist, creating file"
+            print(status_msg)
+            logger.warning(status_msg)
             try:
                 sqlite3.connect(DatabaseSetup.live_expense_database)
                 # dbconnect = sqlite3.connect(DatabaseSetup.live_expense_database)
-                return True
+                return True, status_msg
             except RuntimeError:
                 # Might need to tweak the exception type
-                print(
+                status_msg = (
                     "could not create file for some reason at "
                     + DatabaseSetup.live_expense_database
                 )
-                logger.info(
-                    "could not create file for some reason at "
-                    + DatabaseSetup.live_expense_database
-                )
-                return False
+                print(status_msg)
+                logger.critical(status_msg)
+                return False, status_msg
 
     @staticmethod
     def create_budget_table() -> str:
@@ -94,17 +94,15 @@ class DatabaseSetup:
                 logger.info("Table created")
                 return (True, "Table created")
             else:
-                logger.critical(
+                status_msg = (
                     "Table could not be created, check log messages for more details."
                 )
-                return (
-                    False,
-                    "Table could not be created, check log messages for more details.",
-                )
+                logger.critical(status_msg)
+                return False, status_msg
         else:
-            # print("Table check passed, nothing to do")
-            logger.info("No action required, table already exists.")
-            return True, "No action required, table already exists."
+            status_msg = "No action required, table already exists."
+            logger.info(status_msg)
+            return True, status_msg
 
     @staticmethod
     def poll_master_table():
@@ -115,20 +113,18 @@ class DatabaseSetup:
         try:
             checktables = masterdblist.fetchone()
             if checktables == None:
-                logger.warning("Index Error: Transaction table was not found.")
-                return False, "Transaction table was not found."
+                status_msg = "Index Error: Transaction table was not found."
+                logger.warning(status_msg)
+                return False, status_msg
             else:
-                logger.info(f"Master table checked and {checktables} table was found")
-                return True, f"Master table checked and {checktables} table was found"
+                status_msg = f"Master table checked and {checktables} table was found"
+                logger.info(status_msg)
+                return True, status_msg
 
         except IndexError:
-            logger.warning(
-                "Index Error: Transaction table was not found or database could not be accessed."
-            )
-            return (
-                False,
-                "Transaction table was not found or database could not be accessed.",
-            )
+            status_msg = "Index Error: Transaction table was not found or database could not be accessed."
+            logger.warning(status_msg)
+            return False, status_msg
 
 
 ##### Data add/remove functions  ######
@@ -206,28 +202,17 @@ def load_db_to_dataframe(load_query: dict) -> pd.DataFrame:
     return loaded_frame
 
 
-def write_to_expenses(writedata="", live_expense_database=default_database):
-    # I dont think this is currently used anymore
-    """my doc is my string, verify me"""
-    dbconn = sqlite3.connect(live_expense_database)
-    writeCursor = dbconn.cursor()
-    try:
-        writeCursor.execute(writedata)
-        dbconn.commit()
-    except SyntaxError as e:
-        print("Error executing query: ", e)
-    writeCursor.close()
-
-
 ##### read-only database functions  ########
 
 
+# These two read only functions currently aren't used afaik
 def query_by_month(
     month,
     live_expense_database=default_database,
     expenses_table=expenseTable,
 ):
     """my doc is my string, verify me"""
+
     dbconn = sqlite3.connect(live_expense_database)
     readCursor = dbconn.cursor()
     monthQuery = f"SELECT date, charge_name, amount, tag_id, notes FROM {expenses_table} WHERE\
