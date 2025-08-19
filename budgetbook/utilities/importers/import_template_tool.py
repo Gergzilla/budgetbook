@@ -98,7 +98,7 @@ class Page:
         """my doc is my string, verify me"""
         end_of_table = self.get_rect(needle)  # for capitalOne only
         if end_of_table:
-            self.logger.DEBUG("rect of needle: {end_of_table}")
+            self.logger.DEBUG(f"rect of needle: {end_of_table}")
             return True
         return False
 

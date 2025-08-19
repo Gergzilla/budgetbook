@@ -47,7 +47,10 @@ class DatabaseSetup:
         """my doc is my string, verify me"""
         # can prompt for db name in the future, for now its hard set
         if os.path.exists(DatabaseSetup.live_expense_database):
-            # print("File exists, establishing connection to " + expenseDB)
+            print(
+                "File exists, establishing connection to "
+                + DatabaseSetup.live_expense_database
+            )
             dbconnect = sqlite3.connect(DatabaseSetup.live_expense_database)
             return True
         else:
@@ -80,15 +83,10 @@ class DatabaseSetup:
             logger.error("Master Table check is False, meaning table needs to be made")
             # this should be wrapped in a try/except loop
             DatabaseSetup.write_cursor.executescript(
-                "CREATE TABLE transactions ('Transaction Date' TEXT, 'Post Date' TEXT, "
-                "'Charge Name' TEXT, 'Charge Amount' REAL, Tags TEXT, Notes TEXT, "
-                "UNIQUE('Transaction Date','Charge Name','Charge Amount'))"
+                "CREATE TABLE transactions (transaction_date TEXT, post_date TEXT, "
+                "transaction_name TEXT, transaction_amount REAL, tags TEXT, notes TEXT, "
+                "UNIQUE(transaction_date,transaction_name,transaction_amount))"
             )
-            # DatabaseSetup.write_cursor.executescript(
-            #     "CREATE TABLE transactions ('Transaction Date' TEXT, 'Post Date' TEXT, "
-            #     "'Charge Name' TEXT, 'Charge Amount' REAL, Tags TEXT, Notes TEXT, "
-            #     "UNIQUE('Transaction Date','Charge Name','Charge Amount'))"
-            # )  #the old db, fixing column names again
             DatabaseSetup.dbconnect.commit()
             if table_check:
                 # this internal if makes no sense, it would never be hit because if has to be false first
@@ -116,12 +114,21 @@ class DatabaseSetup:
         )
         try:
             checktables = masterdblist.fetchone()
-            logger.info(f"Master table checked and {checktables} table was found")
-            return True, f"Master table checked and {checktables} table was found"
-            # print("try")
+            if checktables == None:
+                logger.warning("Index Error: Transaction table was not found.")
+                return False, "Transaction table was not found."
+            else:
+                logger.info(f"Master table checked and {checktables} table was found")
+                return True, f"Master table checked and {checktables} table was found"
+
         except IndexError:
-            logger.warning("Index Error: Transaction table was not found.")
-            return False, "Transaction table was not found."
+            logger.warning(
+                "Index Error: Transaction table was not found or database could not be accessed."
+            )
+            return (
+                False,
+                "Transaction table was not found or database could not be accessed.",
+            )
 
 
 ##### Data add/remove functions  ######
@@ -136,12 +143,12 @@ def save_dataframe_to_db(input_frame: pd.DataFrame) -> None:
     write_cursor = dbconn.cursor()
     for index, row in input_frame.iterrows():
         transaction_data = [
-            row["Transaction Date"],
-            row["Post Date"],
-            row["Charge Name"],
-            row["Charge Amount"],
-            row["Tags"],
-            row["Notes"],
+            row["transaction_date"],
+            row["post_date"],
+            row["transaction_name"],
+            row["transaction_amount"],
+            row["tags"],
+            row["notes"],
         ]
         # this does create new entries without duplicates and allows for updates but if there are
         # conflicts and data is empty it could overwrite for example if you import the same file
@@ -149,14 +156,14 @@ def save_dataframe_to_db(input_frame: pd.DataFrame) -> None:
         # post_date, tags, notes in the new conflicting data can overwrite/NULL the data
         # already in the DB.  I need better data integrity handling somehow
         write_cursor.execute(
-            "INSERT INTO transactions ('Transaction Date', 'Post Date', 'Charge Name',"
-            " 'Charge Amount', Tags, Notes)"
+            "INSERT INTO transactions (transaction_date, post_date, transaction_name,"
+            " transaction_amount, tags, notes)"
             " VALUES (?,?,?,?,?,?) "
-            'ON CONFLICT ("Transaction Date","Charge Name","Charge Amount") '
-            "DO UPDATE SET 'Transaction Date' = excluded.'Transaction Date', 'Post Date' = "
-            "excluded.'Post Date', 'Charge Name' = excluded.'Charge Name', "
-            "'Charge Amount' = excluded.'Charge Amount', Tags = excluded.Tags, "
-            "Notes = excluded.Notes",
+            'ON CONFLICT ("transaction_date","transaction_name","transaction_amount") '
+            "DO UPDATE SET transaction_date = excluded.transaction_date, post_date = "
+            "excluded.post_date, transaction_name = excluded.transaction_name, "
+            "transaction_amount = excluded.transaction_amount, tags = excluded.tags, "
+            "notes = excluded.notes",
             transaction_data,
         )
 
@@ -189,8 +196,8 @@ def load_db_to_dataframe(load_query: dict) -> pd.DataFrame:
         month_match = f"-{month_match}-"
     db_query = """
     SELECT *
-    FROM transactions WHERE INSTR("Transaction Date", :year) > 0
-    AND INSTR("Transaction Date", :month) > 0 ;
+    FROM transactions WHERE INSTR("transaction_date", :year) > 0
+    AND INSTR("transaction_date", :month) > 0 ;
     """
     loaded_frame = pd.read_sql(
         db_query, dbconn, params={"year": year_match, "month": month_match}

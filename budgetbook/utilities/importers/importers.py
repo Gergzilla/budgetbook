@@ -41,7 +41,7 @@ class Page:
         """my doc is my string, verify me"""
         end_of_table = self.get_rect(needle)  # for capitalOne only
         if end_of_table:
-            self.logger.debug("rect of needle: {end_of_table}")
+            self.logger.debug(f"Calculated rect of needle: {end_of_table}")
             return True
         return False
 
@@ -54,7 +54,7 @@ class Page:
             # this sets the rectable up a few units to avoid including the end of table keyword
             # in the rectangle
             return self.clip_y1
-        self.logger.debug("Table end not found on page")
+        self.logger.debug(f"Table end not found on page {self.page.number}")
         return self.clip_y1
 
     def get_rect(self, needle):
@@ -105,7 +105,7 @@ class Page:
         if self.find_transaction_table(table_title):
             # print(f"Page: {self.page.number} into the find transaction loop?")
             self.logger.debug(
-                "Page {self.page.number} appears to have a transaction table"
+                f"Page {self.page.number} appears to have a transaction table"
             )
             new_clip_y1 = self.find_table_end(end_of_trans_needle)
             if new_clip_y1 == 0:
@@ -114,7 +114,7 @@ class Page:
                 clip_list = list(alt_clip)
                 clip_list[3] = new_clip_y1
                 alt_clip = tuple(clip_list)
-                self.logger.debug("parsed alt_clip is {alt_clip}")
+                self.logger.debug(f"parsed alt_clip is {alt_clip}")
                 self.parsed_dataframe = self.parse_transaction_table(alt_clip)
             return self.parsed_dataframe
         # df = pd.DataFrame()
@@ -166,12 +166,12 @@ class file_import_handlers(object):
     @staticmethod
     def dateCheck(datestring, fuzzy=False):
         """my doc is my string, verify me"""
-        print(f"datestring in dateCheck() method: {datestring}")
+        # print(f"datestring in dateCheck() method: {datestring}")
         try:
             dateparser.parse(datestring, fuzzy=fuzzy)
             return True
         except dateparser.ParserError as e:
-            logger.debug(e)
+            logger.debug(f"datecheck Parse Error: {e}")
             # e isnt technically used but caught for proper handling, this just needs to evaluate
             # as false if datestring is not a date
             return False
@@ -206,12 +206,12 @@ class file_import_handlers(object):
             joined_df = pd.DataFrame(
                 joined_csv,
                 columns=[
-                    "Transaction Date",
-                    "Post Date",
-                    "Charge Name",
-                    "Charge Amount",
-                    "Tags",
-                    "Notes",
+                    "transaction_date",
+                    "post_date",
+                    "transaction_name",
+                    "transaction_amount",
+                    "tags",
+                    "notes",
                 ],
             )
             return joined_df
@@ -292,21 +292,21 @@ class file_import_handlers(object):
         all_imports = all_imports[["Col1", "Col6", "Col4", "Col5"]]
         # Relabel for clarity
         all_imports.columns = [
-            "Transaction Date",
-            "Post Date",
-            "Charge Name",
-            "Charge Amount",
+            "transaction_date",
+            "post_date",
+            "transaction_name",
+            "transaction_amount",
         ]
-        all_imports["Tags"] = ""
-        all_imports["Notes"] = ""
+        all_imports["tags"] = ""
+        all_imports["notes"] = ""
         # check for missaligned columns, in testing it would happen where negative values greater
         # than ###.## would lose the minus sign to the previous column, check for this trailing
         # minus sign (-) and move it to the right column
         for row in all_imports.itertuples():
             if row[3][-1] == "-":
                 print(f"Minus sign found in charge_name at index {row[0]}")
-                all_imports.loc[row[0], "Charge Name"] = row[3][:-1].strip()
-                all_imports.loc[row[0], "Charge Amount"] = "- " + row[4]
+                all_imports.loc[row[0], "transaction_name"] = row[3][:-1].strip()
+                all_imports.loc[row[0], "transaction_amount"] = "- " + row[4]
             else:
                 pass
         all_imports = file_import_handlers.format_import_dataframe(
