@@ -39,9 +39,6 @@ signal_helpyer.py
 budgetbook/bha14.py
 ocgtnh_cellrename.lua
 
-# not ready to publish this yet, but soon
-roadmap.md
-
 # Unit test / coverage reports
 htmlcov/
 .tox/

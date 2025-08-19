@@ -35,11 +35,17 @@ logger = LoggingHandler(str(os.path.basename(__file__))).log
 class PandasAbstractTable(QAbstractTableModel):
     # moved from handlers for testing
     # https://www.pythonguis.com/tutorials/pyqt6-qtableview-modelviews-numpy-pandas/
-    def __init__(self, data: pd.DataFrame, parent=None):
+    def __init__(self, data: pd.DataFrame, display_headers=None, parent=None):
         super().__init__(parent)
         # self.name = __name__
         self.logger = LoggingHandler(__class__).log
         self._data = data
+
+        if display_headers:
+            self._display_headers = display_headers
+        else:
+            # Fallback to DataFrame columns if no display headers are provided
+            self._display_headers = self.data.columns.tolist()
 
     def flags(self, index) -> Qt.ItemFlag:
         """my doc is my string, verify me"""
@@ -61,7 +67,8 @@ class PandasAbstractTable(QAbstractTableModel):
         """my doc is my string, verify me"""
         if role == Qt.ItemDataRole.DisplayRole:
             if orientation == Qt.Orientation.Horizontal:
-                return str(self._data.columns[section])
+                # return str(self._data.columns[section])
+                return str(self._display_headers[section])
 
             if orientation == Qt.Orientation.Vertical:
                 return str(self._data.index[section])

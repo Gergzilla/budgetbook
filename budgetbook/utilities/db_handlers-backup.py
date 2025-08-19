@@ -1,6 +1,9 @@
 #!/usr/bin/python
 """This module is handler functions and classes related to interacting with the SQLite database"""
 
+"""I am a backup of the db_handlers prior to refactoring the db in order to remove the spaces in the table names
+and other aggressive cleanup like tweaking column formating.  Howefully I wont be needed but with the scope of the 
+changes to be made a full file backup was necessary"""
 import sqlite3
 import os
 from datetime import datetime

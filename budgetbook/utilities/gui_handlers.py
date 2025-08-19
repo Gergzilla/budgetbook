@@ -73,7 +73,6 @@ class CustomOkCancelDialog(QDialog):
 class CustomDateRangeDialogue(QDialog):
     """This creates a custome input dialog to choose year or month and year for various date selections"""
 
-    # this doesnt actually open a window for some reason
     def __init__(self, dialog_type, parent=None):
         super().__init__(parent)
         self.name = __name__

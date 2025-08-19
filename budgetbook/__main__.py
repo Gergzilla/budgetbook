@@ -22,6 +22,7 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QLabel,
     QPushButton,
+    QMessageBox,
     QInputDialog,
     QDialog,
 )
@@ -92,18 +93,48 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(QSize(1000, 800))
         current_font = self.font()
         self.font_metrics = QFontMetrics(current_font)
-        # Setup Menu Menu Actions
+
+        # Setup File Menu Actions
 
         button_quit = QAction("&Quit", self)
         button_quit.setStatusTip("Exit Application")
-        button_quit.triggered.connect(self._button_quit_clicked)
+        button_quit.triggered.connect(self.button_quit_clicked)
 
         button_import = QAction("&Import", self)
         button_import.setStatusTip("Import Expense File")
         button_import.triggered.connect(self.button_import_clicked)
-        # file_menu.addAction(button_quit)
-        # empty frame to just show standard columns for Data
 
+        # Setup Database Menu Actions
+        button_check_db = QAction("Verify Database", self)
+        button_check_db.setStatusTip("Verify Database Tables")
+        button_check_db.triggered.connect(self.button_check_db_clicked)
+
+        button_create_table = QAction("Create Transaction Table", self)
+        button_create_table.setStatusTip("Create Transaction Tables")
+        button_create_table.triggered.connect(self.button_create_table_clicked)
+
+        button_create_db = QAction("Create Database", self)
+        button_create_db.setStatusTip("Create Database File")
+        button_create_db.triggered.connect(self.button_create_database_clicked)
+
+        button_delete_duplicates = QAction("Delete Duplicates", self)
+        button_delete_duplicates.setStatusTip(
+            "Delete Duplicate transactions from database"
+        )
+        button_delete_duplicates.triggered.connect(
+            self.button_delete_duplicates_clicked
+        )
+        # file_menu.addAction(button_quit)
+
+        self.header_labels = [
+            "Tranasction Date",
+            "Post Date",
+            "Transaction Name",
+            "Transaction Amount",
+            "Tags",
+            "Notes",
+        ]
+        # empty frame to just show standard columns for Data
         self.blank_table = pd.DataFrame(
             [
                 ["", "", "", "", "", ""],
@@ -111,8 +142,8 @@ class MainWindow(QMainWindow):
             columns=[
                 "Transaction Date",
                 "Post Date",
-                "Charge Name",
-                "Charge Amount",
+                "Transaction Name",
+                "Transaction Amount",
                 "Tags",
                 "Notes",
             ],
@@ -126,6 +157,11 @@ class MainWindow(QMainWindow):
         file_menu = menu.addMenu("&File")
         file_menu.addAction(button_import)
         file_menu.addAction(button_quit)
+        db_menu = menu.addMenu("Database")
+        db_menu.addAction(button_check_db)
+        db_menu.addAction(button_create_table)
+        db_menu.addAction(button_create_db)
+        db_menu.addAction(button_delete_duplicates)
 
         # Setup Tab Widget
         self.main_tabs = QTabWidget()
@@ -240,7 +276,10 @@ class MainWindow(QMainWindow):
 
         self.transaction_table = self.blank_table
         # Create pandas table object widget from handlers class
-        self.data_table_model = handlers.PandasAbstractTable(self.transaction_table)
+        # self.data_table_model = handlers.PandasAbstractTable(self.transaction_table)
+        self.data_table_model = handlers.PandasAbstractTable(
+            self.transaction_table, display_headers=self.header_labels
+        )
         self.data_table_view = QTableView()
         self.data_table_view.setModel(self.data_table_model)
 
@@ -250,17 +289,17 @@ class MainWindow(QMainWindow):
         self.import_data_button = QPushButton("Import File")
         self.import_data_button.clicked.connect(self.button_import_clicked)
         self.load_data_button = QPushButton("Load Month from Database")
-        self.load_data_button.clicked.connect(self._button_load_from_db_clicked)
+        self.load_data_button.clicked.connect(self.button_load_from_db_clicked)
         self.save_to_db_button = QPushButton("Save to Database")
-        self.save_to_db_button.clicked.connect(self._save_to_database)
-        self.data_tab_reset_table_button = QPushButton("Reset Table Data")
-        self.data_tab_reset_table_button.clicked.connect(self._reset_table)
+        self.save_to_db_button.clicked.connect(self.save_to_database)
+        self.data_tabreset_table_button = QPushButton("Reset Table Data")
+        self.data_tabreset_table_button.clicked.connect(self.reset_table)
 
         # add button widgets to the tabs layout
         self.data_tab_button_layout.addWidget(self.import_data_button)
         self.data_tab_button_layout.addWidget(self.load_data_button)
         self.data_tab_button_layout.addWidget(self.save_to_db_button)
-        self.data_tab_button_layout.addWidget(self.data_tab_reset_table_button)
+        self.data_tab_button_layout.addWidget(self.data_tabreset_table_button)
 
         # add the data table widget and button layouts to the data tab
         self.data_tab_widget.tab_layout.addWidget(self.data_table_view)
@@ -277,50 +316,21 @@ class MainWindow(QMainWindow):
         self.main_tabs.addTab(self.data_tab_widget, "Data")
         self.main_tabs.addTab(self.admin_tab, "Admin")
 
-    # Menu and button functions
+    #### Menu and button functions ####
 
-    def _reset_table(self) -> None:
+    # Data Tab Functions
+    def reset_table(self) -> None:
         """my doc is my string, verify me"""
         # Set the table to the empty dataframe and reset the view
         self.transaction_table = self.blank_table
         self.data_table_model.update_table_from_dataframe(self.transaction_table)
 
-    def _save_to_database(self, current_table: pd.DataFrame):
+    def save_to_database(self, current_table: pd.DataFrame):
         """my doc is my string, verify me"""
         # I need to rework the default view because if you attempt manual
         # entry without import it fails.
         print("Saving table contents to database")
         db_handlers.save_dataframe_to_db(self.transaction_table)
-
-    def _generate_report_chart(self):
-        """my doc is my string, verify me"""
-        print("Generating report from _year_ and _month_")
-        # so we need to call the report handler we will create in db_handlers, and get the value of
-        # the month and year selector and pass those to the function
-        chosen_year = self.report_tab_year_select.itemText(
-            self.report_tab_year_select.currentIndex()
-        )
-        chosen_month = self.report_tab_month_select.itemText(
-            self.report_tab_month_select.currentIndex()
-        )
-        # current selection is finished, future change is dynamic update chart when selection changes
-        print(f"chosen year is: {chosen_year} and chosen month is  {chosen_month}")
-        # need to insert DB call to update the chart with.
-        self.report_tab_pie_series = handlers.QtPieChartSeries(self.pie_dict)
-        self.report_tab_chart.removeAllSeries()  # overwrites the one currently there
-        self.report_tab_chart.addSeries(self.report_tab_pie_series)
-
-    def _choose_date_range(self, type) -> int:
-        # currently deprecated
-        # This was moved to a custom dialog class to handle both month and year as needed
-        """my doc is my string, verify me"""
-        import_year, ok = QInputDialog.getItem(
-            self, "What year is this data for?", "Select Year:", year_list, 0, False
-        )
-        if ok and import_year:
-            # print(f"Year selected was {import_year}")
-            return import_year
-        return None
 
     def button_import_clicked(self) -> None:
         """Initiates the file import process to select, parse and import transactions from
@@ -370,7 +380,7 @@ class MainWindow(QMainWindow):
         except ValueError as e:
             print(e)
 
-    def _button_load_from_db_clicked(self) -> None:
+    def button_load_from_db_clicked(self) -> None:
         # print("did you click load data?")
         load_date_dialog = gui_handlers.CustomDateRangeDialogue(self)
         load_date_dialog.set_dialog_type("month_and_year")
@@ -398,6 +408,26 @@ class MainWindow(QMainWindow):
             except ValueError as e:
                 print(e)
 
+    # Report Functions
+    def _generate_report_chart(self):
+        """my doc is my string, verify me"""
+        print("Generating report from _year_ and _month_")
+        # so we need to call the report handler we will create in db_handlers, and get the value of
+        # the month and year selector and pass those to the function
+        chosen_year = self.report_tab_year_select.itemText(
+            self.report_tab_year_select.currentIndex()
+        )
+        chosen_month = self.report_tab_month_select.itemText(
+            self.report_tab_month_select.currentIndex()
+        )
+        # current selection is finished, future change is dynamic update chart when selection changes
+        print(f"chosen year is: {chosen_year} and chosen month is  {chosen_month}")
+        # need to insert DB call to update the chart with.
+        self.report_tab_pie_series = handlers.QtPieChartSeries(self.pie_dict)
+        self.report_tab_chart.removeAllSeries()  # overwrites the one currently there
+        self.report_tab_chart.addSeries(self.report_tab_pie_series)
+
+    # General Functions
     def _summary_query_by_year(self, year: int) -> pd.DataFrame:
         """my doc is my string, verify me"""
         # pass through to call summary function against database
@@ -407,7 +437,55 @@ class MainWindow(QMainWindow):
         except ValueError as e:
             print(f"oops {e}")
 
-    def _button_quit_clicked(self) -> None:
+    # def _choose_date_range(self, type) -> int:
+    #     # currently deprecated
+    #     # This was moved to a custom dialog class to handle both month and year as needed
+    #     """my doc is my string, verify me"""
+    #     import_year, ok = QInputDialog.getItem(
+    #         self, "What year is this data for?", "Select Year:", year_list, 0, False
+    #     )
+    #     if ok and import_year:
+    #         # print(f"Year selected was {import_year}")
+    #         return import_year
+    #     return None
+
+    # Database Management Functions
+    def button_check_db_clicked(self) -> None:
+        db_table_check_status = db_handlers.DatabaseSetup.poll_master_table()
+        check_msg = QMessageBox()
+        if db_table_check_status:
+            check_msg.setText("Database Check Complete!")
+        else:
+            check_msg.setText(
+                "Database Check failed for some reason, perhaps table not created."
+            )
+        check_msg.exec()
+
+    def button_create_table_clicked(self) -> None:
+        create_Table_bool, status = db_handlers.DatabaseSetup.create_budget_table()
+        check_msg = QMessageBox()
+        check_msg.setWindowTitle("Transaction Table Creation")
+        check_msg.setText(f"{status}")
+        check_msg.exec()
+
+    def button_create_database_clicked(self) -> None:
+        db_transaction_table_creation = db_handlers.DatabaseSetup.create_database()
+        check_msg = QMessageBox()
+        if db_transaction_table_creation:
+            check_msg.setText("Database was created successfully!")
+        else:
+            check_msg.setText(
+                "Database could not be created, check permissions or log files for more information"
+            )
+        check_msg.exec()
+
+    def button_delete_duplicates_clicked(self):
+        """my doc is my string, verify me"""
+        # left as a reminder, this function will be moved to the admin tab for obvious reasons.
+        db_handlers.removeDuplicates()
+
+    # App Control Functions
+    def button_quit_clicked(self) -> None:
         """my doc is my string, verify me"""
         confirm_quit = gui_handlers.CustomOkCancelDialog(
             "Quit?", "Are you sure you want to quit?"
@@ -416,13 +494,6 @@ class MainWindow(QMainWindow):
             sys.exit(0)
         else:
             pass
-
-    def delete_duplicates(self):
-        """my doc is my string, verify me"""
-        # left as a reminder, this function will be moved to the admin tab for obvious reasons.
-        db_handlers.removeDuplicates()
-        # delete_duplicates_button = QPushButton(text="delete duplicates", parent=self)
-        # delete_duplicates_button.setFixedSize(200, 20)
 
 
 def main():
