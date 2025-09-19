@@ -21,7 +21,7 @@ from utilities.logger import (
 """my doc is my string, verify me"""
 # Class is fully functional as is joining all discovered tables for the following institutions:
 # Capital One, Other
-# Future insitutions will be added as I need them but the core functions should be universal in
+# Future institutions will be added as I need them but the core functions should be universal in
 # general.  A helper file has also been created to guide future importer creation.
 # Helper File: import_template_tool.py
 logger = LoggingHandler(str(os.path.basename(__file__))).log
@@ -319,7 +319,8 @@ class file_import_handlers(object):
 
 
 def main():
-    print("this is main")
+    """The main here is just for direct library test with hardcoded imports, its not really needed"""
+    print("This is main for direct testing")
     selection = input("1 for embedded class \n2 to exit\n ")
     if selection == "1":
         pdf_path = os.path.join("statements", "2page-statement.pdf")

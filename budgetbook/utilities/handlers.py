@@ -33,6 +33,9 @@ logger = LoggingHandler(str(os.path.basename(__file__))).log
 
 
 class PandasAbstractTable(QAbstractTableModel):
+    """This is the handler class for creating and populating the QT Abstract Table model using
+    Pandas dataframe objects.  As well as handling data and view updating."""
+
     # moved from handlers for testing
     # https://www.pythonguis.com/tutorials/pyqt6-qtableview-modelviews-numpy-pandas/
     def __init__(self, data: pd.DataFrame, display_headers=None, parent=None):
@@ -138,7 +141,7 @@ class QtPieChartSeries(QPieSeries):
 
 
 ####### Misc utilities  #######
-def dateCheck(datestring, fuzzy=False):
+def dateCheck(datestring, fuzzy=False) -> bool:
     """my doc is my string, verify me"""
     try:
         dateparse(datestring, fuzzy=fuzzy)

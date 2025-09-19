@@ -71,7 +71,8 @@ class CustomOkCancelDialog(QDialog):
 
 
 class CustomDateRangeDialogue(QDialog):
-    """This creates a custome input dialog to choose year or month and year for various date selections"""
+    """This creates a custome input dialog to choose year or month
+    and year for various date selections"""
 
     def __init__(self, dialog_type, parent=None):
         super().__init__(parent)
@@ -89,6 +90,7 @@ class CustomDateRangeDialogue(QDialog):
         # print(f"chosen dialoge type is: {self.dialog_type}")
 
     def set_dialog_type(self, dialog_type: str = "year_only"):
+        """Sets the type of custom dialog box to select year or month and year"""
         self.dialog_type = dialog_type
         if self.dialog_type == "year_only":
             # print(f"you chose {dialog_type}")
@@ -120,6 +122,7 @@ class CustomDateRangeDialogue(QDialog):
         self.setLayout(self.date_dialog_layout)
 
     def accept(self):
+        """hook for accept button to return selected values from the dialog"""
         if self.dialog_type == "year_only":
             self.year = self.chosen_year.itemText(self.chosen_year.currentIndex())
         elif self.dialog_type == "month_and_year":

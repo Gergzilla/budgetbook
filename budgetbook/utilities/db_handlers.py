@@ -21,12 +21,12 @@ logger = LoggingHandler("db_handlers").log  # currently untested
 
 
 class DatabaseSetup:
-    """This is the initial database and table setup, It has been setup within the Database menu of the app
-    Some tweaking is still needed for better user feedback and error handling
-    But for now they are just collected together in a proper method class"""
+    """This is the initial database and table setup, It has been setup within the Database menu of
+    the app.  Some tweaking is still needed for better user feedback and error handling.  But for
+    now they are just collected together in a proper method class"""
 
     live_expense_database = default_database
-    # hard set for now from settings file. I will figure out dynamic later when I make a full DB menu
+    # temp hard set from settings file. I will figure out dynamic later when I make a full DB menu
     try:
         dbconnect = sqlite3.connect(live_expense_database)
     except Exception as e:  # yes its generic, not sure what I might get here yet.
@@ -54,29 +54,28 @@ class DatabaseSetup:
             print(status_msg)
             logger.info(status_msg)
             return True, status_msg
-        else:
-            status_msg = "Database File doesnt exist, creating file"
+        status_msg = "Database File doesnt exist, creating file"
+        print(status_msg)
+        logger.warning(status_msg)
+        try:
+            sqlite3.connect(DatabaseSetup.live_expense_database)
+            # dbconnect = sqlite3.connect(DatabaseSetup.live_expense_database)
+            return True, status_msg
+        except RuntimeError:
+            # Might need to tweak the exception type
+            status_msg = (
+                "could not create file for some reason at "
+                + DatabaseSetup.live_expense_database
+            )
             print(status_msg)
-            logger.warning(status_msg)
-            try:
-                sqlite3.connect(DatabaseSetup.live_expense_database)
-                # dbconnect = sqlite3.connect(DatabaseSetup.live_expense_database)
-                return True, status_msg
-            except RuntimeError:
-                # Might need to tweak the exception type
-                status_msg = (
-                    "could not create file for some reason at "
-                    + DatabaseSetup.live_expense_database
-                )
-                print(status_msg)
-                logger.critical(status_msg)
-                return False, status_msg
+            logger.critical(status_msg)
+            return False, status_msg
 
     @staticmethod
     def create_budget_table() -> str:
         """my doc is my string, verify me"""
         # create expenses table if it doesnt exist
-        table_check, status = DatabaseSetup.poll_master_table()
+        table_check, _status = DatabaseSetup.poll_master_table()
         # print(table_check)
         if table_check is False:
             print("Table check is False, meaning table needs to be made")
@@ -89,8 +88,8 @@ class DatabaseSetup:
             )
             DatabaseSetup.dbconnect.commit()
             if table_check:
-                # this internal if makes no sense, it would never be hit because if has to be false first
-                # and then somehow be true
+                # this makes no sense, it would never be hit because if has to be false first
+                # and then somehow be true, need to validate the logic if it is even used
                 logger.info("Table created")
                 return (True, "Table created")
             else:
@@ -99,10 +98,9 @@ class DatabaseSetup:
                 )
                 logger.critical(status_msg)
                 return False, status_msg
-        else:
-            status_msg = "No action required, table already exists."
-            logger.info(status_msg)
-            return True, status_msg
+        status_msg = "No action required, table already exists."
+        logger.info(status_msg)
+        return True, status_msg
 
     @staticmethod
     def poll_master_table():
@@ -112,14 +110,13 @@ class DatabaseSetup:
         )
         try:
             checktables = masterdblist.fetchone()
-            if checktables == None:
+            if checktables is None:
                 status_msg = "Index Error: Transaction table was not found."
                 logger.warning(status_msg)
                 return False, status_msg
-            else:
-                status_msg = f"Master table checked and {checktables} table was found"
-                logger.info(status_msg)
-                return True, status_msg
+            status_msg = f"Master table checked and {checktables} table was found"
+            logger.info(status_msg)
+            return True, status_msg
 
         except IndexError:
             status_msg = "Index Error: Transaction table was not found or database could not be accessed."
@@ -135,9 +132,11 @@ def save_dataframe_to_db(input_frame: pd.DataFrame) -> None:
     """
     This should parse an input dataframe and save it to the sqlite3 database
     """
-    dbconn = sqlite3.connect(default_database)
-    write_cursor = dbconn.cursor()
-    for index, row in input_frame.iterrows():
+    # dbconn = sqlite3.connect(default_database)
+    dbconn = DatabaseSetup.dbconnect
+    # write_cursor = dbconn.cursor()
+    write_cursor = DatabaseSetup.write_cursor
+    for _index, row in input_frame.iterrows():
         transaction_data = [
             row["transaction_date"],
             row["post_date"],
@@ -183,6 +182,7 @@ def load_db_to_dataframe(load_query: dict) -> pd.DataFrame:
         year_match = "-"
     else:
         year_match = load_query["year"]
+
     if "Whole" in load_query["month"]:
         # If whole year is selected then the query matches just the year in both cases
         month_match = year_match

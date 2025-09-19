@@ -6,6 +6,7 @@ import random
 
 # from dateutil.parser import parse as dateparse
 import pandas as pd
+import numpy as np
 
 from PyQt6.QtCharts import QChartView, QChart
 from PyQt6.QtCore import QSize, Qt
@@ -169,7 +170,7 @@ class MainWindow(QMainWindow):
         self.main_tabs.setTabPosition(QTabWidget.TabPosition.North)
         self.main_tabs.setMovable(False)
 
-        # Summary Tab
+        # Summary Tab ##########################################################################################
         self.summary_tab_widget = gui_handlers.TabGenerator()
         self.summary_tab_widget.setup_new_tab()
 
@@ -202,7 +203,7 @@ class MainWindow(QMainWindow):
         self.summary_tab_widget.tab_layout.addLayout(self.summary_tab_display_layout)
         self.summary_tab_widget.tab_layout.addStretch()
 
-        # Report Tab
+        # Report Tab ##########################################################################################
         self.report_tab_widget = gui_handlers.TabGenerator()
         self.report_tab_widget.setup_new_tab()
         self.report_tab_button_layout = QHBoxLayout()
@@ -230,15 +231,15 @@ class MainWindow(QMainWindow):
         self.report_tab_button_layout.addWidget(self.report_tab_run_report_button)
         self.report_tab_button_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
-        self.pie_dict = {  # temp static data for chart generation
-            "Mortage 30 pct": 180,
-            "Utilies 5 pct": 5,
-            "Grocery 20 pct": 20,
-            "Restuarant 15 pct": 15,
-            "Clothing 10 pct": 10,
-            "Misc 20 pct": 20,
-        }
-        self.report_tab_pie_series = handlers.QtPieChartSeries(self.pie_dict)
+        # self.pie_dict = {  # temp static data for chart generation
+        #     "Mortage 30 pct": 180,
+        #     "Utilies 5 pct": 5,
+        #     "Grocery 20 pct": 20,
+        #     "Restuarant 15 pct": 15,
+        #     "Clothing 10 pct": 10,
+        #     "Misc 20 pct": 20,
+        # }
+        # self.report_tab_pie_series = handlers.QtPieChartSeries(self.pie_dict)
 
         # self.report_tab_pie_series.setLabelsVisible(True)
         pie_labels_font = QFont("Arial", 22)
@@ -246,9 +247,9 @@ class MainWindow(QMainWindow):
         # need to find if its possible to set the slice font for all of them at once
 
         self.report_tab_chart = QChart()
+        self.report_tab_chart.setMinimumHeight(480)
         # self.report_tab_chart.setFont(pie_labels_font)
-        # the addSeries is the component we will modify with the generate report button
-        # self.report_tab_chart.addSeries(self.report_tab_pie_series)
+
         self.report_tab_chart.setTitle("Expense Report Demo Chart")
         self.report_tab_chart.setTitleFont(QFont("Arial", 16, QFont.Weight.Bold))
         self.report_tab_chart.legend().setVisible(True)
@@ -263,14 +264,23 @@ class MainWindow(QMainWindow):
             QPainter.RenderHint.Antialiasing
         )  # For smoother rendering
         self.report_tab_content_layout.addWidget(self.report_tab_chart_view)
-        # I will be adding a small table display to view the data the pie chart uses for reference
-        # later.
+
+        self.report_table = self.blank_table
+        # Create pandas table object widget from handlers class
+        # self.data_table_model = handlers.PandasAbstractTable(self.transaction_table)
+        self.report_table_model = handlers.PandasAbstractTable(
+            self.report_table, display_headers=self.header_labels
+        )
+        self.report_table_view = QTableView()
+        self.report_table_view.setModel(self.report_table_model)
+
+        self.report_tab_content_layout.addWidget(self.report_table_view)
 
         self.report_tab_widget.tab_layout.addLayout(self.report_tab_button_layout)
         self.report_tab_widget.tab_layout.addLayout(self.report_tab_content_layout)
         self.report_tab_widget.tab_layout.addStretch()
 
-        # Data Tab
+        # Data Tab ##########################################################################################
         self.data_tab_widget = gui_handlers.TabGenerator()
         self.data_tab_widget.setup_new_tab()
 
@@ -281,6 +291,7 @@ class MainWindow(QMainWindow):
             self.transaction_table, display_headers=self.header_labels
         )
         self.data_table_view = QTableView()
+        self.data_tab_widget.tab_layout.addWidget(self.data_table_view)
         self.data_table_view.setModel(self.data_table_model)
 
         # Data Tab Buttons
@@ -327,13 +338,14 @@ class MainWindow(QMainWindow):
 
     def save_to_database(self, current_table: pd.DataFrame):
         """my doc is my string, verify me"""
+        self.logger.debug(current_table)
         # I need to rework the default view because if you attempt manual
         # entry without import it fails.
         print("Saving table contents to database")
         db_handlers.save_dataframe_to_db(self.transaction_table)
         check_msg = QMessageBox()
         check_msg.setWindowTitle("Transactions Saved")
-        check_msg.setText(f"Saved current transactions to database.")
+        check_msg.setText("Saved current transactions to database.")
         check_msg.exec()
 
     def button_import_clicked(self) -> None:
@@ -399,7 +411,7 @@ class MainWindow(QMainWindow):
             print("Data Loading complete")
             try:
                 # I need to add a formatter to make the column names look nice and pretty
-                # without impacting the DB
+                # without impacting the DB - further note I think I fixed this already
                 self.data_table_model.update_table_from_dataframe(
                     self.transaction_table
                 )
@@ -415,6 +427,14 @@ class MainWindow(QMainWindow):
     # Report Functions
     def _generate_report_chart(self):
         """my doc is my string, verify me"""
+        # TODO this function needs to be broken into several parts now as  there needs to be a
+        # function that loads the chosen data, which is what this mostly does.  Then there needs
+        # to be a function that will parse the loaded data for the category tags to populate the
+        # chart with and then it needs to call the actual chart trigger to send the data for the
+        # display which is currently handled in self.report_tab_pie_series.  This will also need
+        # to be modified with a trigger so that it gets refreshed perhaps more automatically when
+        # data is changed.  In addition to this I should add the ability to modify the table on the
+        # report page so that corrections can be made as needed.
         self.logger.debug("Generating report from _year_ and _month_")
         # so we need to call the report handler we will create in db_handlers, and get the value of
         # the month and year selector and pass those to the function
@@ -428,8 +448,103 @@ class MainWindow(QMainWindow):
         self.logger.debug(
             f"chosen year is: {chosen_year} and chosen month is  {chosen_month}"
         )
-        # need to insert DB call to update the chart with.
-        self.report_tab_pie_series = handlers.QtPieChartSeries(self.pie_dict)
+
+        load_query = {}
+        load_query["year"] = chosen_year
+        load_query["month"] = chosen_month
+        print(load_query)
+        # Next we call a DB query
+        self.report_table = db_handlers.load_db_to_dataframe(load_query)
+        self.logger.warning("Data Loading complete")
+        try:
+            # update the table from the report data
+            # TODO I need to add variables for allowing table resize, this probably needs to go in
+            # the GUI handlers library for the whole QAbstractTableView class
+            self.report_table_model.update_table_from_dataframe(self.report_table)
+            self.report_table_view.resizeColumnsToContents()
+            self.report_table_view.setEditTriggers(
+                QTableView.EditTrigger.DoubleClicked
+                | QTableView.EditTrigger.AnyKeyPressed
+            )  # this works now, missed flag function in table class
+            # print(self.data_table_view.editTriggers())
+            # there isnt a set of connections
+        except ValueError as e:
+            self.logger.critical(f"Value Exception encountered: {e}")
+            print(e)
+
+        self._refresh_report_chart(self.report_table)
+
+    def _refresh_report_chart(self, table_dataframe: pd.DataFrame) -> None:
+        report_frame = table_dataframe
+        print(f"Datatypes in the frame table_dataframe is {table_dataframe.dtypes}")
+
+        # I should probably change the original query to fix data types and move display handling
+        # out of the DB like I have done for other things.  But for now I am stripping the spaces
+        # and the dollar signs in order to convert the data type to integor for proper sum()
+        report_frame["transaction_amount"] = report_frame[
+            "transaction_amount"
+        ].str.replace(r" ", "", regex=True)
+
+        report_frame["transaction_amount"] = (
+            report_frame["transaction_amount"]
+            .str.replace(r"[$,]", "", regex=True)
+            .astype(float)
+        )
+        print(f"Datatypes in the frame report_frame is {report_frame.dtypes}")
+        # exit()
+        # fill in empty entries with catch-all category
+        # report_frame.replace({"tags": ""}, np.nan, inplace=True)
+        # report_frame.fillna({"tags": "Other"}, inplace=True)
+
+        report_frame["tags"] = report_frame["tags"].replace("", np.nan)
+        report_frame["transaction_amount"] = report_frame["transaction_amount"].astype(
+            float
+        )
+        try:
+            raw_tag_names = report_frame["tags"].tolist()
+            # return tag_names
+        except KeyError:
+            print(f"Error: Column {raw_tag_names} not found in DataFrame")
+            # return []
+        # df['Product'].fillna('Uncategorized', inplace=True)
+        # report_frame["tags"] =
+        report_frame["tags"].fillna("Other", inplace=True)
+
+        try:
+            raw_tag_names = report_frame["tags"].tolist()
+            # return tag_names
+        except KeyError:
+            print(f"Error: Column {raw_tag_names} not found in DataFrame")
+            # return []
+        print(raw_tag_names)
+        # print(type(tag_names))
+        chart_data_dict = {}
+        category_list = []
+        for tag in raw_tag_names:
+            if tag not in category_list:
+                category_list.append(tag)
+
+        # for category in category_list:
+        #     print(category)
+        category_series = report_frame.groupby("tags")["transaction_amount"].sum()
+        # chart_data_dict.append[category:category_sum]
+        print(category_series)
+        category_dict = category_series.to_dict()
+        print(category_dict)
+        print(type(category_dict))
+        pie_dict = {  # temp static data for chart generation
+            "Mortage 30 pct": 180,
+            "Utilies 5 pct": 5,
+            "Grocery 20 pct": 20,
+            "Restuarant 15 pct": 15,
+            "Clothing 10 pct": 10,
+            "Misc 20 pct": 20,
+        }
+        print(chart_data_dict)
+        tag_dict = {"placeholder1": 100, "placeholder2": 50}
+        # self.report_tab_pie_series = handlers.QtPieChartSeries(tag_dict)
+        self.report_tab_pie_series = handlers.QtPieChartSeries(category_dict)
+        # self.report_tab_pie_series = handlers.QtPieChartSeries(pie_dict)
         self.report_tab_chart.removeAllSeries()  # overwrites the one currently there
         self.report_tab_chart.addSeries(self.report_tab_pie_series)
 
@@ -438,6 +553,7 @@ class MainWindow(QMainWindow):
         """my doc is my string, verify me"""
         # pass through to call summary function against database
         try:
+            self.logger.debug(f"chosen chart year was {year}")
             return
             # print(f"year chosen was {year}")
         except ValueError as e:
@@ -456,14 +572,14 @@ class MainWindow(QMainWindow):
         check_msg.exec()
 
     def button_create_table_clicked(self) -> None:
-        create_Table_bool, status = db_handlers.DatabaseSetup.create_budget_table()
+        _create_table_bool, status = db_handlers.DatabaseSetup.create_budget_table()
         check_msg = QMessageBox()
         check_msg.setWindowTitle("Transaction Table Creation")
         check_msg.setText(f"{status}")
         check_msg.exec()
 
     def button_create_database_clicked(self) -> None:
-        db_transaction_table_creation, status_msg = (
+        _db_transaction_table_creation, status_msg = (
             db_handlers.DatabaseSetup.create_database()
         )
         check_msg = QMessageBox()

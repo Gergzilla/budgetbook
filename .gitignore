@@ -38,6 +38,8 @@ table_test_py
 signal_helpyer.py
 budgetbook/bha14.py
 ocgtnh_cellrename.lua
+song_of_storms_phonk_sketch.mid
+zelda-midi-mix.py
 
 # Unit test / coverage reports
 htmlcov/

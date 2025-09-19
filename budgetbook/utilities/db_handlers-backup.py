@@ -1,10 +1,6 @@
 #!/usr/bin/python
 """This module is handler functions and classes related to interacting with the SQLite database"""
 
-"""I am a backup of the db_handlers prior to refactoring the db in order to remove the spaces in the table names
-and other aggressive cleanup like tweaking column formating.  Howefully I wont be needed but with the scope of the 
-changes to be made a full file backup was necessary"""
-
 import sqlite3
 import os
 from datetime import datetime
@@ -12,6 +8,10 @@ import pandas as pd
 from vars import settings
 
 from utilities.logger import LoggingHandler
+
+"""I am a backup of the db_handlers prior to refactoring the db in order to remove the spaces in 
+the table names and other aggressive cleanup like tweaking column formating.  Howefully I wont be
+needed but with the scope of the changes to be made a full file backup was necessary"""
 
 # try:
 #     from utilities.logger import LoggingHandler
@@ -25,9 +25,9 @@ logger = LoggingHandler("db_handlers").log  # currently untested
 
 
 class DatabaseSetup:
-    """This is the initial database and table setup, It has been setup within the Database menu of the app
-    Some tweaking is still needed for better user feedback and error handling
-    But for now they are just collected together in a proper method class"""
+    """This is the initial database and table setup, It has been setup within the Database menu of
+    the app.  Some tweaking is still needed for better user feedback and error handling.  But for
+    now they are just collected together in a proper method class"""
 
     live_expense_database = default_database
     # hard set for now from settings file. I will figure out dynamic later when I make a full DB menu
@@ -52,7 +52,7 @@ class DatabaseSetup:
         # can prompt for db name in the future, for now its hard set
         if os.path.exists(DatabaseSetup.live_expense_database):
             # print("File exists, establishing connection to " + expenseDB)
-            dbconnect = sqlite3.connect(DatabaseSetup.live_expense_database)
+            _dbconnect = sqlite3.connect(DatabaseSetup.live_expense_database)
             return True
         else:
             print("Database File doesnt exist, creating file")
