@@ -10,6 +10,7 @@
 budgetbook/statements/
 budgetbook/utilities/importers/statements/
 budgetbook/data/
+Statement*
 
 # deprecated archive, kept local for reference
 budgetbook/utilities/deprecated/*

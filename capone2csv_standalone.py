@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import os
 from datetime import datetime
 import csv
@@ -7,13 +8,19 @@ import numpy as np
 import pandas as pd
 import dateutil.parser as dateparser
 
+# new note for 2/26/26 capital one seems to have changed their report just enough that this is broken now.  I am legit not sure why yet or how as they look the same
+# but most likely some kind of sizing change or similar.  The part that doesnt make sense is the pymupdf still seems to find data and parse it.
+# but the
+
+### The purpose of this standalone is to try and convert a capital one pdf to a csv format in order to import into google docs for temp budge reasons
+
 # from dateutil.parser import parse as dateparse
 
 
 # this stuff below is only really needed for testing, not for prod
-from utilities.logger import (
-    LoggingHandler,
-)  # temporary local utilities until packaging later
+# from budgetbook.utilities.logger import (
+#     LoggingHandler,
+# )  # temporary local utilities until packaging later
 
 
 # import matplotlib.pyplot as plt
@@ -24,7 +31,7 @@ from utilities.logger import (
 # Future institutions will be added as I need them but the core functions should be universal in
 # general.  A helper file has also been created to guide future importer creation.
 # Helper File: import_template_tool.py
-logger = LoggingHandler(str(os.path.basename(__file__))).log
+# logger = LoggingHandler(str(os.path.basename(__file__))).log
 
 
 class Page:
@@ -32,7 +39,7 @@ class Page:
         self.name = __name__
         self.page = page
         self.page_number = page_number
-        self.logger = LoggingHandler(__class__).log
+        # self.logger.debug = print()
         self.clip_y1 = 0
         self.parsed_dataframe = pd.DataFrame()
         # moved this for lint, havent tested
@@ -41,7 +48,8 @@ class Page:
         """my doc is my string, verify me"""
         end_of_table = self.get_rect(needle)  # for capitalOne only
         if end_of_table:
-            self.logger.debug(f"Calculated rect of needle: {end_of_table}")
+            # self.logger.debug(f"Calculated rect of needle: {end_of_table}")
+            # print(f"Calculated rect of needle: {end_of_table}")
             return True
         return False
 
@@ -53,13 +61,16 @@ class Page:
             self.clip_y1 = round(end_of_table[0].y1, 0) - 5
             # this sets the rectable up a few units to avoid including the end of table keyword
             # in the rectangle
+            print(f"Table end FOUND on page {self.page.number}")
             return self.clip_y1
-        self.logger.debug(f"Table end not found on page {self.page.number}")
+        # self.logger.debug(f"Table end not found on page {self.page.number}")
+        print(f"Table end NOT found on page {self.page.number}")
         return self.clip_y1
 
     def get_rect(self, needle):
         """my doc is my string, verify me"""
         found_rect = self.page.search_for(needle)
+        # print(f"DEBUG: found rect is {found_rect}")
         return found_rect
 
     def parse_transaction_table(self, new_clip):
@@ -117,18 +128,22 @@ class Page:
             alt_clip = default_clip
         if self.find_transaction_table(table_title):
             # print(f"Page: {self.page.number} into the find transaction loop?")
-            self.logger.debug(
-                f"Page {self.page.number} appears to have a transaction table"
-            )
+            # self.logger.debug(
+            #     f"Page {self.page.number} appears to have a transaction table"
+            # )
+            print(f"Page {self.page.number} appears to have a transaction table")
             new_clip_y1 = self.find_table_end(end_of_trans_needle)
             if new_clip_y1 == 0:
                 self.parsed_dataframe = self.parse_transaction_table(default_clip)
+                # print(f"DEBUG: Default Clip Parsedataframe is {self.parsed_dataframe}")
             else:
                 clip_list = list(alt_clip)
                 clip_list[3] = new_clip_y1
                 alt_clip = tuple(clip_list)
-                self.logger.debug(f"parsed alt_clip is {alt_clip}")
+                # self.logger.debug(f"parsed alt_clip is {alt_clip}") temp disable
+                # print(f"parsed alt_clip is {alt_clip}")
                 self.parsed_dataframe = self.parse_transaction_table(alt_clip)
+                # print(f"DEBUG: Alt Clip Parsedataframe is {self.parsed_dataframe}")
             return self.parsed_dataframe
         # df = pd.DataFrame()
         # print(f"Page: {self.page.number} into the else for empty table?")
@@ -140,14 +155,11 @@ class Page:
         return self.name
 
 
-######## Begin import handler functions ########
-
-
 class file_import_handlers(object):
     # these functions moved from handlers to consolidate all file import components to one module
     def __init__(self):
         self.name = __name__
-        self.logger = LoggingHandler(__class__).log
+        # self.logger = LoggingHandler(__class__).log
 
     def __str__(self):
         return self.name
@@ -184,7 +196,8 @@ class file_import_handlers(object):
             dateparser.parse(datestring, fuzzy=fuzzy)
             return True
         except dateparser.ParserError as e:
-            logger.debug(f"datecheck Parse Error: {e}")
+            # logger.debug(f"datecheck Parse Error: {e}")
+            print(f"datecheck Parse Error: {e}")
             # e isnt technically used but caught for proper handling, this just needs to evaluate
             # as false if datestring is not a date
             return False
@@ -201,70 +214,6 @@ class file_import_handlers(object):
         formated_date = f"{date_to_string}"
         # print(f"3: formated_date in format_date: {formated_date}")
         return formated_date
-
-    @staticmethod
-    def csvImporter(input_file_name, year: int = 2025):
-        """my doc is my string, verify me"""
-        # Works perfectly!  results in a joined list of formatted data and converted to dataframe
-        joined_csv = []
-        try:
-            with open(input_file_name, newline="") as infile:
-                infilereader = csv.reader(
-                    filter(lambda line: line.strip(), infile), delimiter=","
-                )
-                for row in infilereader:
-                    parsedRow = file_import_handlers.parseCSV(row, year)
-                    joined_csv.append(parsedRow)
-            infile.close()
-            joined_df = pd.DataFrame(
-                joined_csv,
-                columns=[
-                    "transaction_date",
-                    "post_date",
-                    "transaction_name",
-                    "transaction_amount",
-                    "tags",
-                    "notes",
-                ],
-            )
-            return joined_df
-        except FileNotFoundError:
-            logger.critical("No valid file was found to import")
-
-    @staticmethod
-    def parseCSV(row, year):  # Works perfect!
-        """my doc is my string, verify me"""
-        expenses = []
-        i = 0
-        date, charge_name, expense, tag, notes = "", "", "", "", ""
-        while i < len(row):
-            if row[i] != "":
-                if file_import_handlers.dateCheck(row[i], fuzzy=False) is True:
-                    date = file_import_handlers.format_date(
-                        row[i], year
-                    )  # this is shitting itself somewhere
-                    print(f"date in parseCSV(): {date}")
-                    print(f"loop count is: {i}")
-                    # date = "'{}'".format(row[i])
-                    # date = year + " " + str(date).strip("'")
-                    # date = "{}".format(str(datetime.strptime(date, "%Y %b %d").date()))
-                    expenses.append(date)
-                elif "$" in row[i]:
-                    expense = row[i].replace("$", "").strip("\n")
-                    print(f"expense in parseCSV(): {expense}")
-                    expenses.append(expense)
-                    # adds empty list elements to the end as placeholders
-                    expenses.append(tag)
-                    expenses.append(notes)
-                else:
-                    charge_name = f"{row[i]}"
-                    print(f"charge_name in parseCSV(): {charge_name}")
-                    # charge_name = "'{}'".format(row[i])
-                    expenses.append(charge_name)
-                i += 1
-            else:
-                i += 1
-        return expenses
 
     @staticmethod
     def cap_one_import(pdf_path: str, import_year: int):
@@ -381,16 +330,50 @@ class file_import_handlers(object):
 ######## End import handler functions ########
 
 
+class generate_csv(object):
+    def __init__(self):
+        self.name = __name__
+
+    @staticmethod
+    def csv_from_dataframe(imported_dataframe: pd.DataFrame, csv_file: str):
+        print("Generating CSV from processed dataframe")
+        try:
+            imported_dataframe.to_csv(
+                csv_file, sep=",", header=False, index=False, mode="w", encoding="utf-8"
+            )
+        except Exception as e:
+            print(f"This failed due to: {e}")
+
+
 def main():
     """The main here is just for direct library test with hardcoded imports, its not really needed"""
     print("This is main for direct testing")
-    selection = input("1 for embedded class \n2 to exit\n ")
+    if len(sys.argv) > 2:
+        input_pdf = sys.argv[1]
+        import_year = sys.argv[2]
+    else:
+        print("You need to supply an input filename and year, exiting script...")
+        input_pdf = ""
+        sys.exit(1)
+
+    selection = input(
+        "1 for testing import \n2 to import a pdf and export csv\n3 to exit\n "
+    )
     if selection == "1":
-        pdf_path = os.path.join("statements", "2page-statement.pdf")
-        csv_path = os.path.join("statements", "converted.csv")
-        # pymu_pdf(pdf_path, csv_path) swapped to cap one function
-        file_import_handlers.cap_one_import(pdf_path)
+        pdf_path = os.path.join(input_pdf)
+        processed_import = file_import_handlers.cap_one_import(pdf_path, import_year)
+        print(f"Import processing completed\n: {processed_import}")
     if selection == "2":
+        pdf_path = os.path.join(input_pdf)
+        output_filename = input_pdf.split(".")[1].strip("\\") + ".csv"
+        print(output_filename)
+        # sys.exit(1)
+        processed_import = file_import_handlers.cap_one_import(pdf_path, import_year)
+        print(f"Import processing completed\n: {processed_import}")
+        output_csv = generate_csv.csv_from_dataframe(processed_import, output_filename)
+
+        print(f"conversion from PDF to CSV completed, check\n: {output_filename}")
+    if selection == "3":
         print("Exiting...")
         sys.exit(1)
 

@@ -20,6 +20,18 @@ expenseTable = settings.expenseTable
 logger = LoggingHandler("db_handlers").log  # currently untested
 
 
+# note for database.  I have encountered several issues now regarding the data integrity and types
+# withing the DB.  First is that I need to unify the charge amount column, I either must always
+# write a dollar sign to it or I need to never write the dollar sign and just display the sign when
+# needed.  I think the later is better for data usability.  The other issue is the method for
+# maintaining unique entries without overwrite or duplciation issue does not work.  The current
+# checks relay on the dates, name and charge amount to keep unique.  Which is an issue if there
+# are problems with the amount that needs to be changed or even if one wants to modify the amount
+# manually it is going to create duplicate entries.  I need to I think include the column ID or
+# perhaps better is to actually generate a hash on initial creation (like that other budget thing
+# does).  This way I can use the hash for tracking and should never have a problem of duplication.
+# I just need to learn how to better manipulate dispalyed data so I dont have display issues.
+#
 class DatabaseSetup:
     """This is the initial database and table setup, It has been setup within the Database menu of
     the app.  Some tweaking is still needed for better user feedback and error handling.  But for

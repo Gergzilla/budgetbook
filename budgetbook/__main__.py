@@ -480,7 +480,7 @@ class MainWindow(QMainWindow):
 
         # I should probably change the original query to fix data types and move display handling
         # out of the DB like I have done for other things.  But for now I am stripping the spaces
-        # and the dollar signs in order to convert the data type to integor for proper sum()
+        # and the dollar signs and space in order to convert the data type to integer(float) for proper sum()
         report_frame["transaction_amount"] = report_frame[
             "transaction_amount"
         ].str.replace(r" ", "", regex=True)
@@ -490,12 +490,8 @@ class MainWindow(QMainWindow):
             .str.replace(r"[$,]", "", regex=True)
             .astype(float)
         )
-        print(f"Datatypes in the frame report_frame is {report_frame.dtypes}")
-        # exit()
+        # print(f"Datatypes in the frame report_frame is {report_frame.dtypes}")
         # fill in empty entries with catch-all category
-        # report_frame.replace({"tags": ""}, np.nan, inplace=True)
-        # report_frame.fillna({"tags": "Other"}, inplace=True)
-
         report_frame["tags"] = report_frame["tags"].replace("", np.nan)
         report_frame["transaction_amount"] = report_frame["transaction_amount"].astype(
             float
@@ -505,9 +501,7 @@ class MainWindow(QMainWindow):
             # return tag_names
         except KeyError:
             print(f"Error: Column {raw_tag_names} not found in DataFrame")
-            # return []
-        # df['Product'].fillna('Uncategorized', inplace=True)
-        # report_frame["tags"] =
+
         report_frame["tags"].fillna("Other", inplace=True)
 
         try:
@@ -524,22 +518,12 @@ class MainWindow(QMainWindow):
             if tag not in category_list:
                 category_list.append(tag)
 
-        # for category in category_list:
-        #     print(category)
         category_series = report_frame.groupby("tags")["transaction_amount"].sum()
         # chart_data_dict.append[category:category_sum]
         print(category_series)
         category_dict = category_series.to_dict()
         print(category_dict)
         print(type(category_dict))
-        pie_dict = {  # temp static data for chart generation
-            "Mortage 30 pct": 180,
-            "Utilies 5 pct": 5,
-            "Grocery 20 pct": 20,
-            "Restuarant 15 pct": 15,
-            "Clothing 10 pct": 10,
-            "Misc 20 pct": 20,
-        }
         print(chart_data_dict)
         tag_dict = {"placeholder1": 100, "placeholder2": 50}
         # self.report_tab_pie_series = handlers.QtPieChartSeries(tag_dict)
