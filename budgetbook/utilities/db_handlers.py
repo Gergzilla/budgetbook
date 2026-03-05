@@ -15,7 +15,7 @@ from utilities.logger import LoggingHandler
 #     from logger import LoggingHandler
 
 #### Database Setup Functions #####
-default_database = settings.expenseDB
+default_database = settings.expensedb
 expenseTable = settings.expenseTable
 logger = LoggingHandler("db_handlers").log  # currently untested
 
@@ -228,17 +228,17 @@ def query_by_month(
     """my doc is my string, verify me"""
 
     dbconn = sqlite3.connect(live_expense_database)
-    readCursor = dbconn.cursor()
-    monthQuery = f"SELECT date, charge_name, amount, tag_id, notes FROM {expenses_table} WHERE\
+    read_cursor = dbconn.cursor()
+    month_query = f"SELECT date, charge_name, amount, tag_id, notes FROM {expenses_table} WHERE\
         date LIKE '{month}%'"
     try:
-        readCursor.execute(monthQuery)
-        monthlyExpenses = readCursor.fetchall()
+        read_cursor.execute(month_query)
+        monthly_expenses = read_cursor.fetchall()
     except SyntaxError as e:
         print("Unable to execute for for reason: ", e)
-        monthlyExpenses = e
-    readCursor.close()
-    return monthlyExpenses
+        monthly_expenses = e
+    read_cursor.close()
+    return monthly_expenses
 
 
 def query_by_yearly_table(
@@ -246,7 +246,7 @@ def query_by_yearly_table(
 ):
     """my doc is my string, verify me"""
     dbconn = sqlite3.connect(live_expense_database)
-    readCursor = dbconn.cursor()
+    read_cursor = dbconn.cursor()
     # Specify exact columns so you always know what you are getting back and dont get
     # 'too many values' errors
     recordquery = (
@@ -254,34 +254,34 @@ def query_by_yearly_table(
     )
     # print(recordquery)
     try:
-        readCursor.execute(recordquery)
-        fulltable = readCursor.fetchall()
+        read_cursor.execute(recordquery)
+        fulltable = read_cursor.fetchall()
     except SyntaxError as e:
         print("unable to execute query for reason: ", repr(e))
         fulltable = e
-    readCursor.close()
+    read_cursor.close()
     return fulltable
 
 
 ##### maintenance functions ######
 
 
-def removeDuplicates(
-    expenseDB=default_database,
+def remove_duplicates(
+    expensedb=default_database,
     expenses_table=expenseTable,
 ):
     # Not currently used
     """my doc is my string, verify me"""
-    dbconn = sqlite3.connect(expenseDB)
-    writeCursor = dbconn.cursor()
+    dbconn = sqlite3.connect(expensedb)
+    write_cursor = dbconn.cursor()
     rowquery = f"SELECT MIN(rowid) FROM {expenses_table} group by charge_date, charge_name, amount"
     print(rowquery)
     deletedupes = f"DELETE FROM {expenses_table} WHERE rowid not in({rowquery})"
     print(deletedupes)
-    removalResult = writeCursor.execute(deletedupes)
-    print(removalResult)
+    removal_result = write_cursor.execute(deletedupes)
+    print(removal_result)
     dbconn.commit()
-    writeCursor.close()
+    write_cursor.close()
 
 
 if __name__ == "__main__":

@@ -584,7 +584,7 @@ class MainWindow(QMainWindow):
     def button_delete_duplicates_clicked(self):
         """Runs the remove duplicates function from db_handlers"""
         # left as a reminder, this function will be moved to the admin tab for obvious reasons.
-        db_handlers.removeDuplicates()
+        db_handlers.remove_duplicates()
 
     # App Control Functions
     def button_quit_clicked(self) -> None:

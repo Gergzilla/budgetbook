@@ -49,6 +49,7 @@ class PandasAbstractTable(QAbstractTableModel):
         else:
             # Fallback to DataFrame columns if no display headers are provided
             self._display_headers = self.data.columns.tolist()
+            # self._display_headers = self.data.columns.tolist()
 
     def flags(self, index) -> Qt.ItemFlag:
         """my doc is my string, verify me"""

@@ -52,11 +52,11 @@ class CustomOkCancelDialog(QDialog):
         self.prompt_message = str(prompt_message)
         self.setWindowTitle(str(self.box_title))
 
-        Qbutton_set = (
+        qbutton_set = (
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
 
-        self.button_box = QDialogButtonBox(Qbutton_set)
+        self.button_box = QDialogButtonBox(qbutton_set)
         self.button_box.accepted.connect(self.accept)
         self.button_box.rejected.connect(self.reject)
 
@@ -79,7 +79,7 @@ class CustomDateRangeDialogue(QDialog):
         self.name = __name__
         self.dialog_type = dialog_type
         self.setWindowTitle("Choose Data Range")
-
+        # R0902: Too many instance attributes (9/7) (too-many-instance-attributes)
         self.date_dialog_layout = QVBoxLayout()
         self.year_layout = QHBoxLayout()
         self.month_layout = QHBoxLayout()
