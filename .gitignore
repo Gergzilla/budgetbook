@@ -10,6 +10,7 @@
 budgetbook/statements/
 budgetbook/utilities/importers/statements/
 budgetbook/data/
+Statement*
 
 # deprecated archive, kept local for reference
 budgetbook/utilities/deprecated/*
@@ -36,9 +37,10 @@ broken__main__.py
 test_main.py
 table_test_py
 signal_helpyer.py
-
-# not ready to publish this yet, but soon
-roadmap.md
+budgetbook/bha14.py
+ocgtnh_cellrename.lua
+song_of_storms_phonk_sketch.mid
+zelda-midi-mix.py
 
 # Unit test / coverage reports
 htmlcov/

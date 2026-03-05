@@ -9,6 +9,10 @@ from vars import settings
 
 from utilities.logger import LoggingHandler
 
+"""I am a backup of the db_handlers prior to refactoring the db in order to remove the spaces in 
+the table names and other aggressive cleanup like tweaking column formating.  Howefully I wont be
+needed but with the scope of the changes to be made a full file backup was necessary"""
+
 # try:
 #     from utilities.logger import LoggingHandler
 # except Exception:
@@ -20,25 +24,13 @@ expenseTable = settings.expenseTable
 logger = LoggingHandler("db_handlers").log  # currently untested
 
 
-# note for database.  I have encountered several issues now regarding the data integrity and types
-# withing the DB.  First is that I need to unify the charge amount column, I either must always
-# write a dollar sign to it or I need to never write the dollar sign and just display the sign when
-# needed.  I think the later is better for data usability.  The other issue is the method for
-# maintaining unique entries without overwrite or duplciation issue does not work.  The current
-# checks relay on the dates, name and charge amount to keep unique.  Which is an issue if there
-# are problems with the amount that needs to be changed or even if one wants to modify the amount
-# manually it is going to create duplicate entries.  I need to I think include the column ID or
-# perhaps better is to actually generate a hash on initial creation (like that other budget thing
-# does).  This way I can use the hash for tracking and should never have a problem of duplication.
-# I just need to learn how to better manipulate dispalyed data so I dont have display issues.
-#
 class DatabaseSetup:
     """This is the initial database and table setup, It has been setup within the Database menu of
     the app.  Some tweaking is still needed for better user feedback and error handling.  But for
     now they are just collected together in a proper method class"""
 
     live_expense_database = default_database
-    # temp hard set from settings file. I will figure out dynamic later when I make a full DB menu
+    # hard set for now from settings file. I will figure out dynamic later when I make a full DB menu
     try:
         dbconnect = sqlite3.connect(live_expense_database)
     except Exception as e:  # yes its generic, not sure what I might get here yet.
@@ -59,60 +51,66 @@ class DatabaseSetup:
         """my doc is my string, verify me"""
         # can prompt for db name in the future, for now its hard set
         if os.path.exists(DatabaseSetup.live_expense_database):
-            status_msg = (
-                "Database already exists, connected to "
-                + DatabaseSetup.live_expense_database
-            )
-            print(status_msg)
-            logger.info(status_msg)
-            return True, status_msg
-        status_msg = "Database File doesnt exist, creating file"
-        print(status_msg)
-        logger.warning(status_msg)
-        try:
-            sqlite3.connect(DatabaseSetup.live_expense_database)
-            # dbconnect = sqlite3.connect(DatabaseSetup.live_expense_database)
-            return True, status_msg
-        except RuntimeError:
-            # Might need to tweak the exception type
-            status_msg = (
-                "could not create file for some reason at "
-                + DatabaseSetup.live_expense_database
-            )
-            print(status_msg)
-            logger.critical(status_msg)
-            return False, status_msg
+            # print("File exists, establishing connection to " + expenseDB)
+            _dbconnect = sqlite3.connect(DatabaseSetup.live_expense_database)
+            return True
+        else:
+            print("Database File doesnt exist, creating file")
+            logger.info("Database File doesnt exist, creating file")
+            try:
+                sqlite3.connect(DatabaseSetup.live_expense_database)
+                # dbconnect = sqlite3.connect(DatabaseSetup.live_expense_database)
+                return True
+            except RuntimeError:
+                # Might need to tweak the exception type
+                print(
+                    "could not create file for some reason at "
+                    + DatabaseSetup.live_expense_database
+                )
+                logger.info(
+                    "could not create file for some reason at "
+                    + DatabaseSetup.live_expense_database
+                )
+                return False
 
     @staticmethod
     def create_budget_table() -> str:
         """my doc is my string, verify me"""
         # create expenses table if it doesnt exist
-        table_check, _status = DatabaseSetup.poll_master_table()
+        table_check, status = DatabaseSetup.poll_master_table()
         # print(table_check)
         if table_check is False:
             print("Table check is False, meaning table needs to be made")
             logger.error("Master Table check is False, meaning table needs to be made")
             # this should be wrapped in a try/except loop
             DatabaseSetup.write_cursor.executescript(
-                "CREATE TABLE transactions (transaction_date TEXT, post_date TEXT, "
-                "transaction_name TEXT, transaction_amount REAL, tags TEXT, notes TEXT, "
-                "UNIQUE(transaction_date,transaction_name,transaction_amount))"
+                "CREATE TABLE transactions ('Transaction Date' TEXT, 'Post Date' TEXT, "
+                "'Charge Name' TEXT, 'Charge Amount' REAL, Tags TEXT, Notes TEXT, "
+                "UNIQUE('Transaction Date','Charge Name','Charge Amount'))"
             )
+            # DatabaseSetup.write_cursor.executescript(
+            #     "CREATE TABLE transactions ('Transaction Date' TEXT, 'Post Date' TEXT, "
+            #     "'Charge Name' TEXT, 'Charge Amount' REAL, Tags TEXT, Notes TEXT, "
+            #     "UNIQUE('Transaction Date','Charge Name','Charge Amount'))"
+            # )  #the old db, fixing column names again
             DatabaseSetup.dbconnect.commit()
             if table_check:
-                # this makes no sense, it would never be hit because if has to be false first
-                # and then somehow be true, need to validate the logic if it is even used
+                # this internal if makes no sense, it would never be hit because if has to be false first
+                # and then somehow be true
                 logger.info("Table created")
                 return (True, "Table created")
             else:
-                status_msg = (
+                logger.critical(
                     "Table could not be created, check log messages for more details."
                 )
-                logger.critical(status_msg)
-                return False, status_msg
-        status_msg = "No action required, table already exists."
-        logger.info(status_msg)
-        return True, status_msg
+                return (
+                    False,
+                    "Table could not be created, check log messages for more details.",
+                )
+        else:
+            # print("Table check passed, nothing to do")
+            logger.info("No action required, table already exists.")
+            return True, "No action required, table already exists."
 
     @staticmethod
     def poll_master_table():
@@ -122,18 +120,12 @@ class DatabaseSetup:
         )
         try:
             checktables = masterdblist.fetchone()
-            if checktables is None:
-                status_msg = "Index Error: Transaction table was not found."
-                logger.warning(status_msg)
-                return False, status_msg
-            status_msg = f"Master table checked and {checktables} table was found"
-            logger.info(status_msg)
-            return True, status_msg
-
+            logger.info(f"Master table checked and {checktables} table was found")
+            return True, f"Master table checked and {checktables} table was found"
+            # print("try")
         except IndexError:
-            status_msg = "Index Error: Transaction table was not found or database could not be accessed."
-            logger.warning(status_msg)
-            return False, status_msg
+            logger.warning("Index Error: Transaction table was not found.")
+            return False, "Transaction table was not found."
 
 
 ##### Data add/remove functions  ######
@@ -144,18 +136,16 @@ def save_dataframe_to_db(input_frame: pd.DataFrame) -> None:
     """
     This should parse an input dataframe and save it to the sqlite3 database
     """
-    # dbconn = sqlite3.connect(default_database)
-    dbconn = DatabaseSetup.dbconnect
-    # write_cursor = dbconn.cursor()
-    write_cursor = DatabaseSetup.write_cursor
-    for _index, row in input_frame.iterrows():
+    dbconn = sqlite3.connect(default_database)
+    write_cursor = dbconn.cursor()
+    for index, row in input_frame.iterrows():
         transaction_data = [
-            row["transaction_date"],
-            row["post_date"],
-            row["transaction_name"],
-            row["transaction_amount"],
-            row["tags"],
-            row["notes"],
+            row["Transaction Date"],
+            row["Post Date"],
+            row["Charge Name"],
+            row["Charge Amount"],
+            row["Tags"],
+            row["Notes"],
         ]
         # this does create new entries without duplicates and allows for updates but if there are
         # conflicts and data is empty it could overwrite for example if you import the same file
@@ -163,14 +153,14 @@ def save_dataframe_to_db(input_frame: pd.DataFrame) -> None:
         # post_date, tags, notes in the new conflicting data can overwrite/NULL the data
         # already in the DB.  I need better data integrity handling somehow
         write_cursor.execute(
-            "INSERT INTO transactions (transaction_date, post_date, transaction_name,"
-            " transaction_amount, tags, notes)"
+            "INSERT INTO transactions ('Transaction Date', 'Post Date', 'Charge Name',"
+            " 'Charge Amount', Tags, Notes)"
             " VALUES (?,?,?,?,?,?) "
-            'ON CONFLICT ("transaction_date","transaction_name","transaction_amount") '
-            "DO UPDATE SET transaction_date = excluded.transaction_date, post_date = "
-            "excluded.post_date, transaction_name = excluded.transaction_name, "
-            "transaction_amount = excluded.transaction_amount, tags = excluded.tags, "
-            "notes = excluded.notes",
+            'ON CONFLICT ("Transaction Date","Charge Name","Charge Amount") '
+            "DO UPDATE SET 'Transaction Date' = excluded.'Transaction Date', 'Post Date' = "
+            "excluded.'Post Date', 'Charge Name' = excluded.'Charge Name', "
+            "'Charge Amount' = excluded.'Charge Amount', Tags = excluded.Tags, "
+            "Notes = excluded.Notes",
             transaction_data,
         )
 
@@ -194,7 +184,6 @@ def load_db_to_dataframe(load_query: dict) -> pd.DataFrame:
         year_match = "-"
     else:
         year_match = load_query["year"]
-
     if "Whole" in load_query["month"]:
         # If whole year is selected then the query matches just the year in both cases
         month_match = year_match
@@ -204,8 +193,8 @@ def load_db_to_dataframe(load_query: dict) -> pd.DataFrame:
         month_match = f"-{month_match}-"
     db_query = """
     SELECT *
-    FROM transactions WHERE INSTR("transaction_date", :year) > 0
-    AND INSTR("transaction_date", :month) > 0 ;
+    FROM transactions WHERE INSTR("Transaction Date", :year) > 0
+    AND INSTR("Transaction Date", :month) > 0 ;
     """
     loaded_frame = pd.read_sql(
         db_query, dbconn, params={"year": year_match, "month": month_match}
@@ -214,17 +203,28 @@ def load_db_to_dataframe(load_query: dict) -> pd.DataFrame:
     return loaded_frame
 
 
+def write_to_expenses(writedata="", live_expense_database=default_database):
+    # I dont think this is currently used anymore
+    """my doc is my string, verify me"""
+    dbconn = sqlite3.connect(live_expense_database)
+    writeCursor = dbconn.cursor()
+    try:
+        writeCursor.execute(writedata)
+        dbconn.commit()
+    except SyntaxError as e:
+        print("Error executing query: ", e)
+    writeCursor.close()
+
+
 ##### read-only database functions  ########
 
 
-# These two read only functions currently aren't used afaik
 def query_by_month(
     month,
     live_expense_database=default_database,
     expenses_table=expenseTable,
 ):
     """my doc is my string, verify me"""
-
     dbconn = sqlite3.connect(live_expense_database)
     readCursor = dbconn.cursor()
     monthQuery = f"SELECT date, charge_name, amount, tag_id, notes FROM {expenses_table} WHERE\

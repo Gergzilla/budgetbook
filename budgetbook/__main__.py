@@ -1,66 +1,101 @@
 #!/usr/bin/python
-
-import utilities.handlers as handlers
-import utilities.db_handlers as db_handlers
-import utilities.gui_handlers as gui_handlers
-import utilities.importers.importers as importers
-import pandas as pd
+"""my doc is my string, verify me"""
 import os
 import sys
+import random
 
+# from dateutil.parser import parse as dateparse
+import pandas as pd
+import numpy as np
 
-from PyQt6.QtGui import QColor, QFont, QPen
-from PyQt6.QtCharts import QChartView, QPieSeries, QChart, QPieSlice
-from PyQt6.QtCore import QSize, Qt, QAbstractTableModel, QModelIndex, pyqtSignal
-from PyQt6.QtGui import QAction, QIcon, QColor
+from PyQt6.QtCharts import QChartView, QChart
+from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtGui import QAction, QFont, QFontMetrics, QPainter
 from PyQt6.QtWidgets import (
     QApplication,
-    QWidget,
     QMainWindow,
     QTabWidget,
-    QToolBar,
     QStatusBar,
-    QDialog,
     QFileDialog,
     QTableView,
-    QDialogButtonBox,
     QVBoxLayout,
     QHBoxLayout,
     QComboBox,
     QLabel,
     QPushButton,
+    QMessageBox,
     QInputDialog,
+    QDialog,
 )
-from tkinter import *
-from tkinter import ttk
-from tkinter import messagebox, filedialog
-from dateutil.parser import parse as dateparse
 
-# from datetime import datetime
+from utilities import handlers
+from utilities import db_handlers
+from utilities import gui_handlers
+
+# import utilities.importers.importers as importers
 
 try:
     # Required as if -h is passed the program should exit cleanly
     from utilities.logger import LoggingHandler
-except Exception:
-    quit()
+except ImportError:
+    sys.exit(0)
 
 logger = LoggingHandler(str(os.path.basename(__file__))).log
 
 # List of years to use for various prompts
+# further note, these should be unified somewhere in vars file later
 year_list = ["2025", "2024", "2023", "2022", "2021", "2020"]
+month_dict = {
+    "Jan": "January",
+    "Feb": "February",
+    "Mar": "March",
+    "Apr": "April",
+    "May": "May",
+    "Jun": "June",
+    "Jul": "July",
+    "Aug": "August",
+    "Sep": "September",
+    "Oct": "October",
+    "Nov": "November",
+    "Dec": "December",
+    "Whole Year": "All",
+}
 # specific year selector for reports and summaries
 year_selector = year_list
 year_selector.append("All")
 
+# Dictionary to convert database columns to user readable strings for displaying expenses
+readable_columns = {
+    "transaction_date": "Charge Date",
+    "post_date": "Post Date",
+    "transaction_name": "Charge Name",
+    "transaction_amount": "Charge Amount",
+    "tags": "Tags",
+    "notes": "Notes",
+}
+
+
+def random_color_gen() -> str:
+    """my doc is my string, verify me"""
+    r = random.randint(0, 255)
+    g = random.randint(0, 255)
+    b = random.randint(0, 255)
+    color_string = f"#{r:02x}{g:02x}{b:02x}"
+    return color_string
+
 
 class MainWindow(QMainWindow):
+    """my doc is my string, verify me"""
+
     def __init__(self):
         super().__init__()
-
+        self.logger = LoggingHandler(__class__).log
         self.setWindowTitle("Budget Book")
         self.setMinimumSize(QSize(1000, 800))
+        current_font = self.font()
+        self.font_metrics = QFontMetrics(current_font)
 
-        # Setup Menu Menu Actions
+        # Setup File Menu Actions
 
         button_quit = QAction("&Quit", self)
         button_quit.setStatusTip("Exit Application")
@@ -69,8 +104,52 @@ class MainWindow(QMainWindow):
         button_import = QAction("&Import", self)
         button_import.setStatusTip("Import Expense File")
         button_import.triggered.connect(self.button_import_clicked)
+
+        # Setup Database Menu Actions
+        button_check_db = QAction("Verify Database", self)
+        button_check_db.setStatusTip("Verify Database Tables")
+        button_check_db.triggered.connect(self.button_check_db_clicked)
+
+        button_create_table = QAction("Create Transaction Table", self)
+        button_create_table.setStatusTip("Create Transaction Tables")
+        button_create_table.triggered.connect(self.button_create_table_clicked)
+
+        button_create_db = QAction("Create Database", self)
+        button_create_db.setStatusTip("Create Database File")
+        button_create_db.triggered.connect(self.button_create_database_clicked)
+
+        button_delete_duplicates = QAction("Delete Duplicates", self)
+        button_delete_duplicates.setStatusTip(
+            "Delete Duplicate transactions from database"
+        )
+        button_delete_duplicates.triggered.connect(
+            self.button_delete_duplicates_clicked
+        )
         # file_menu.addAction(button_quit)
 
+        self.header_labels = [
+            "Tranasction Date",
+            "Post Date",
+            "Transaction Name",
+            "Transaction Amount",
+            "Tags",
+            "Notes",
+        ]
+        # empty frame to just show standard columns for Data
+        self.blank_table = pd.DataFrame(
+            [
+                ["", "", "", "", "", ""],
+            ],
+            columns=[
+                "Transaction Date",
+                "Post Date",
+                "Transaction Name",
+                "Transaction Amount",
+                "Tags",
+                "Notes",
+            ],
+            index=["0"],
+        )
         # Setup Main Menu
         self.setStatusBar(QStatusBar(self))
 
@@ -79,6 +158,11 @@ class MainWindow(QMainWindow):
         file_menu = menu.addMenu("&File")
         file_menu.addAction(button_import)
         file_menu.addAction(button_quit)
+        db_menu = menu.addMenu("Database")
+        db_menu.addAction(button_check_db)
+        db_menu.addAction(button_create_table)
+        db_menu.addAction(button_create_db)
+        db_menu.addAction(button_delete_duplicates)
 
         # Setup Tab Widget
         self.main_tabs = QTabWidget()
@@ -86,9 +170,9 @@ class MainWindow(QMainWindow):
         self.main_tabs.setTabPosition(QTabWidget.TabPosition.North)
         self.main_tabs.setMovable(False)
 
-        # Summary Tab
+        # Summary Tab ##########################################################################################
         self.summary_tab_widget = gui_handlers.TabGenerator()
-        self.summary_tab_widget.setup_new_tab("Summary")
+        self.summary_tab_widget.setup_new_tab()
 
         self.summary_tab_button_layout = QHBoxLayout()
         self.summary_tab_button_layout.setAlignment(
@@ -119,51 +203,114 @@ class MainWindow(QMainWindow):
         self.summary_tab_widget.tab_layout.addLayout(self.summary_tab_display_layout)
         self.summary_tab_widget.tab_layout.addStretch()
 
-        # Report Tab
+        # Report Tab ##########################################################################################
         self.report_tab_widget = gui_handlers.TabGenerator()
-        self.report_tab_widget.setup_new_tab("Reports")
+        self.report_tab_widget.setup_new_tab()
         self.report_tab_button_layout = QHBoxLayout()
+        self.report_tab_content_layout = QVBoxLayout()
+
+        report_tab_year_label = QLabel("Select Year")
         self.report_tab_year_select = QComboBox()
         self.report_tab_year_select.addItems(year_selector)
+        self.report_tab_year_select.setFixedSize(100, 30)
+        report_tab_month_label = QLabel("Select Month")
+        self.report_tab_month_select = QComboBox()
+        self.report_tab_month_select.addItems(month_dict)
+        self.report_tab_month_select.setFixedSize(100, 30)
+        # self.report_tab_refresh_button = gui_handlers.PushButtonGenerator(
+        #     ["Refresh", self.font_metrics.width("Refresh")]
+        # )
+        self.report_tab_run_report_button = QPushButton("Run Report")
+        self.report_tab_run_report_button.setFixedSize(80, 30)
+        self.report_tab_run_report_button.clicked.connect(self._generate_report_chart)
 
+        self.report_tab_button_layout.addWidget(report_tab_year_label)
+        self.report_tab_button_layout.addWidget(self.report_tab_year_select)
+        self.report_tab_button_layout.addWidget(report_tab_month_label)
+        self.report_tab_button_layout.addWidget(self.report_tab_month_select)
+        self.report_tab_button_layout.addWidget(self.report_tab_run_report_button)
+        self.report_tab_button_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        # self.pie_dict = {  # temp static data for chart generation
+        #     "Mortage 30 pct": 180,
+        #     "Utilies 5 pct": 5,
+        #     "Grocery 20 pct": 20,
+        #     "Restuarant 15 pct": 15,
+        #     "Clothing 10 pct": 10,
+        #     "Misc 20 pct": 20,
+        # }
+        # self.report_tab_pie_series = handlers.QtPieChartSeries(self.pie_dict)
+
+        # self.report_tab_pie_series.setLabelsVisible(True)
+        pie_labels_font = QFont("Arial", 22)
+        pie_labels_font.setBold(True)
+        # need to find if its possible to set the slice font for all of them at once
+
+        self.report_tab_chart = QChart()
+        self.report_tab_chart.setMinimumHeight(480)
+        # self.report_tab_chart.setFont(pie_labels_font)
+
+        self.report_tab_chart.setTitle("Expense Report Demo Chart")
+        self.report_tab_chart.setTitleFont(QFont("Arial", 16, QFont.Weight.Bold))
+        self.report_tab_chart.legend().setVisible(True)
+        # self.report_tab_chart.legend().setFont(font object) this sets legend font
+        self.report_tab_chart.legend().setAlignment(Qt.AlignmentFlag.AlignBottom)
+
+        self.report_tab_chart.createDefaultAxes()  # Creates default axes first
+
+        self.report_tab_chart_view = QChartView(self.report_tab_chart)
+        # left this off for now
+        self.report_tab_chart_view.setRenderHint(
+            QPainter.RenderHint.Antialiasing
+        )  # For smoother rendering
+        self.report_tab_content_layout.addWidget(self.report_tab_chart_view)
+
+        self.report_table = self.blank_table
+        # Create pandas table object widget from handlers class
+        # self.data_table_model = handlers.PandasAbstractTable(self.transaction_table)
+        self.report_table_model = handlers.PandasAbstractTable(
+            self.report_table, display_headers=self.header_labels
+        )
+        self.report_table_view = QTableView()
+        self.report_table_view.setModel(self.report_table_model)
+
+        self.report_tab_content_layout.addWidget(self.report_table_view)
+
+        self.report_tab_widget.tab_layout.addLayout(self.report_tab_button_layout)
+        self.report_tab_widget.tab_layout.addLayout(self.report_tab_content_layout)
         self.report_tab_widget.tab_layout.addStretch()
 
-        # Data Tab
+        # Data Tab ##########################################################################################
         self.data_tab_widget = gui_handlers.TabGenerator()
-        self.data_tab_widget.setup_new_tab("Data")
+        self.data_tab_widget.setup_new_tab()
 
-        # empty frame to just show standard columns for Data
-        blank_data = pd.DataFrame(
-            [
-                ["", "", "", "", ""],
-            ],
-            columns=["Charge Date", "Charge Name", "Charge Amount", "Tag", "Notes"],
-            index=["0"],
-        )
+        self.transaction_table = self.blank_table
         # Create pandas table object widget from handlers class
-        self.data_table_model = handlers.PandasAbstractTable(blank_data)
+        # self.data_table_model = handlers.PandasAbstractTable(self.transaction_table)
+        self.data_table_model = handlers.PandasAbstractTable(
+            self.transaction_table, display_headers=self.header_labels
+        )
         self.data_table_view = QTableView()
+        self.data_tab_widget.tab_layout.addWidget(self.data_table_view)
         self.data_table_view.setModel(self.data_table_model)
-
-        # self.data_table_view.setEditTriggers(
-        #     QTableView.EditTrigger.DoubleClicked | QTableView.EditTrigger.AnyKeyPressed
-        # )  # This doesnt currently work in my app but it did in testing.
 
         # Data Tab Buttons
         self.data_tab_button_layout = QHBoxLayout()
+
         self.import_data_button = QPushButton("Import File")
         self.import_data_button.clicked.connect(self.button_import_clicked)
-
+        self.load_data_button = QPushButton("Load Month from Database")
+        self.load_data_button.clicked.connect(self.button_load_from_db_clicked)
         self.save_to_db_button = QPushButton("Save to Database")
-        self.save_to_db_button.clicked.connect(self._save_to_database)  # NYI
-
-        self.data_tab_reset_table_button = QPushButton("Reset Table Data")
-        self.data_tab_reset_table_button.clicked.connect(self._reset_table)
+        self.save_to_db_button.clicked.connect(self.save_to_database)
+        self.data_tabreset_table_button = QPushButton("Reset Table Data")
+        self.data_tabreset_table_button.clicked.connect(self.reset_table)
 
         # add button widgets to the tabs layout
         self.data_tab_button_layout.addWidget(self.import_data_button)
+        self.data_tab_button_layout.addWidget(self.load_data_button)
         self.data_tab_button_layout.addWidget(self.save_to_db_button)
-        self.data_tab_button_layout.addWidget(self.data_tab_reset_table_button)
+        self.data_tab_button_layout.addWidget(self.data_tabreset_table_button)
 
         # add the data table widget and button layouts to the data tab
         self.data_tab_widget.tab_layout.addWidget(self.data_table_view)
@@ -171,7 +318,7 @@ class MainWindow(QMainWindow):
 
         # Admin Tab
         self.admin_tab = gui_handlers.TabGenerator()
-        self.admin_tab.setup_new_tab("Admin")
+        self.admin_tab.setup_new_tab()
         self.admin_tab.tab_layout.addStretch()
 
         # Add all tabs to the main tab widget
@@ -180,42 +327,36 @@ class MainWindow(QMainWindow):
         self.main_tabs.addTab(self.data_tab_widget, "Data")
         self.main_tabs.addTab(self.admin_tab, "Admin")
 
-    # Menu and button functions
+    #### Menu and button functions ####
 
-    def _reset_table(self) -> None:
-        blank_data = pd.DataFrame(
-            [
-                ["", "", "", "", ""],
-            ],
-            columns=["Charge Date", "Charge Name", "Charge Amount", "Tag", "Notes"],
-            index=["0"],
-        )
-        self.data_table_model.update_table_from_dataframe(blank_data)
+    # Data Tab Functions
+    def reset_table(self) -> None:
+        """my doc is my string, verify me"""
+        # Set the table to the empty dataframe and reset the view
+        self.transaction_table = self.blank_table
+        self.data_table_model.update_table_from_dataframe(self.transaction_table)
 
-    def _save_to_database(self, current_table: pd.DataFrame):
+    def save_to_database(self, current_table: pd.DataFrame):
+        """my doc is my string, verify me"""
+        self.logger.debug(current_table)
+        # I need to rework the default view because if you attempt manual
+        # entry without import it fails.
         print("Saving table contents to database")
         db_handlers.save_dataframe_to_db(self.transaction_table)
-
-    def button_quit_clicked(self) -> None:
-        confirm_quit = gui_handlers.CustomOkCancelDialog(
-            "Quit?", "Are you sure you want to quit?"
-        )
-        if confirm_quit.exec():
-            sys.exit(0)
-        else:
-            pass
-
-    def _choose_import_year(self) -> int:
-        import_year, ok = QInputDialog.getItem(
-            self, "What year is this data for?", "Select Year:", year_list, 0, False
-        )
-        if ok and import_year:
-            # print(f"Year selected was {import_year}")
-            return import_year
+        check_msg = QMessageBox()
+        check_msg.setWindowTitle("Transactions Saved")
+        check_msg.setText("Saved current transactions to database.")
+        check_msg.exec()
 
     def button_import_clicked(self) -> None:
-        import_year = self._choose_import_year()
-        print(f"Year returned was {import_year}")
+        """Initiates the file import process to select, parse and import transactions from
+        external files into the application to then be saved to the database"""
+        import_year_dialog = gui_handlers.CustomDateRangeDialogue(self)
+        import_year_dialog.set_dialog_type("year_only")
+        import_year_range = import_year_dialog.exec()
+        if import_year_range == QDialog.DialogCode.Accepted:
+            import_year = import_year_dialog.year
+            print(f"chosen year is: {import_year}")
 
         try:
             import_filename = QFileDialog.getOpenFileName(
@@ -227,109 +368,232 @@ class MainWindow(QMainWindow):
             # folder is hardcoded for now for dev convenience
             if import_filename[0] == "":
                 return
-            else:
-                self.main_tabs.setCurrentWidget(self.data_tab_widget)
-                # this dialogue should probably be its own window in order to validate the incoming data more easily
-                # and then it can be saved to the database and then viewed and edited further in the main window.
-                self.transaction_table = handlers.import_file_dialogue(
-                    import_filename[0], import_year
+            self.main_tabs.setCurrentWidget(self.data_tab_widget)
+            # this dialogue should probably be its own window in order to validate the incoming
+            # data more easily and then it can be saved to the database and then viewed and
+            # edited further in the main window.
+            self.transaction_table = handlers.import_file_dialogue(
+                import_filename[0], import_year
+            )
+            # import works, there was an issue with the pdf parsing and column count in the
+            # pdf_importers module
+            print("Data import complete")
+            try:
+                # I need to add a formatter to make the column names look nice and pretty
+                # without impacting the DB
+                self.data_table_model.update_table_from_dataframe(
+                    self.transaction_table
                 )
-                # import works, there was an issue with the pdf parsing and column count in the pdf_importers module
-                print("Data import complete")
-                try:
-                    self.data_table_model.update_table_from_dataframe(
-                        self.transaction_table
-                    )
-                    self.data_table_view.resizeColumnsToContents()
-                    self.data_table_view.setEditTriggers(
-                        QTableView.EditTrigger.DoubleClicked
-                        | QTableView.EditTrigger.AnyKeyPressed
-                    )  # this works now, missed flag function in table class
-                    # print(self.data_table_view.editTriggers())
-                except Exception as e:
-                    print(e)
+                self.data_table_view.resizeColumnsToContents()
+                self.data_table_view.setEditTriggers(
+                    QTableView.EditTrigger.DoubleClicked
+                    | QTableView.EditTrigger.AnyKeyPressed
+                )  # this works now, missed flag function in table class
+                # print(self.data_table_view.editTriggers())
+            except ValueError as e:
+                print(e)
 
-        except:
-            pass
+        except ValueError as e:
+            print(e)
 
+    def button_load_from_db_clicked(self) -> None:
+        # print("did you click load data?")
+        load_date_dialog = gui_handlers.CustomDateRangeDialogue(self)
+        load_date_dialog.set_dialog_type("month_and_year")
+        load_date_range = load_date_dialog.exec()
+        if load_date_range == QDialog.DialogCode.Accepted:
+            load_query = {}
+            load_query["year"] = load_date_dialog.year
+            load_query["month"] = load_date_dialog.month
+            print(load_query)
+            # Next we call a DB query
+            self.transaction_table = db_handlers.load_db_to_dataframe(load_query)
+            print("Data Loading complete")
+            try:
+                # I need to add a formatter to make the column names look nice and pretty
+                # without impacting the DB - further note I think I fixed this already
+                self.data_table_model.update_table_from_dataframe(
+                    self.transaction_table
+                )
+                self.data_table_view.resizeColumnsToContents()
+                self.data_table_view.setEditTriggers(
+                    QTableView.EditTrigger.DoubleClicked
+                    | QTableView.EditTrigger.AnyKeyPressed
+                )  # this works now, missed flag function in table class
+                # print(self.data_table_view.editTriggers())
+            except ValueError as e:
+                print(e)
+
+    # Report Functions
+    def _generate_report_chart(self):
+        """my doc is my string, verify me"""
+        # TODO this function needs to be broken into several parts now as  there needs to be a
+        # function that loads the chosen data, which is what this mostly does.  Then there needs
+        # to be a function that will parse the loaded data for the category tags to populate the
+        # chart with and then it needs to call the actual chart trigger to send the data for the
+        # display which is currently handled in self.report_tab_pie_series.  This will also need
+        # to be modified with a trigger so that it gets refreshed perhaps more automatically when
+        # data is changed.  In addition to this I should add the ability to modify the table on the
+        # report page so that corrections can be made as needed.
+        self.logger.debug("Generating report from _year_ and _month_")
+        # so we need to call the report handler we will create in db_handlers, and get the value of
+        # the month and year selector and pass those to the function
+        chosen_year = self.report_tab_year_select.itemText(
+            self.report_tab_year_select.currentIndex()
+        )
+        chosen_month = self.report_tab_month_select.itemText(
+            self.report_tab_month_select.currentIndex()
+        )
+        # current selection is finished, future change is dynamic update chart when selection changes
+        self.logger.debug(
+            f"chosen year is: {chosen_year} and chosen month is  {chosen_month}"
+        )
+
+        load_query = {}
+        load_query["year"] = chosen_year
+        load_query["month"] = chosen_month
+        print(load_query)
+        # Next we call a DB query
+        self.report_table = db_handlers.load_db_to_dataframe(load_query)
+        self.logger.warning("Data Loading complete")
+        try:
+            # update the table from the report data
+            # TODO I need to add variables for allowing table resize, this probably needs to go in
+            # the GUI handlers library for the whole QAbstractTableView class
+            self.report_table_model.update_table_from_dataframe(self.report_table)
+            self.report_table_view.resizeColumnsToContents()
+            self.report_table_view.setEditTriggers(
+                QTableView.EditTrigger.DoubleClicked
+                | QTableView.EditTrigger.AnyKeyPressed
+            )  # this works now, missed flag function in table class
+            # print(self.data_table_view.editTriggers())
+            # there isnt a set of connections
+        except ValueError as e:
+            self.logger.critical(f"Value Exception encountered: {e}")
+            print(e)
+
+        self._refresh_report_chart(self.report_table)
+
+    def _refresh_report_chart(self, table_dataframe: pd.DataFrame) -> None:
+        report_frame = table_dataframe
+        print(f"Datatypes in the frame table_dataframe is {table_dataframe.dtypes}")
+
+        # I should probably change the original query to fix data types and move display handling
+        # out of the DB like I have done for other things.  But for now I am stripping the spaces
+        # and the dollar signs and space in order to convert the data type to integer(float) for proper sum()
+        report_frame["transaction_amount"] = report_frame[
+            "transaction_amount"
+        ].str.replace(r" ", "", regex=True)
+
+        report_frame["transaction_amount"] = (
+            report_frame["transaction_amount"]
+            .str.replace(r"[$,]", "", regex=True)
+            .astype(float)
+        )
+        # print(f"Datatypes in the frame report_frame is {report_frame.dtypes}")
+        # fill in empty entries with catch-all category
+        report_frame["tags"] = report_frame["tags"].replace("", np.nan)
+        report_frame["transaction_amount"] = report_frame["transaction_amount"].astype(
+            float
+        )
+        try:
+            raw_tag_names = report_frame["tags"].tolist()
+            # return tag_names
+        except KeyError:
+            print(f"Error: Column {raw_tag_names} not found in DataFrame")
+
+        report_frame["tags"].fillna("Other", inplace=True)
+
+        try:
+            raw_tag_names = report_frame["tags"].tolist()
+            # return tag_names
+        except KeyError:
+            print(f"Error: Column {raw_tag_names} not found in DataFrame")
+            # return []
+        print(raw_tag_names)
+        # print(type(tag_names))
+        chart_data_dict = {}
+        category_list = []
+        for tag in raw_tag_names:
+            if tag not in category_list:
+                category_list.append(tag)
+
+        category_series = report_frame.groupby("tags")["transaction_amount"].sum()
+        # chart_data_dict.append[category:category_sum]
+        print(category_series)
+        category_dict = category_series.to_dict()
+        print(category_dict)
+        print(type(category_dict))
+        print(chart_data_dict)
+        tag_dict = {"placeholder1": 100, "placeholder2": 50}
+        # self.report_tab_pie_series = handlers.QtPieChartSeries(tag_dict)
+        self.report_tab_pie_series = handlers.QtPieChartSeries(category_dict)
+        # self.report_tab_pie_series = handlers.QtPieChartSeries(pie_dict)
+        self.report_tab_chart.removeAllSeries()  # overwrites the one currently there
+        self.report_tab_chart.addSeries(self.report_tab_pie_series)
+
+    # General Functions
     def _summary_query_by_year(self, year: int) -> pd.DataFrame:
+        """my doc is my string, verify me"""
         # pass through to call summary function against database
         try:
+            self.logger.debug(f"chosen chart year was {year}")
             return
-            print(f"year chosen was {year}")
-        except Exception as e:
-            print(f"oops {e}")
+            # print(f"year chosen was {year}")
+        except ValueError as e:
+            print(f"oops? {e}")
 
-    def _table_query_by_year(self, year: int) -> pd.DataFrame:
-        try:
-            return
-            print(f"year chosen was {year}")
-        except Exception as e:
-            print(f"oops {e}")
+    # Database Management Functions
+    def button_check_db_clicked(self) -> None:
+        db_table_check_status = db_handlers.DatabaseSetup.poll_master_table()
+        check_msg = QMessageBox()
+        if db_table_check_status:
+            check_msg.setText("Database Check Complete!")
+        else:
+            check_msg.setText(
+                "Database Check failed for some reason, perhaps table not created."
+            )
+        check_msg.exec()
 
-        # buttons below were removed from main page for tab conversion, left to be used later as the functionality
-        # is still needed in most cases and is a reference to the old UI layout but ported to PyQt6
+    def button_create_table_clicked(self) -> None:
+        _create_table_bool, status = db_handlers.DatabaseSetup.create_budget_table()
+        check_msg = QMessageBox()
+        check_msg.setWindowTitle("Transaction Table Creation")
+        check_msg.setText(f"{status}")
+        check_msg.exec()
 
-        # view_expenses_button = QPushButton(text="View Expense Summar", parent=self)
-        # view_expenses_button.setFixedSize(200, 20)
-        # budget_report_button = QPushButton(text="View Budget Report", parent=self)
-        # budget_report_button.setFixedSize(200, 20)
-        # print_expenses_button = QPushButton(text="Print Expenses", parent=self)
-        # print_expenses_button.setFixedSize(200, 20)
-        # import_expenses_button = QPushButton(text="Import Expenses", parent=self)
-        # import_expenses_button.setFixedSize(200, 20)
-        # save_expenses_button = QPushButton(text="Save Expenses", parent=self)
-        # save_expenses_button.setFixedSize(200, 20)
-        # delete_duplicates_button = QPushButton(text="delete duplicates", parent=self)
-        # delete_duplicates_button.setFixedSize(200, 20)
-        # quit_button = QPushButton(text="Quit", parent=self)
-        # quit_button.setFixedSize(200, 20)
+    def button_create_database_clicked(self) -> None:
+        _db_transaction_table_creation, status_msg = (
+            db_handlers.DatabaseSetup.create_database()
+        )
+        check_msg = QMessageBox()
+        check_msg.setWindowTitle("Database Status")
+        check_msg.setText(status_msg)
+        check_msg.exec()
 
-        # main_window_layout = QVBoxLayout()
+    def button_delete_duplicates_clicked(self):
+        """my doc is my string, verify me"""
+        # left as a reminder, this function will be moved to the admin tab for obvious reasons.
+        db_handlers.removeDuplicates()
 
-        # main_window_layout.addWidget(view_expenses_button)
-        # main_window_layout.addWidget(budget_report_button)
-        # main_window_layout.addWidget(print_expenses_button)
-        # main_window_layout.addWidget(import_expenses_button)
-        # main_window_layout.addWidget(save_expenses_button)
-        # main_window_layout.addWidget(delete_duplicates_button)
-        # main_window_layout.addWidget(quit_button)
-        # main_window_layout.addWidget(main_tabs)
-        # main_window_widget = QWidget()
-
-        # main_window_widget.setLayout(main_window_layout)
-        # self.setCentralWidget(main_window_widget)
-
-
-# class removed for cleanup, methods left for conversion reference
-#     def saveExpenses(self):
-#         expenses = self.BoxMaking.getBoxContents()
-#         handlers.writeExpenseToDB(expenses)
-
-#     def printBoxContents(self):
-#         try:
-#             print(self.BoxMaking.getBoxContents())
-#             # self.BoxMaking.print_box_data()
-#         except AttributeError:
-#             messagebox.showwarning(message="Error: No data has been loaded yet")
-#             # print("Error: No data has been loaded yet")
-
-
-#     def deleteDupes(self):
-#         db_handlers.removeDuplicates()
-
-#     def leave(self):
-#         try:
-#             quit()
-#         except Exception as e:
-#             print(f"I have no idea how this failed but it was because of: {e}")
+    # App Control Functions
+    def button_quit_clicked(self) -> None:
+        """my doc is my string, verify me"""
+        confirm_quit = gui_handlers.CustomOkCancelDialog(
+            "Quit?", "Are you sure you want to quit?"
+        )
+        if confirm_quit.exec():
+            sys.exit(0)
+        else:
+            pass
 
 
 def main():
+    """my doc is my string, verify me"""
     try:
-        with open("gui_style.css", "r") as f:
+        with open("gui_style.css", "r", encoding="utf-8") as f:
             stylesheet = f.read()
-    except:
+    except FileNotFoundError:
         stylesheet = ""
 
     main_app = QApplication(sys.argv)
