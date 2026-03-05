@@ -63,13 +63,13 @@ Tracking for what I need to change, fix or implement
   - ~~Create template and tools for adding Pdf parse functions~~ Completed 05/16/2025
 - ~~Create library for parsing imported dataframes into database entries~~ Completed 07/15/2025
 - ~~Import test data~~
-- ~Correct formatting of import data <sup>The date format is causing issues</sup>~ Resolved 05/07/2025
+- ~Correct formatting of import data ^The date format is causing issues^~ Resolved 05/07/2025
 - ~Create budget summary page template~
-- Update links, filters and buttons for summary browsing <sup>Django development moved to [Budget Book Web Repository](https://github.com/Gergzilla/budgetbook-web)</sup>
-- Create a page to edit the budget data to add tags and make corrections <sup>Django development moved to [Budget Book Web Repository](https://github.com/Gergzilla/budgetbook-web)</sup>
-- Add ability to upload CSV/TSV files for easier import <sup>CSV file import added 5-7-2025</sup>
+- Update links, filters and buttons for summary browsing ^Django development moved to [Budget Book Web Repository](https://github.com/Gergzilla/budgetbook-web)^
+- Create a page to edit the budget data to add tags and make corrections ^Django development moved to [Budget Book Web Repository](https://github.com/Gergzilla/budgetbook-web)^
+- Add ability to upload CSV/TSV files for easier import ^CSV file import added 5-7-2025^
   - CSV import needs to be updated for better parsing of pandas dataframes from pdf imports
-- ~~Setup tagging in a more friendly way, inline editing of a table perhaps~~ Completed for now via tkinter display <sup>solved in PyQt6 as well</sup>
+- ~~Setup tagging in a more friendly way, inline editing of a table perhaps~~ Completed for now via tkinter display ^solved in PyQt6 as well^
 - Add a reliable storage method for tags to be used to to correlate common names with a tag to 'learn' how things get tagged
 
 ## Bugs or Issues
