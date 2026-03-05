@@ -20,7 +20,7 @@ jobs:
           python -m pip install -r requirements.txt
       - name: Analysing the code with pylint
         run: |
-          pylint --disable=C0103,R0903 --rcfile=.pylintrc $(git ls-files '*.py') || true
+          pylint --disable=R0903 --rcfile=.pylintrc $(git ls-files '*.py') || true
         # --output=lint-${{ matrix.python-version }}.txt || true
 
     # - name: Upload Artifact
