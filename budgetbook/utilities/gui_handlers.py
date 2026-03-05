@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """This module is classes and functions relating to managin the gui and it's unique elements.
 Such as creating tabs and handling custom dialog boxes for various things"""
-# TODO I need to add I think a button making class that will
+# I need to add I think a button making class that will
 # create buttons at a fixed height and dynamic width of the text
 
 # from PyQt6.QtCore import QSize, Qt
