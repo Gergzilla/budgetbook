@@ -293,20 +293,6 @@ class file_import_handlers(object):
                 "transaction_name",
                 "transaction_amount",
             ]
-        # Now join col 2 and 3 due to pdf parsing issues and drop the old ones
-        # # I need to redo this, in some cases col2/3 are not separated.  The assumption was that the date gets chopped up.
-        # # add a regex to check if col2 and 3 are broken dates or not
-        # all_imports["Col6"] = all_imports["Col2"].str.cat(all_imports["Col3"], sep=" ")
-        # all_imports.drop(["Col2", "Col3"], axis=1, inplace=True)
-        # # Reorder the dataframe
-        # all_imports = all_imports[["Col1", "Col6", "Col4", "Col5"]]
-        # # Relabel for clarity
-        # all_imports.columns = [
-        #     "transaction_date",
-        #     "post_date",
-        #     "transaction_name",
-        #     "transaction_amount",
-        # ]
 
         # add the extra columns for tags and notes
         all_imports["tags"] = ""
@@ -339,7 +325,12 @@ class generate_csv(object):
         print("Generating CSV from processed dataframe")
         try:
             imported_dataframe.to_csv(
-                csv_file, sep=",", header=False, index=False, mode="w", encoding="utf-8"
+                csv_file,
+                sep="\t",
+                header=False,
+                index=False,
+                mode="w",
+                encoding="utf-8",
             )
         except Exception as e:
             print(f"This failed due to: {e}")
@@ -369,7 +360,8 @@ def main():
         print(output_filename)
         # sys.exit(1)
         processed_import = file_import_handlers.cap_one_import(pdf_path, import_year)
-        print(f"Import processing completed\n: {processed_import}")
+        print(f"Data import completed, dropping extra columns before export")
+        processed_import.drop(["post_date", "tags", "notes"], axis=1, inplace=True)
         output_csv = generate_csv.csv_from_dataframe(processed_import, output_filename)
 
         print(f"conversion from PDF to CSV completed, check\n: {output_filename}")
