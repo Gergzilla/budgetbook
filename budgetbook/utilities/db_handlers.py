@@ -41,8 +41,8 @@ class DatabaseSetup:
     # temp hard set from settings file. I will figure out dynamic later when I make a full DB menu
     try:
         dbconnect = sqlite3.connect(live_expense_database)
-    except Exception as e:  # yes its generic, not sure what I might get here yet.
-        print("throwing a generic exception for now for visibility")
+    except PermissionError as e:  # I think this except type is valid
+        print("Database could not be opened or access for some reason:")
         print({e})
 
     write_cursor = dbconnect.cursor()
@@ -104,12 +104,11 @@ class DatabaseSetup:
                 # and then somehow be true, need to validate the logic if it is even used
                 logger.info("Table created")
                 return (True, "Table created")
-            else:
-                status_msg = (
-                    "Table could not be created, check log messages for more details."
-                )
-                logger.critical(status_msg)
-                return False, status_msg
+            status_msg = (
+                "Table could not be created, check log messages for more details."
+            )
+            logger.critical(status_msg)
+            return False, status_msg
         status_msg = "No action required, table already exists."
         logger.info(status_msg)
         return True, status_msg
@@ -131,7 +130,10 @@ class DatabaseSetup:
             return True, status_msg
 
         except IndexError:
-            status_msg = "Index Error: Transaction table was not found or database could not be accessed."
+            status_msg = (
+                "Index Error: Transaction table was not "
+                "found or database could not be accessed."
+            )
             logger.warning(status_msg)
             return False, status_msg
 

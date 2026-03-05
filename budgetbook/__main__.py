@@ -24,7 +24,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QPushButton,
     QMessageBox,
-    QInputDialog,
+    # QInputDialog,
     QDialog,
 )
 
@@ -87,6 +87,9 @@ def random_color_gen() -> str:
 class MainWindow(QMainWindow):
     """my doc is my string, verify me"""
 
+    # So this function fails linting stating too many statements and too many attributes. I think
+    # the only solution to this is figuring out how to break out this into a unique import
+    # but at this time I do not have the knowledge to do so
     def __init__(self):
         super().__init__()
         self.logger = LoggingHandler(__class__).log
@@ -170,7 +173,7 @@ class MainWindow(QMainWindow):
         self.main_tabs.setTabPosition(QTabWidget.TabPosition.North)
         self.main_tabs.setMovable(False)
 
-        # Summary Tab ##########################################################################################
+        # Summary Tab ############################################################################
         self.summary_tab_widget = gui_handlers.TabGenerator()
         self.summary_tab_widget.setup_new_tab()
 
@@ -203,7 +206,7 @@ class MainWindow(QMainWindow):
         self.summary_tab_widget.tab_layout.addLayout(self.summary_tab_display_layout)
         self.summary_tab_widget.tab_layout.addStretch()
 
-        # Report Tab ##########################################################################################
+        # Report Tab #############################################################################
         self.report_tab_widget = gui_handlers.TabGenerator()
         self.report_tab_widget.setup_new_tab()
         self.report_tab_button_layout = QHBoxLayout()
@@ -247,6 +250,8 @@ class MainWindow(QMainWindow):
         # need to find if its possible to set the slice font for all of them at once
 
         self.report_tab_chart = QChart()
+        # the report tab pie series is here for proper declaration, it should be empty
+        self.report_tab_pie_series = handlers.QtPieChartSeries({"mmmmm": 50, "pie": 50})
         self.report_tab_chart.setMinimumHeight(480)
         # self.report_tab_chart.setFont(pie_labels_font)
 
@@ -280,7 +285,7 @@ class MainWindow(QMainWindow):
         self.report_tab_widget.tab_layout.addLayout(self.report_tab_content_layout)
         self.report_tab_widget.tab_layout.addStretch()
 
-        # Data Tab ##########################################################################################
+        # Data Tab ###############################################################################
         self.data_tab_widget = gui_handlers.TabGenerator()
         self.data_tab_widget.setup_new_tab()
 
@@ -397,6 +402,7 @@ class MainWindow(QMainWindow):
             print(e)
 
     def button_load_from_db_clicked(self) -> None:
+        """my doc is my string, verify me"""
         # print("did you click load data?")
         load_date_dialog = gui_handlers.CustomDateRangeDialogue(self)
         load_date_dialog.set_dialog_type("month_and_year")
@@ -427,7 +433,7 @@ class MainWindow(QMainWindow):
     # Report Functions
     def _generate_report_chart(self):
         """my doc is my string, verify me"""
-        # TODO this function needs to be broken into several parts now as  there needs to be a
+        # TO-DO this function needs to be broken into several parts now as  there needs to be a
         # function that loads the chosen data, which is what this mostly does.  Then there needs
         # to be a function that will parse the loaded data for the category tags to populate the
         # chart with and then it needs to call the actual chart trigger to send the data for the
@@ -444,7 +450,7 @@ class MainWindow(QMainWindow):
         chosen_month = self.report_tab_month_select.itemText(
             self.report_tab_month_select.currentIndex()
         )
-        # current selection is finished, future change is dynamic update chart when selection changes
+        # current selection is finished, for future is dynamic update chart when selection changes
         self.logger.debug(
             f"chosen year is: {chosen_year} and chosen month is  {chosen_month}"
         )
@@ -458,8 +464,7 @@ class MainWindow(QMainWindow):
         self.logger.warning("Data Loading complete")
         try:
             # update the table from the report data
-            # TODO I need to add variables for allowing table resize, this probably needs to go in
-            # the GUI handlers library for the whole QAbstractTableView class
+            # table resize notes added to the known issues tracker
             self.report_table_model.update_table_from_dataframe(self.report_table)
             self.report_table_view.resizeColumnsToContents()
             self.report_table_view.setEditTriggers(
@@ -476,11 +481,13 @@ class MainWindow(QMainWindow):
 
     def _refresh_report_chart(self, table_dataframe: pd.DataFrame) -> None:
         report_frame = table_dataframe
+        raw_tag_names = ""
         print(f"Datatypes in the frame table_dataframe is {table_dataframe.dtypes}")
 
         # I should probably change the original query to fix data types and move display handling
         # out of the DB like I have done for other things.  But for now I am stripping the spaces
-        # and the dollar signs and space in order to convert the data type to integer(float) for proper sum()
+        # and the dollar signs and space in order to convert the data type to integer(float)
+        # for proper sum()
         report_frame["transaction_amount"] = report_frame[
             "transaction_amount"
         ].str.replace(r" ", "", regex=True)
@@ -525,7 +532,7 @@ class MainWindow(QMainWindow):
         print(category_dict)
         print(type(category_dict))
         print(chart_data_dict)
-        tag_dict = {"placeholder1": 100, "placeholder2": 50}
+        # tag_dict = {"placeholder1": 100, "placeholder2": 50}
         # self.report_tab_pie_series = handlers.QtPieChartSeries(tag_dict)
         self.report_tab_pie_series = handlers.QtPieChartSeries(category_dict)
         # self.report_tab_pie_series = handlers.QtPieChartSeries(pie_dict)
@@ -545,6 +552,7 @@ class MainWindow(QMainWindow):
 
     # Database Management Functions
     def button_check_db_clicked(self) -> None:
+        """Runs poll_master_table from db_handlers"""
         db_table_check_status = db_handlers.DatabaseSetup.poll_master_table()
         check_msg = QMessageBox()
         if db_table_check_status:
@@ -556,6 +564,7 @@ class MainWindow(QMainWindow):
         check_msg.exec()
 
     def button_create_table_clicked(self) -> None:
+        """Runs create_budget_table from db_handlers"""
         _create_table_bool, status = db_handlers.DatabaseSetup.create_budget_table()
         check_msg = QMessageBox()
         check_msg.setWindowTitle("Transaction Table Creation")
@@ -563,6 +572,7 @@ class MainWindow(QMainWindow):
         check_msg.exec()
 
     def button_create_database_clicked(self) -> None:
+        """Runs the create_database function from db_handlers"""
         _db_transaction_table_creation, status_msg = (
             db_handlers.DatabaseSetup.create_database()
         )
@@ -572,7 +582,7 @@ class MainWindow(QMainWindow):
         check_msg.exec()
 
     def button_delete_duplicates_clicked(self):
-        """my doc is my string, verify me"""
+        """Runs the remove duplicates function from db_handlers"""
         # left as a reminder, this function will be moved to the admin tab for obvious reasons.
         db_handlers.removeDuplicates()
 

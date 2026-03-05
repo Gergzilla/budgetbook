@@ -79,3 +79,4 @@ Tracking for what I need to change, fix or implement
 - ~~App crashes if you cancel the import file dialogue box without selecting a file~~ Resolved 5-8-2025
 - ~~The dynamic entry boxes do not always properly reset when importing different data or changing sources~~ Not an issue in PyQt6 6-19-2025
 - There is a weird crash caused by running the program with -h for the logging config.  temp fix applied in __main__.py
+- There is a known limitation with the data table view relating to the _generate_report_chart function in __main__.py where the size of the table cannot be modified manually.  This would involve changes in the gui_handles module.
