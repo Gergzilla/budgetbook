@@ -1,3 +1,6 @@
+#!/usr/bin/python
+"""my doc is my string, verify me"""
+
 import os
 from datetime import datetime
 import csv
@@ -9,7 +12,6 @@ import dateutil.parser as dateparser
 
 # from dateutil.parser import parse as dateparse
 
-
 # this stuff below is only really needed for testing, not for prod
 from utilities.logger import (
     LoggingHandler,
@@ -18,7 +20,6 @@ from utilities.logger import (
 
 # import matplotlib.pyplot as plt
 
-"""my doc is my string, verify me"""
 # Class is fully functional as is joining all discovered tables for the following institutions:
 # Capital One, Other
 # Future institutions will be added as I need them but the core functions should be universal in
@@ -28,6 +29,8 @@ logger = LoggingHandler(str(os.path.basename(__file__))).log
 
 
 class Page:
+    """my doc is my string, verify me"""
+
     def __init__(self, page: pymupdf.Page, page_number):
         self.name = __name__
         self.page = page
@@ -81,8 +84,9 @@ class Page:
 
             match column_count:
                 # In testing there are cases where valid data returns with 4 or 5 columns
-                # The purpose here is to rename the columns in those cases and in any other case purge the dataframe
-                # as it is unlikely to have correct information and it could cause merge errors later
+                # The purpose here is to rename the columns in those cases and in any other case
+                # purge the dataframe as it is unlikely to have correct information and it could
+                # cause merge errors later
                 case 4:
                     # 4 columns means all data was found properly and ready for next steps.
                     df.columns = ["Col1", "Col2", "Col3", "Col4"]
@@ -90,7 +94,7 @@ class Page:
                     # 5 columns means the transaction date is probably split between col 2 and 3
                     df.columns = ["Col1", "Col2", "Col3", "Col4", "Col5"]
                 case _:
-                    # If the column count is not 4 or 5, purge the dataframe with an empty, 5 column frame
+                    # If the column count is not 4 or 5, replace the dataframe 5 empty columns
                     df = pd.DataFrame(columns=["Col1", "Col2", "Col3", "Col4", "Col5"])
 
             # replaces empty or null rows with nan and drops all nan/null rows
@@ -143,7 +147,9 @@ class Page:
 ######## Begin import handler functions ########
 
 
-class file_import_handlers(object):
+class FileImportHandlers(object):
+    """my doc is my string, verify me"""
+
     # these functions moved from handlers to consolidate all file import components to one module
     def __init__(self):
         self.name = __name__
@@ -161,10 +167,10 @@ class file_import_handlers(object):
         # fix the date format
         while 0 <= index_num < row_count:
             # print(row_count)
-            formated_transaction_date = file_import_handlers.format_date(
+            formated_transaction_date = FileImportHandlers.format_date(
                 import_frame.iloc[index_num, 0], import_year
             )
-            formated_post_date = file_import_handlers.format_date(
+            formated_post_date = FileImportHandlers.format_date(
                 import_frame.iloc[index_num, 1], import_year
             )
 
@@ -177,14 +183,14 @@ class file_import_handlers(object):
         return import_frame
 
     @staticmethod
-    def dateCheck(datestring, fuzzy=False):
+    def date_check(datestring, fuzzy=False):
         """my doc is my string, verify me"""
-        # print(f"datestring in dateCheck() method: {datestring}")
+        # print(f"datestring in date_check() method: {datestring}")
         try:
             dateparser.parse(datestring, fuzzy=fuzzy)
             return True
         except dateparser.ParserError as e:
-            logger.debug(f"datecheck Parse Error: {e}")
+            logger.debug(f"date_check Parse Error: {e}")
             # e isnt technically used but caught for proper handling, this just needs to evaluate
             # as false if datestring is not a date
             return False
@@ -203,18 +209,18 @@ class file_import_handlers(object):
         return formated_date
 
     @staticmethod
-    def csvImporter(input_file_name, year: int = 2025):
+    def importer_csv(input_file_name, year: int = 2025):
         """my doc is my string, verify me"""
         # Works perfectly!  results in a joined list of formatted data and converted to dataframe
         joined_csv = []
         try:
-            with open(input_file_name, newline="") as infile:
+            with open(input_file_name, newline="", encoding="utf-8") as infile:
                 infilereader = csv.reader(
                     filter(lambda line: line.strip(), infile), delimiter=","
                 )
                 for row in infilereader:
-                    parsedRow = file_import_handlers.parseCSV(row, year)
-                    joined_csv.append(parsedRow)
+                    parsed_row = FileImportHandlers.parse_csv(row, year)
+                    joined_csv.append(parsed_row)
             infile.close()
             joined_df = pd.DataFrame(
                 joined_csv,
@@ -232,18 +238,20 @@ class file_import_handlers(object):
             logger.critical("No valid file was found to import")
 
     @staticmethod
-    def parseCSV(row, year):  # Works perfect!
+    def parse_csv(row, year):  # Works perfect!
+        # note that this function  does work but the import of csv currently doesnt support
+        # the pandas formatting needed to complete the import 3-2-2026
         """my doc is my string, verify me"""
         expenses = []
         i = 0
         date, charge_name, expense, tag, notes = "", "", "", "", ""
         while i < len(row):
             if row[i] != "":
-                if file_import_handlers.dateCheck(row[i], fuzzy=False) is True:
-                    date = file_import_handlers.format_date(
+                if FileImportHandlers.date_check(row[i], fuzzy=False) is True:
+                    date = FileImportHandlers.format_date(
                         row[i], year
                     )  # this is shitting itself somewhere
-                    print(f"date in parseCSV(): {date}")
+                    print(f"date in parse_csv(): {date}")
                     print(f"loop count is: {i}")
                     # date = "'{}'".format(row[i])
                     # date = year + " " + str(date).strip("'")
@@ -251,14 +259,14 @@ class file_import_handlers(object):
                     expenses.append(date)
                 elif "$" in row[i]:
                     expense = row[i].replace("$", "").strip("\n")
-                    print(f"expense in parseCSV(): {expense}")
+                    print(f"expense in parse_csv(): {expense}")
                     expenses.append(expense)
                     # adds empty list elements to the end as placeholders
                     expenses.append(tag)
                     expenses.append(notes)
                 else:
                     charge_name = f"{row[i]}"
-                    print(f"charge_name in parseCSV(): {charge_name}")
+                    print(f"charge_name in parse_csv(): {charge_name}")
                     # charge_name = "'{}'".format(row[i])
                     expenses.append(charge_name)
                 i += 1
@@ -295,7 +303,7 @@ class file_import_handlers(object):
         # valid rows should have a Date in the first column, removing ones that dont
         for row in all_imports.itertuples():
             try:
-                if file_import_handlers.dateCheck(row[1], fuzzy=False) is True:
+                if FileImportHandlers.date_check(row[1], fuzzy=False) is True:
                     pass
                 else:
                     all_imports.drop(index=row[0], inplace=True)
@@ -306,10 +314,10 @@ class file_import_handlers(object):
         row_spot_check = all_imports.iloc[1]
         # takes the first row for column spot check
         try:
-            # check if the contents of the 2nd column is a valid date, if not it means columns need to be merged
-            # otherwise they are good to go
+            # check if the contents of the 2nd column is a valid date, if not it means columns
+            # need to be merged otherwise they are good to go.
             if (
-                file_import_handlers.dateCheck(str(row_spot_check.iloc[2]), fuzzy=False)
+                FileImportHandlers.date_check(str(row_spot_check.iloc[2]), fuzzy=False)
                 is True
             ):
                 row_check_merge_required = False
@@ -317,7 +325,7 @@ class file_import_handlers(object):
                 row_check_merge_required = True
         except TypeError:
             print(
-                f"something else broke in datecheck spot check for col3, might need catchall"
+                f"something else broke in date_check spot check for col3, might need catchall"
             )
         if row_check_merge_required:
             # Relabel for clarity
@@ -344,20 +352,6 @@ class file_import_handlers(object):
                 "transaction_name",
                 "transaction_amount",
             ]
-        # Now join col 2 and 3 due to pdf parsing issues and drop the old ones
-        # # I need to redo this, in some cases col2/3 are not separated.  The assumption was that the date gets chopped up.
-        # # add a regex to check if col2 and 3 are broken dates or not
-        # all_imports["Col6"] = all_imports["Col2"].str.cat(all_imports["Col3"], sep=" ")
-        # all_imports.drop(["Col2", "Col3"], axis=1, inplace=True)
-        # # Reorder the dataframe
-        # all_imports = all_imports[["Col1", "Col6", "Col4", "Col5"]]
-        # # Relabel for clarity
-        # all_imports.columns = [
-        #     "transaction_date",
-        #     "post_date",
-        #     "transaction_name",
-        #     "transaction_amount",
-        # ]
 
         # add the extra columns for tags and notes
         all_imports["tags"] = ""
@@ -372,7 +366,7 @@ class file_import_handlers(object):
                 all_imports.loc[row[0], "transaction_amount"] = "- " + row[4]
             else:
                 pass
-        all_imports = file_import_handlers.format_import_dataframe(
+        all_imports = FileImportHandlers.format_import_dataframe(
             all_imports, import_year
         )
         return all_imports
@@ -382,14 +376,16 @@ class file_import_handlers(object):
 
 
 def main():
-    """The main here is just for direct library test with hardcoded imports, its not really needed"""
+    """The main function is used for testing the import functions directly.  Mainly in cases
+    where troubleshooting of pdf changes are needed or similar parsing related issues.
+    """
     print("This is main for direct testing")
     selection = input("1 for embedded class \n2 to exit\n ")
     if selection == "1":
         pdf_path = os.path.join("statements", "2page-statement.pdf")
-        csv_path = os.path.join("statements", "converted.csv")
+        # csv_path = os.path.join("statements", "converted.csv")
         # pymu_pdf(pdf_path, csv_path) swapped to cap one function
-        file_import_handlers.cap_one_import(pdf_path)
+        FileImportHandlers.cap_one_import(pdf_path)
     if selection == "2":
         print("Exiting...")
         sys.exit(1)

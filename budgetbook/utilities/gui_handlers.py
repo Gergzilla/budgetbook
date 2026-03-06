@@ -80,6 +80,7 @@ class CustomDateRangeDialogue(QDialog):
         self.dialog_type = dialog_type
         self.setWindowTitle("Choose Data Range")
         # R0902: Too many instance attributes (9/7) (too-many-instance-attributes)
+        # I should probably condense the dialog options into a dict or a dedicated function
         self.date_dialog_layout = QVBoxLayout()
         self.year_layout = QHBoxLayout()
         self.month_layout = QHBoxLayout()

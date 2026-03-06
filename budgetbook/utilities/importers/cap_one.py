@@ -6,7 +6,7 @@ from dateutil.parser import parse as dateparse
 
 
 # copy pasted from handler, no changes made yet
-def dateCheck(datestring, fuzzy=False):
+def date_check(datestring, fuzzy=False):
     """my doc is my string, verify me"""
     try:
         dateparse(datestring, fuzzy=fuzzy)
@@ -15,27 +15,27 @@ def dateCheck(datestring, fuzzy=False):
         return False
 
 
-def csvImporter(inputFileName, year="2025"):
+def importer_csv(input_filename, year="2025"):
     """my doc is my string, verify me"""
     # Works perfectly!  results in a joined list of formatted data
-    joinedCsv = []
+    joined_csv = []
     # For now we hardcode tab delim, need to do better handling later
-    with open(inputFileName, newline="") as infile:
+    with open(input_filename, newline="", encoding="utf-8") as infile:
         infilereader = csv.reader(
             filter(lambda line: line.strip(), infile), delimiter=","
         )
         for row in infilereader:
-            parsedRow, rowCount = parseCSV(row, year)
-            for i in parsedRow:
-                joinedCsv.append(i)
+            parsed_row, row_count = parse_csv(row, year)
+            for i in parsed_row:
+                joined_csv.append(i)
     infile.close()
-    return joinedCsv, rowCount
+    return joined_csv, row_count
 
 
 ####### Parsers and Writers ########
 
 
-def parseCSV(row, year):  # Works perfect!
+def parse_csv(row, year):  # Works perfect!
     """my doc is my string, verify me"""
     # New function to parse the csv one row at a time and reformat the data into a list of strings
     expenses = []
@@ -43,7 +43,7 @@ def parseCSV(row, year):  # Works perfect!
     date, charge_name, expense, tag, notes = "", "", "", "", ""
     while i < len(row):
         if row[i] != "":
-            if dateCheck(row[i], fuzzy=False) is True:
+            if date_check(row[i], fuzzy=False) is True:
                 # date = "'{}'".format(row[i])
                 date = f"'{row[i]}'"
                 date = year + " " + str(date).strip("'")

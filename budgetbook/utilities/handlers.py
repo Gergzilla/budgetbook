@@ -27,7 +27,7 @@ from utilities import importers
 #     import utilities.db_handlers as db_handlers
 # except Exception:
 #     import db_handlers as db_handlers
-file_import_handler = importers.file_import_handlers()
+file_import_handler = importers.FileImportHandlers()
 month_selector = settings.month_selector
 logger = LoggingHandler(str(os.path.basename(__file__))).log
 
@@ -176,7 +176,7 @@ def import_file_dialogue(import_file_name, import_year: int = 0):
         # print(f"file_type is: {file_type}")
         if "csv" in file_type:
             # print("CSV file detected")
-            transaction_data = file_import_handler.csvImporter(
+            transaction_data = file_import_handler.importer_csv(
                 import_file_name, import_year
             )
         elif "pdf" in file_type:
@@ -188,7 +188,7 @@ def import_file_dialogue(import_file_name, import_year: int = 0):
         return transaction_data
     except FileNotFoundError as e:
         print(e)
-        return
+        return None
 
 
 ####### Parsers and Writers ########
@@ -198,15 +198,15 @@ def import_file_dialogue(import_file_name, import_year: int = 0):
 # data data sources into pandas dataframes for better universal functionality and so there
 # should not be a case where I need to parse massive lists to write to the db anymore.  will
 # deprecate in later versions
-def expense_chunks(expenseList, chunkSize):
+def expense_chunks(expense_list, chunk_size):
     """my doc is my string, verify me"""
     print(
         f"Deprecation warning, the function {__name__} is being deprecated, if you got this message\
             Check what is using it as it should be migrated to db_handlers.save_dataframe_to_db()"
     )
-    # this should take the list and return tuples of size chunkSize for all data sent to it
-    for i in range(0, len(expenseList), chunkSize):
-        yield expenseList[i : i + chunkSize]
+    # this should take the list and return tuples of size chunk_size for all data sent to it
+    for i in range(0, len(expense_list), chunk_size):
+        yield expense_list[i : i + chunk_size]
 
 
 def write_expense_to_db(expenses) -> bool:
@@ -237,13 +237,14 @@ def create_query_by_month():  # rewriting for error handling on bad input
     month = input("Enter the name of the Month to modify: ").capitalize()
     while month not in month_selector:
         month = input(
-            "That was not a valid choice.  Month must be a name or abbrev, e.g. Mar or March: "
+            "That was not a valid choice.  Month must be the name of a month "
+            "or an abbreviation, e.g. Mar or March: "
         ).capitalize()
         month = "" + month[0:3]
         # print(month)
     print("looks fine, calling query")
-    listByMonth = db_handlers.query_by_month(month)
-    return listByMonth
+    list_by_month = db_handlers.query_by_month(month)
+    return list_by_month
 
 
 # def monthlyQueryBuilder(): original, works ok
@@ -253,8 +254,8 @@ def create_query_by_month():  # rewriting for error handling on bad input
 #         print("Month must be a name or abbrev, e.g. Mar or March")
 #     else:
 #         print("looks fine, calling query")
-#         listByMonth = db_handlers.queryByMonth(month)
-#     return listByMonth
+#         list_by_month = db_handlers.queryByMonth(month)
+#     return list_by_month
 
 if __name__ == "__main__":
     print(

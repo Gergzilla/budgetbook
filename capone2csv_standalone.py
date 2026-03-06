@@ -155,7 +155,7 @@ class Page:
         return self.name
 
 
-class file_import_handlers(object):
+class FileImportHandlers(object):
     # these functions moved from handlers to consolidate all file import components to one module
     def __init__(self):
         self.name = __name__
@@ -173,10 +173,10 @@ class file_import_handlers(object):
         # fix the date format
         while 0 <= index_num < row_count:
             # print(row_count)
-            formated_transaction_date = file_import_handlers.format_date(
+            formated_transaction_date = FileImportHandlers.format_date(
                 import_frame.iloc[index_num, 0], import_year
             )
-            formated_post_date = file_import_handlers.format_date(
+            formated_post_date = FileImportHandlers.format_date(
                 import_frame.iloc[index_num, 1], import_year
             )
 
@@ -244,7 +244,7 @@ class file_import_handlers(object):
         # valid rows should have a Date in the first column, removing ones that dont
         for row in all_imports.itertuples():
             try:
-                if file_import_handlers.dateCheck(row[1], fuzzy=False) is True:
+                if FileImportHandlers.dateCheck(row[1], fuzzy=False) is True:
                     pass
                 else:
                     all_imports.drop(index=row[0], inplace=True)
@@ -258,7 +258,7 @@ class file_import_handlers(object):
             # check if the contents of the 2nd column is a valid date, if not it means columns need to be merged
             # otherwise they are good to go
             if (
-                file_import_handlers.dateCheck(str(row_spot_check.iloc[2]), fuzzy=False)
+                FileImportHandlers.dateCheck(str(row_spot_check.iloc[2]), fuzzy=False)
                 is True
             ):
                 row_check_merge_required = False
@@ -307,7 +307,7 @@ class file_import_handlers(object):
                 all_imports.loc[row[0], "transaction_amount"] = "- " + row[4]
             else:
                 pass
-        all_imports = file_import_handlers.format_import_dataframe(
+        all_imports = FileImportHandlers.format_import_dataframe(
             all_imports, import_year
         )
         return all_imports
@@ -352,14 +352,14 @@ def main():
     )
     if selection == "1":
         pdf_path = os.path.join(input_pdf)
-        processed_import = file_import_handlers.cap_one_import(pdf_path, import_year)
+        processed_import = FileImportHandlers.cap_one_import(pdf_path, import_year)
         print(f"Import processing completed\n: {processed_import}")
     if selection == "2":
         pdf_path = os.path.join(input_pdf)
         output_filename = input_pdf.split(".")[1].strip("\\") + ".csv"
         print(output_filename)
         # sys.exit(1)
-        processed_import = file_import_handlers.cap_one_import(pdf_path, import_year)
+        processed_import = FileImportHandlers.cap_one_import(pdf_path, import_year)
         print(f"Data import completed, dropping extra columns before export")
         processed_import.drop(["post_date", "tags", "notes"], axis=1, inplace=True)
         output_csv = generate_csv.csv_from_dataframe(processed_import, output_filename)
