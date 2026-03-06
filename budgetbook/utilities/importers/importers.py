@@ -236,6 +236,7 @@ class FileImportHandlers(object):
             return joined_df
         except FileNotFoundError:
             logger.critical("No valid file was found to import")
+            return None
 
     @staticmethod
     def parse_csv(row, year):  # Works perfect!
@@ -367,7 +368,7 @@ class FileImportHandlers(object):
             else:
                 pass
         all_imports = FileImportHandlers.format_import_dataframe(
-            all_imports, import_year
+            all_imports, parse_transaction_table
         )
         return all_imports
 

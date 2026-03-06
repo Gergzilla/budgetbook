@@ -1,4 +1,6 @@
 #!/usr/bin/python
+"""This file is a universal location for common variables within the application landscape.
+Eventually I want this to move to something more robust like the database itself."""
 import os
 import sqlite3
 

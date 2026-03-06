@@ -1,4 +1,5 @@
 #!/usr/bin/python
+"""my doc is my string, verify me"""
 import os
 from datetime import datetime
 import csv
@@ -8,11 +9,8 @@ import numpy as np
 import pandas as pd
 import dateutil.parser as dateparser
 
-# new note for 2/26/26 capital one seems to have changed their report just enough that this is broken now.  I am legit not sure why yet or how as they look the same
-# but most likely some kind of sizing change or similar.  The part that doesnt make sense is the pymupdf still seems to find data and parse it.
-# but the
-
-### The purpose of this standalone is to try and convert a capital one pdf to a csv format in order to import into google docs for temp budge reasons
+# The purpose of this standalone is to try and convert a capital one pdf to a csv format in order
+# to import into google docs for temp budget reasons.
 
 # from dateutil.parser import parse as dateparse
 
@@ -25,7 +23,7 @@ import dateutil.parser as dateparser
 
 # import matplotlib.pyplot as plt
 
-"""my doc is my string, verify me"""
+
 # Class is fully functional as is joining all discovered tables for the following institutions:
 # Capital One, Other
 # Future institutions will be added as I need them but the core functions should be universal in
@@ -35,6 +33,8 @@ import dateutil.parser as dateparser
 
 
 class Page:
+    """my doc is my string, verify me"""
+
     def __init__(self, page: pymupdf.Page, page_number):
         self.name = __name__
         self.page = page
@@ -92,8 +92,9 @@ class Page:
 
             match column_count:
                 # In testing there are cases where valid data returns with 4 or 5 columns
-                # The purpose here is to rename the columns in those cases and in any other case purge the dataframe
-                # as it is unlikely to have correct information and it could cause merge errors later
+                # The purpose here is to rename the columns in those cases and in any other case
+                # purge the dataframe as it is unlikely to have correct information and it could
+                # cause merge errors later
                 case 4:
                     # 4 columns means all data was found properly and ready for next steps.
                     df.columns = ["Col1", "Col2", "Col3", "Col4"]
@@ -101,7 +102,7 @@ class Page:
                     # 5 columns means the transaction date is probably split between col 2 and 3
                     df.columns = ["Col1", "Col2", "Col3", "Col4", "Col5"]
                 case _:
-                    # If the column count is not 4 or 5, purge the dataframe with an empty, 5 column frame
+                    # If the column count is not 4 or 5, replace the dataframe 5 empty columns
                     df = pd.DataFrame(columns=["Col1", "Col2", "Col3", "Col4", "Col5"])
 
             # replaces empty or null rows with nan and drops all nan/null rows
@@ -155,7 +156,9 @@ class Page:
         return self.name
 
 
-class FileImportHandlers(object):
+class FileImportHandlers:
+    """my doc is my string, verify me"""
+
     # these functions moved from handlers to consolidate all file import components to one module
     def __init__(self):
         self.name = __name__
@@ -255,8 +258,8 @@ class FileImportHandlers(object):
         row_spot_check = all_imports.iloc[1]
         # takes the first row for column spot check
         try:
-            # check if the contents of the 2nd column is a valid date, if not it means columns need to be merged
-            # otherwise they are good to go
+            # check if the contents of the 2nd column is a valid date, if not it means columns
+            # need to be merged otherwise they are good to go.
             if (
                 FileImportHandlers.dateCheck(str(row_spot_check.iloc[2]), fuzzy=False)
                 is True
@@ -316,12 +319,15 @@ class FileImportHandlers(object):
 ######## End import handler functions ########
 
 
-class generate_csv(object):
+class GenerateCsv(object):
+    """my doc is my string, verify me"""
+
     def __init__(self):
         self.name = __name__
 
     @staticmethod
     def csv_from_dataframe(imported_dataframe: pd.DataFrame, csv_file: str):
+        """my doc is my string, verify me"""
         print("Generating CSV from processed dataframe")
         try:
             imported_dataframe.to_csv(
@@ -332,7 +338,7 @@ class generate_csv(object):
                 mode="w",
                 encoding="utf-8",
             )
-        except Exception as e:
+        except PermissionError as e:
             print(f"This failed due to: {e}")
 
 
@@ -362,7 +368,8 @@ def main():
         processed_import = FileImportHandlers.cap_one_import(pdf_path, import_year)
         print(f"Data import completed, dropping extra columns before export")
         processed_import.drop(["post_date", "tags", "notes"], axis=1, inplace=True)
-        output_csv = generate_csv.csv_from_dataframe(processed_import, output_filename)
+        # output_csv = GenerateCsv.csv_from_dataframe(processed_import, output_filename)
+        GenerateCsv.csv_from_dataframe(processed_import, output_filename)
 
         print(f"conversion from PDF to CSV completed, check\n: {output_filename}")
     if selection == "3":
