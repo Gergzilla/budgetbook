@@ -29,7 +29,11 @@ logger = LoggingHandler(str(os.path.basename(__file__))).log
 
 
 class Page:
-    """my doc is my string, verify me"""
+    """Page is a custom class for the pymupdf Page object along with needed attributes for parsing
+    and processing imported pdfs.  It parses out the input pdf into numbbered pages for tracking
+    which are then used by a set of functions to look for transaction tables for import.  Each
+    financial institution requires its own import function due to the unique formatting of their
+    monthly statements."""
 
     def __init__(self, page: pymupdf.Page, page_number):
         self.name = __name__
@@ -41,7 +45,10 @@ class Page:
         # moved this for lint, havent tested
 
     def find_transaction_table(self, needle):
-        """my doc is my string, verify me"""
+        """scans the pdf within the page object using the 'needle' which is the name for a string
+        of text unique to the start of the transaction table.  This is sourced ia the unique
+        function for a given institution.  More details can be found on the pymupdf documentation
+        here https://pymupdf.readthedocs.io/en/latest/textpage.html#TextPage.search"""
         end_of_table = self.get_rect(needle)  # for capitalOne only
         if end_of_table:
             self.logger.debug(f"Calculated rect of needle: {end_of_table}")
@@ -49,7 +56,9 @@ class Page:
         return False
 
     def find_table_end(self, needle):
-        """my doc is my string, verify me"""
+        """This works basically the same as the find_transaction_table function except that the
+        needle is a unique string for the end of a given transaction table.  Also unique to the
+        institution specific function."""
         # print(f"Page: {self.page.number} into the find_table_end function?")
         end_of_table = self.get_rect(needle)
         if end_of_table:
@@ -61,12 +70,18 @@ class Page:
         return self.clip_y1
 
     def get_rect(self, needle):
-        """my doc is my string, verify me"""
+        """This function returns the rect or rectangle of an area where the needle was found.
+        These are basically coordinates of the table we want on the given page of a pdf we are
+        parsing.  More info here https://pymupdf.readthedocs.io/en/latest/rect.html#rect
+        """
         found_rect = self.page.search_for(needle)
         return found_rect
 
     def parse_transaction_table(self, new_clip):
-        """my doc is my string, verify me"""
+        """This function is the real work horse of the imports.  It loops through each page to
+        record each one that has a transaction table.  Then it parses through all of them and
+        converts them to pandas dataframes.  Then unifies their columns, drops empty entries
+        and merges them all into one single dataframe for the next processing step."""
         tabs = self.page.find_tables(
             clip=new_clip, strategy="text", join_x_tolerance=3, text_x_tolerance=5
         )
@@ -109,9 +124,14 @@ class Page:
         return df
 
     def import_cap_one_pdf(self):
-        """my doc is my string, verify me"""
-        # This is specific to capital One credit card PDF statements which is what the needles
-        # and rect reference
+        """This is the Capital One specific function for PDF processing that has the unique strings
+        for finding the start and end of the transaction tables as well as the default clip size
+        of the rect on the page that could contain the transaction details."""
+        # note for myself I feel this would better serve logical and functional separation by not
+        # having the institution specific functions inside the page class but I currently lack the
+        # know-how to do this effectively.  Ideally there will be a module for each institution
+        # to make it easier to maintain and having all universal functions consolidated here for
+        # example.
         table_title = "Trans Date"
         end_of_trans_needle = "Total Transactions for This Period"
         # self.parsed_dataframe = pd.DataFrame()
@@ -148,7 +168,10 @@ class Page:
 
 
 class FileImportHandlers(object):
-    """my doc is my string, verify me"""
+    """This class is a collection of static methods for various import functions as well as the
+    import formatters for the specific types of imports, such as csv or specific financial
+    institutions.  The generic handlers go first and the custom ones at the end for readability.
+    """
 
     # these functions moved from handlers to consolidate all file import components to one module
     def __init__(self):
@@ -160,7 +183,10 @@ class FileImportHandlers(object):
 
     @staticmethod
     def format_import_dataframe(import_frame: pd.DataFrame, import_year):
-        """my doc is my string, verify me"""
+        """This formatter is basically designed to handle looping through all rows in the incoming
+        dataframe to fix the formatting of it, mainly the dates, to a unified format for import
+        into the database.  Although all it currently does is call date formatting it is still
+        a generic 'loop through the rows' function and thus serves its purpose."""
         index_num = 0
         row_count = len(import_frame)
         print(f"Processing {row_count} rows.")
@@ -184,7 +210,11 @@ class FileImportHandlers(object):
 
     @staticmethod
     def date_check(datestring, fuzzy=False):
-        """my doc is my string, verify me"""
+        """This is used to validate dates.  This serves two main purposes.  The first is to check
+        that data contained within a given row actually has a date where one is expected when
+        parsing an import file.  This is also used to check what kind of data or pdf may have beenedswwww[']xdsssssssz20p4o
+        imported.  As which rows have valid dates in them can determine the format style of the
+        given data and allow for corrections."""
         # print(f"datestring in date_check() method: {datestring}")
         try:
             dateparser.parse(datestring, fuzzy=fuzzy)
@@ -197,7 +227,11 @@ class FileImportHandlers(object):
 
     @staticmethod
     def format_date(datestring, year):
-        """my doc is my string, verify me"""
+        """This function is designed to convert a given date to a specific format to unify all
+        imported data to the same style for useful data handling.  It is not currently as
+        robust as it likely will need to be going forward but currently works for dates in
+        the 'MM DD' format and updates them to 'YYYY-MM-DD' format based on the import year chosen.
+        """
         formated_date = f"'{datestring}'"
         # print(f"1: formated_date in format_date: {formated_date}")
         formated_date = year + " " + str(formated_date).strip("'")
@@ -210,7 +244,12 @@ class FileImportHandlers(object):
 
     @staticmethod
     def importer_csv(input_file_name, year: int = 2025):
-        """my doc is my string, verify me"""
+        """This is the actual import function for CSV files, it opens a provided csv, runs each
+        row into through the parse_csv function and combines all the results into a pandas
+        dataframe designed to be imported later.  As noted in the parse function this does not
+        actually make it to the database currently due to lack of implementation for the needed
+        functions but should be easy to implement now that the rest of the db handlers work well.
+        """
         # Works perfectly!  results in a joined list of formatted data and converted to dataframe
         joined_csv = []
         try:
@@ -242,7 +281,13 @@ class FileImportHandlers(object):
     def parse_csv(row, year):  # Works perfect!
         # note that this function  does work but the import of csv currently doesnt support
         # the pandas formatting needed to complete the import 3-2-2026
-        """my doc is my string, verify me"""
+        """This parses raw CSV for import and is called from the import_csv static method.
+        Currently it assumes a certain formatting, mainly for efirst bank or amazon.  However it
+        is no longer fully implemented since the move to the new database format and structure.
+        The parsing all still works but it does not call the next steps correctly to actually get
+        the data into the program and DB.  This is primarily due to the fact that it just doesn't
+        call the rest of the functions and methods required to actually finish the import.  So
+        currently a new work in progress. 3-8-2026"""
         expenses = []
         i = 0
         date, charge_name, expense, tag, notes = "", "", "", "", ""
@@ -277,7 +322,11 @@ class FileImportHandlers(object):
 
     @staticmethod
     def cap_one_import(pdf_path: str, import_year: int):
-        """my doc is my string, verify me"""
+        """This is basically the front end to the import_cap_one_pdf function in the Page class and
+        also serves as main handler for formatting and labelling all the Capital One institution
+        specific data formats.  This is the other side of the institution specific template that is
+        needed when adding support for a new source.  refer to the template documentation for more
+        explicit details in that regard."""
         frame_list = []
         all_imports = pd.DataFrame
         pdf = pymupdf.open(pdf_path)
@@ -298,8 +347,6 @@ class FileImportHandlers(object):
         # Join all tables into one DataFrame and reset the index before cleanup
 
         all_imports = pd.concat(frame_list)
-        # forcing exit here while troubleshooting
-        # sys.exit(1)
         all_imports = all_imports.reset_index(drop=True)
         # valid rows should have a Date in the first column, removing ones that dont
         for row in all_imports.itertuples():
@@ -368,7 +415,7 @@ class FileImportHandlers(object):
             else:
                 pass
         all_imports = FileImportHandlers.format_import_dataframe(
-            all_imports, parse_transaction_table
+            all_imports, import_year
         )
         return all_imports
 
