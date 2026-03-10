@@ -28,9 +28,9 @@ from PyQt6.QtWidgets import (
     QDialog,
 )
 
-from utilities import handlers
-from utilities import db_handlers
-from utilities import gui_handlers
+from budgetbook.utilities import handlers
+from budgetbook.utilities import db_handlers
+from budgetbook.utilities import gui_handlers
 
 # import utilities.importers.importers as importers
 
@@ -39,7 +39,7 @@ try:
     from utilities.logger import LoggingHandler
 except ImportError:
     sys.exit(0)
-
+print("Is main running?")
 logger = LoggingHandler(str(os.path.basename(__file__))).log
 
 # List of years to use for various prompts
