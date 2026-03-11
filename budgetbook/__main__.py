@@ -28,15 +28,15 @@ from PyQt6.QtWidgets import (
     QDialog,
 )
 
-from budgetbook.utilities import handlers
-from budgetbook.utilities import db_handlers
-from budgetbook.utilities import gui_handlers
+from .utilities import handlers
+from .utilities import db_handlers
+from .utilities import gui_handlers
 
 # import utilities.importers.importers as importers
 
 try:
     # Required as if -h is passed the program should exit cleanly
-    from utilities.logger import LoggingHandler
+    from .utilities.logger import LoggingHandler
 except ImportError:
     sys.exit(0)
 print("Is main running?")
@@ -363,43 +363,43 @@ class MainWindow(QMainWindow):
             import_year = import_year_dialog.year
             print(f"chosen year is: {import_year}")
 
-        try:
-            import_filename = QFileDialog.getOpenFileName(
-                self,
-                str("Open expense file"),
-                "/scripts/pybudget/budgetbook/statements",
-                str("Expense files (*.csv *.pdf *.xls *.xlsx)"),
-            )
-            # folder is hardcoded for now for dev convenience
-            if import_filename[0] == "":
-                return
-            self.main_tabs.setCurrentWidget(self.data_tab_widget)
-            # this dialogue should probably be its own window in order to validate the incoming
-            # data more easily and then it can be saved to the database and then viewed and
-            # edited further in the main window.
-            self.transaction_table = handlers.import_file_dialogue(
-                import_filename[0], import_year
-            )
-            # import works, there was an issue with the pdf parsing and column count in the
-            # pdf_importers module
-            print("Data import complete")
             try:
-                # I need to add a formatter to make the column names look nice and pretty
-                # without impacting the DB
-                self.data_table_model.update_table_from_dataframe(
-                    self.transaction_table
+                import_filename = QFileDialog.getOpenFileName(
+                    self,
+                    str("Open expense file"),
+                    "/scripts/pybudget/budgetbook/statements",
+                    str("Expense files (*.csv *.pdf *.xls *.xlsx)"),
                 )
-                self.data_table_view.resizeColumnsToContents()
-                self.data_table_view.setEditTriggers(
-                    QTableView.EditTrigger.DoubleClicked
-                    | QTableView.EditTrigger.AnyKeyPressed
-                )  # this works now, missed flag function in table class
-                # print(self.data_table_view.editTriggers())
+                # folder is hardcoded for now for dev convenience
+                if import_filename[0] == "":
+                    return
+                self.main_tabs.setCurrentWidget(self.data_tab_widget)
+                # this dialogue should probably be its own window in order to validate the incoming
+                # data more easily and then it can be saved to the database and then viewed and
+                # edited further in the main window.
+                self.transaction_table = handlers.import_file_dialogue(
+                    import_filename[0], import_year
+                )
+                # import works, there was an issue with the pdf parsing and column count in the
+                # pdf_importers module
+                print("Data import complete")
+                try:
+                    # I need to add a formatter to make the column names look nice and pretty
+                    # without impacting the DB
+                    self.data_table_model.update_table_from_dataframe(
+                        self.transaction_table
+                    )
+                    self.data_table_view.resizeColumnsToContents()
+                    self.data_table_view.setEditTriggers(
+                        QTableView.EditTrigger.DoubleClicked
+                        | QTableView.EditTrigger.AnyKeyPressed
+                    )  # this works now, missed flag function in table class
+                    # print(self.data_table_view.editTriggers())
+                except ValueError as e:
+                    print(e)
+
             except ValueError as e:
                 print(e)
-
-        except ValueError as e:
-            print(e)
 
     def button_load_from_db_clicked(self) -> None:
         """my doc is my string, verify me"""
