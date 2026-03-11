@@ -22,6 +22,7 @@ Dead_db.sqlite3_dead
 # Misc test/scratch and log files that shouldnt be on Git
 **/runninglog.txt*
 **/*runninglog.txt*
+budgetbook/utilities/importers/logs/*
 
 #temporary setups that should not be replicated to actual release
 budgetbook/utilities/importers/utilities/
