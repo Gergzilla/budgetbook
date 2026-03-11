@@ -17,10 +17,10 @@ from PyQt6.QtGui import QColor
 from PyQt6.QtCharts import QPieSeries
 
 
-from vars import settings
-from utilities.logger import LoggingHandler
-from utilities import db_handlers
-from utilities import importers
+from ..vars import settings
+from ..utilities.logger import LoggingHandler
+from ..utilities import db_handlers
+from ..utilities import importers
 
 
 # try:

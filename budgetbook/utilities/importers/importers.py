@@ -13,7 +13,7 @@ import dateutil.parser as dateparser
 # from dateutil.parser import parse as dateparse
 
 # this stuff below is only really needed for testing, not for prod
-from utilities.logger import (
+from ..logger import (
     LoggingHandler,
 )  # temporary local utilities until packaging later
 

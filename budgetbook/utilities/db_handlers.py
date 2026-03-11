@@ -5,9 +5,9 @@ import sqlite3
 import os
 from datetime import datetime
 import pandas as pd
-from vars import settings
+from ..vars import settings
 
-from utilities.logger import LoggingHandler
+from ..utilities.logger import LoggingHandler
 
 # try:
 #     from utilities.logger import LoggingHandler
