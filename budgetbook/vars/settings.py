@@ -11,7 +11,7 @@ dbconnect = sqlite3.connect(expensedb)
 # mytable = "database_transaction"
 expenseTable = "transactions"
 
-month_selector = {
+month_dict = {
     "Jan": "January",
     "Feb": "February",
     "Mar": "March",
@@ -26,5 +26,6 @@ month_selector = {
     "Dec": "December",
 }
 
+year_list = ["2026", "2025", "2024", "2023", "2022", "2021", "2020"]
 if __name__ == "__main__":
     print("I am a settings file, why did you run me?  LOL")
