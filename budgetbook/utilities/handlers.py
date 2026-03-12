@@ -28,7 +28,7 @@ from ..utilities import importers
 # except Exception:
 #     import db_handlers as db_handlers
 file_import_handler = importers.FileImportHandlers()
-month_selector = settings.month_selector
+month_selector = settings.month_dict
 logger = LoggingHandler(str(os.path.basename(__file__))).log
 
 
@@ -195,7 +195,7 @@ def import_file_dialogue(import_file_name, import_year: int = 0):
 
 
 # The expenseChunks and writeExpenseToDB are probably not needed anynmore.  I am converting all
-# data data sources into pandas dataframes for better universal functionality and so there
+# data sources into pandas dataframes for better universal functionality and so there
 # should not be a case where I need to parse massive lists to write to the db anymore.  will
 # deprecate in later versions
 def expense_chunks(expense_list, chunk_size):

@@ -17,7 +17,9 @@ from ..utilities.logger import LoggingHandler
 #### Database Setup Functions #####
 default_database = settings.expensedb
 expenseTable = settings.expenseTable
-logger = LoggingHandler("db_handlers").log  # currently untested
+logger = LoggingHandler("db_handlers").log
+# print(logger.log)  # currently untested
+# print(f"logging test of {logger} module: {logger.show_logging_level()}")
 
 
 # note for database.  I have encountered several issues now regarding the data integrity and types

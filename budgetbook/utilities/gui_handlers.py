@@ -17,29 +17,15 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QPushButton,
 )
+from ..vars import settings
 
-# List of years to use for various prompts
-# further note, these should be unified somewhere in vars file later
-# also the years should probably be dynamic in some way and editable especially for imports
-year_list = ["2025", "2024", "2023", "2022", "2021", "2020"]
-month_dict = {
-    "Jan": "January",
-    "Feb": "February",
-    "Mar": "March",
-    "Apr": "April",
-    "May": "May",
-    "Jun": "June",
-    "Jul": "July",
-    "Aug": "August",
-    "Sep": "September",
-    "Oct": "October",
-    "Nov": "November",
-    "Dec": "December",
-    "Whole Year": "All",
-}
-# specific year selector for reports and summaries
-year_selector = year_list
+
+# specific year and month selectors for reports and summaries
+year_selector = settings.year_list
 year_selector.append("All")
+
+month_selector = settings.month_dict
+month_selector["Whole Year"] = "All"
 
 
 class CustomOkCancelDialog(QDialog):
@@ -106,7 +92,7 @@ class CustomDateRangeDialogue(QDialog):
             self.chosen_year.addItems(year_selector)
             self.year_layout.addWidget(self.chosen_year)
             self.month_layout.addWidget(QLabel("Select Year: "))
-            self.chosen_month.addItems(month_dict)
+            self.chosen_month.addItems(month_selector)
             self.month_layout.addWidget(self.chosen_month)
             self.date_dialog_layout.addLayout(self.year_layout)
             self.date_dialog_layout.addLayout(self.month_layout)
