@@ -78,7 +78,7 @@ import pymupdf
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import logging as logger
+import logging
 
 pdf_path = os.path.join("relative", "path", "to", "pdf")
 
@@ -90,7 +90,7 @@ class Page:
         self.name = __name__
         self.page = page
         self.page_number = page_number
-        self.logger = logger()
+        self.logger = logging()
         self.parsed_dataframe = pd.DataFrame()
         self.clip_y1 = 0
 
