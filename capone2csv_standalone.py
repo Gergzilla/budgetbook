@@ -21,9 +21,6 @@ import dateutil.parser as dateparser
 # )  # temporary local utilities until packaging later
 
 
-# import matplotlib.pyplot as plt
-
-
 # Class is fully functional as is joining all discovered tables for the following institutions:
 # Capital One, Other
 # Future institutions will be added as I need them but the core functions should be universal in
