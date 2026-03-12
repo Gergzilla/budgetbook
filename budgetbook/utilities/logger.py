@@ -39,7 +39,8 @@ parser.add_argument(
     help="Enables output of log messages to the console, default is logfile in /logs folder",
 )
 try:
-    options = parser.parse_args()
+    options, passthrough_args = parser.parse_known_args()
+    # options = parser.parse_args()
 except ValueError as e:
     print(f"Logger module exiting with exception: {e}")
     sys.exit(1)
@@ -52,10 +53,9 @@ levels = {
     "info": logging.INFO,
     "debug": logging.DEBUG,
 }
-
+# parse the input arguments and assign relevant values
 level = levels.get(options.log.lower())
 showconsole = options.console.lower()
-
 if level is None:
     raise ValueError(
         f"log level given: {options.log}"
@@ -78,9 +78,12 @@ console.setFormatter(formatter)
 class LoggingHandler:
     """my doc is my string, verify me"""
 
-    def __init__(self, name):
-        self.name = __name__
-        self.log = logging.getLogger(str(name))
+    def __init__(self, name, level=level):
+        # fixed this, it should have been name not __name__ so it picks up the source name
+        self.name = name
+        # print(f"where the hell is my name from? {self.name}")
+        self.log = logging.getLogger(str(self.name))
+        self.level = level
         if showconsole:
             self.log.addHandler(console)
         # logging.getLogger(self.log)
@@ -88,6 +91,9 @@ class LoggingHandler:
     def __str__(self):
         return self.name
 
-    def show_level(self):
+    def get_logging_level(self):
+        return self.level
+
+    def show_logging_level(self):
         """my doc is my string, verify me"""
-        return f"current Debug Level: {level})"
+        return f"current logging Level: {self.level}:{logging.getLevelName(self.level)}"
