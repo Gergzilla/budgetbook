@@ -31,6 +31,7 @@ from PyQt6.QtWidgets import (
 from .utilities import handlers
 from .utilities import db_handlers
 from .utilities import gui_handlers
+from .vars import settings
 
 # import utilities.importers.importers as importers
 
@@ -39,30 +40,22 @@ try:
     from .utilities.logger import LoggingHandler
 except ImportError:
     sys.exit(0)
-print("Is main running?")
-logger = LoggingHandler(str(os.path.basename(__file__))).log
+# print("Is main running?")
 
-# List of years to use for various prompts
-# further note, these should be unified somewhere in vars file later
-year_list = ["2025", "2024", "2023", "2022", "2021", "2020"]
-month_dict = {
-    "Jan": "January",
-    "Feb": "February",
-    "Mar": "March",
-    "Apr": "April",
-    "May": "May",
-    "Jun": "June",
-    "Jul": "July",
-    "Aug": "August",
-    "Sep": "September",
-    "Oct": "October",
-    "Nov": "November",
-    "Dec": "December",
-    "Whole Year": "All",
-}
-# specific year selector for reports and summaries
-year_selector = year_list
+# note that this logger import isnt used here, only in the mainwindow class so I removed it for now
+# logger = LoggingHandler(str("whyisthisnotaname"))
+# # logger = LoggingHandler(str(os.path.basename(__file__)))
+# logger.log
+# print(logger.show_logging_level())
+# testing rewrite of logger mechanism. below is the old line
+# logger = LoggingHandler(str(os.path.basename(__file__))).log
+
+# specific year and month selectors for reports and summaries
+year_selector = settings.year_list
 year_selector.append("All")
+
+month_selector = settings.month_dict
+month_selector["Whole Year"] = "All"
 
 # Dictionary to convert database columns to user readable strings for displaying expenses
 readable_columns = {
@@ -73,15 +66,6 @@ readable_columns = {
     "tags": "Tags",
     "notes": "Notes",
 }
-
-
-def random_color_gen() -> str:
-    """my doc is my string, verify me"""
-    r = random.randint(0, 255)
-    g = random.randint(0, 255)
-    b = random.randint(0, 255)
-    color_string = f"#{r:02x}{g:02x}{b:02x}"
-    return color_string
 
 
 class MainWindow(QMainWindow):
@@ -218,7 +202,7 @@ class MainWindow(QMainWindow):
         self.report_tab_year_select.setFixedSize(100, 30)
         report_tab_month_label = QLabel("Select Month")
         self.report_tab_month_select = QComboBox()
-        self.report_tab_month_select.addItems(month_dict)
+        self.report_tab_month_select.addItems(month_selector)
         self.report_tab_month_select.setFixedSize(100, 30)
         # self.report_tab_refresh_button = gui_handlers.PushButtonGenerator(
         #     ["Refresh", self.font_metrics.width("Refresh")]
@@ -605,7 +589,7 @@ def main():
             stylesheet = f.read()
     except FileNotFoundError:
         stylesheet = ""
-
+    # print(f"main function logging message: {logger.__str__()}")
     main_app = QApplication(sys.argv)
     main_app.setStyleSheet(stylesheet)
     main_app.styleHints().setColorScheme(Qt.ColorScheme.Dark)
