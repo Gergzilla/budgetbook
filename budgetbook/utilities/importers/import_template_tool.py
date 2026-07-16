@@ -6,7 +6,8 @@ from how I got the first imports working.
 
 How To Use
 1. Put your pdf in the same folder as the tool for ease of use
-2. Modify pdf_path variable with your pdf name
+2. execute the script by supplying the name of the pdf as the first argument
+    (e.g. python import_template_tool.py myNewStatement.pdf)
 3. Execute this script choosing option 2 to get a page by page display of the pdf with a grid line
 3a. The goal here is to try and determine the best grid size for your document to minimize area
     outside the transaction tables as well as to determine a good set of string to use for
@@ -74,13 +75,14 @@ that it can do more than that currently.
 """
 
 import os
+import sys
 import pymupdf
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import logging
 
-pdf_path = os.path.join("relative", "path", "to", "pdf")
+# pdf_path = os.path.join("relative", "path", "to", "pdf")
 
 
 class Page:
@@ -90,15 +92,15 @@ class Page:
         self.name = __name__
         self.page = page
         self.page_number = page_number
-        self.logger = logging()
         self.parsed_dataframe = pd.DataFrame()
+        # moved this for lint, havent tested
         self.clip_y1 = 0
 
     def find_transaction_table(self, needle):
         """my doc is my string, verify me"""
         end_of_table = self.get_rect(needle)  # for capitalOne only
         if end_of_table:
-            self.logger.DEBUG(f"rect of needle: {end_of_table}")
+            # self.logger.DEBUG(f"rect of needle: {end_of_table}")
             return True
         return False
 
@@ -110,7 +112,7 @@ class Page:
             # This sets the rectable up a few units to avoid including the end of table keyword in
             # the rectangle, you may need to adjust this depending on your specific import files.
             return self.clip_y1
-        self.logger.DEBUG("Table end not found on page")
+        # self.logger.DEBUG("Table end not found on page")
         return self.clip_y1
 
     def get_rect(self, needle):
@@ -123,13 +125,16 @@ class Page:
         tabs = self.page.find_tables(
             clip=new_clip, strategy="text", join_x_tolerance=5, text_x_tolerance=5
         )
-        if tabs.tables:
-            df = tabs[0].to_pandas()
-            # TODO I need to make column relabelling dynamic later
-            df.columns = ["Col1", "Col2", "Col3", "Col4", "Col5"]
-            df = df.replace("", np.nan)
-            df = df.dropna()
-        return df
+        print(f"Found {len(tabs.tables)} table(s) on page {self.page.number}")
+
+        # #temp disable this piece for troubleshooting and attempting to render the tables on the page
+        # if tabs.tables:
+        #     df = tabs[0].to_pandas()
+        #     # TODO I need to make column relabelling dynamic later
+        #     df.columns = ["Col1", "Col2", "Col3", "Col4", "Col5"]
+        #     df = df.replace("", np.nan)
+        #     df = df.dropna()
+        # return df
 
     def import_pdf_boilerplate(self):
         """my doc is my string, verify me"""
@@ -167,6 +172,8 @@ def test_boilerplate(pdf_path):
             frame_list.append(imports)
         else:
             pass
+
+    sys.exit(0)  # temporary exit for errors
     all_imports = pd.concat(frame_list)
     print(all_imports)
     return all_imports
@@ -200,18 +207,37 @@ def pymu_render(chosen_page):
     plt.show()
 
 
+def render_rectangle(chosen_page):
+    print("this should hopefully display the pdf pages with the detection rectangle")
+
+
 def main():
+    if len(sys.argv) > 1:
+        input_pdf = sys.argv[1]
+        # import_year = sys.argv[2]
+    else:
+        print("You need to supply an input filename, exiting script...")
+        input_pdf = ""
+        sys.exit(1)
     selection = input(
         "1 Test boilerplate extraction \n"
         "2 Render PDF pages with grid for rectangle visualization \n "
+        "3 Render the PDF pages with the detected rectangle of the table: \n"
     )
     if selection == "1":
-        test_boilerplate(pdf_path)
+        test_boilerplate(input_pdf)
     elif selection == "2":
-        pdf = pymupdf.open(pdf_path)
-        for i in pdf:
-            chosen_page = pdf[i]
+        pdf = pymupdf.open(input_pdf)
+        import_pages = [Page(page, page_num) for page_num, page in enumerate(pdf)]
+        for i in import_pages:
+            chosen_page = i.page
             pymu_render(chosen_page)
+    elif selection == "3":
+        pdf = pymupdf.open(input_pdf)
+        import_pages = [Page(page, page_num) for page_num, page in enumerate(pdf)]
+        for i in import_pages:
+            chosen_page = i.page
+        render_rectangle(input_pdf)
 
 
 if __name__ == "__main__":

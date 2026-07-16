@@ -1,10 +1,12 @@
 #!/usr/bin/python
 """This module is classes and functions relating to managin the gui and it's unique elements.
 Such as creating tabs and handling custom dialog boxes for various things"""
+
 # I need to add I think a button making class that will
 # create buttons at a fixed height and dynamic width of the text
 
-# from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import Qt
+
 # from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import (
     QWidget,
@@ -19,13 +21,117 @@ from PyQt6.QtWidgets import (
 )
 from ..vars import settings
 
-
 # specific year and month selectors for reports and summaries
 year_selector = settings.year_list
 year_selector.append("All")
 
 month_selector = settings.month_dict
 month_selector["Whole Year"] = "All"
+
+
+class BudgetBookDialog(QDialog):
+    """Base class for custom dialog boxes"""
+
+    def __init__(self, mainwindow, modal=False):
+        "initialize the dialog window, if modal is false base on the top level window"
+        flag = Qt.WindowType.Dialog
+
+        # if not modal:
+        #     flag |= (
+        #         Qt.WindowType.CustomizeWindowHint |
+        #         Qt.WindowType.WindowMinimizeButtonHint |
+        #         Qt.WindowType.WindowMaximizeButtonHint |
+        #         Qt.WindowType.WindowCloseButtonHint |
+        #         Qt.WindowType.WindowTitleHint |
+        #         Qt.WindowType.WindowSystemMenuHint
+        #     )
+
+        QDialog.__init__(self, mainwindow, flag)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+
+        self.mainwindow = mainwindow
+
+
+class StandardDialogLayout(BudgetBookDialog):
+    """Standard dialog layout with a menu bar, preview area, options entries, and confirmation buttons."""
+
+    def __init__(self, parent, title="Standard Dialog", preview_text="Preview text goes here.", options=None):
+        BudgetBookDialog.__init__(self, parent)
+        self.setWindowTitle(str(title))
+
+        self.menu_bar = QWidget()
+        self.menu_bar.setObjectName("standardDialogMenuBar")
+        menu_layout = QHBoxLayout()
+        menu_layout.setContentsMargins(0, 0, 0, 0)
+        menu_layout.setSpacing(4)
+        self.menu_bar.setLayout(menu_layout)
+
+        for menu_name in ("File", "Edit", "View"):
+            menu_button = QPushButton(menu_name)
+            menu_button.setFlat(True)
+            menu_layout.addWidget(menu_button)
+
+        menu_layout.addStretch()
+
+        self.preview_label = QLabel(str(preview_text))
+        self.preview_label.setWordWrap(True)
+        self.preview_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        self.preview_label.setMinimumHeight(120)
+
+        self.options_layout = QVBoxLayout()
+        self.option_entries = []
+
+        if options is None:
+            options = {
+                "Option 1": ["Choice A", "Choice B", "Choice C"],
+                "Option 2": ["First", "Second", "Third"],
+            }
+
+        for label_text, values in options.items():
+            row_widget = QWidget()
+            row_layout = QHBoxLayout()
+            row_layout.setContentsMargins(0, 0, 0, 0)
+            row_layout.setSpacing(6)
+            row_widget.setLayout(row_layout)
+
+            row_label = QLabel(label_text)
+            row_combo = QComboBox()
+            row_combo.addItems([str(value) for value in values])
+            self.option_entries.append(row_combo)
+
+            row_layout.addWidget(row_label)
+            row_layout.addWidget(row_combo)
+            self.options_layout.addWidget(row_widget)
+
+        button_set = (
+            QDialogButtonBox.StandardButton.Ok |
+            QDialogButtonBox.StandardButton.Cancel
+        )
+        self.button_box = QDialogButtonBox(button_set)
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+
+        dialog_layout = QVBoxLayout()
+        dialog_layout.addWidget(self.menu_bar)
+        dialog_layout.addWidget(self.preview_label)
+        dialog_layout.addLayout(self.options_layout)
+        dialog_layout.addWidget(self.button_box)
+        self.setLayout(dialog_layout)
+
+
+class FileImportDialog(BudgetBookDialog):
+    import_folder = "."
+
+    def __init__(self, parent, document):
+        BudgetBookDialog.__init__(self, parent)
+        self.document = document
+
+        # whether import is ready to process
+
+        self.previewisaccepted = False
+
+        # Tab collection for import dialog
+        self.tabs = {}
 
 
 class CustomOkCancelDialog(QDialog):

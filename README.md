@@ -71,6 +71,7 @@ Tracking for what I need to change, fix or implement
   - CSV import needs to be updated for better parsing of pandas dataframes from pdf imports
 - ~~Setup tagging in a more friendly way, inline editing of a table perhaps~~ Completed for now via tkinter display ^solved in PyQt6 as well^
 - Add a reliable storage method for tags to be used to to correlate common names with a tag to 'learn' how things get tagged
+- There is a feature needed for the import template tool that will overlay the detected tables on the pdf documents for better troubleshooting.
 
 ## Bugs or Issues
 
@@ -80,3 +81,7 @@ Tracking for what I need to change, fix or implement
 - ~~The dynamic entry boxes do not always properly reset when importing different data or changing sources~~ Not an issue in PyQt6 6-19-2025
 - There is a weird crash caused by running the program with -h for the logging config.  temp fix applied in __main__.py
 - There is a known limitation with the data table view relating to the _generate_report_chart function in __main__.py where the size of the table cannot be modified manually.  This would involve changes in the gui_handles module.
+
+### self note
+
+This app is now built locally as a python package.  to update the package run `pip install -e .` and to execute run `python -m budgetbook`

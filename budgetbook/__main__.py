@@ -1,5 +1,6 @@
 #!/usr/bin/python
 """my doc is my string, verify me"""
+
 import os
 import sys
 import random
@@ -369,7 +370,7 @@ class MainWindow(QMainWindow):
                 print("Data import complete")
                 try:
                     # I need to add a formatter to make the column names look nice and pretty
-                    # without impacting the DB
+                    # without impacting the DB, I added this somewhere I thought? 3-12-26
                     self.data_table_model.update_table_from_dataframe(
                         self.transaction_table
                     )

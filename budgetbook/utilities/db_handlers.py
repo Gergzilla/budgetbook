@@ -276,7 +276,7 @@ def remove_duplicates(
     """my doc is my string, verify me"""
     dbconn = sqlite3.connect(expensedb)
     write_cursor = dbconn.cursor()
-    rowquery = f"SELECT MIN(rowid) FROM {expenses_table} group by charge_date, charge_name, amount"
+    rowquery = f"SELECT MIN(rowid) FROM {expenses_table} group by transaction_date, transaction_name, transaction_amount"
     print(rowquery)
     deletedupes = f"DELETE FROM {expenses_table} WHERE rowid not in({rowquery})"
     print(deletedupes)

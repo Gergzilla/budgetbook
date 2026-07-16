@@ -83,8 +83,12 @@ class Page:
         converts them to pandas dataframes.  Then unifies their columns, drops empty entries
         and merges them all into one single dataframe for the next processing step."""
         tabs = self.page.find_tables(
-            clip=new_clip, strategy="text", join_x_tolerance=3, text_x_tolerance=5
-        )
+            clip=new_clip,
+            strategy="text",
+            join_x_tolerance=10,
+            text_x_tolerance=10,
+            intersection_x_tolerance=10,
+        )  # increasing the tolerance for trouelshooting, was 3 and 5 and intersection wasnt there
         # print(f"Page: {self.page.number} into the parse_transaction_table function?")
         if tabs.tables:
             # print(f"Page: {self.page.number} if tabs.tables in function?")

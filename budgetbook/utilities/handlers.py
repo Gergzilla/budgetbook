@@ -22,7 +22,6 @@ from ..utilities.logger import LoggingHandler
 from ..utilities import db_handlers
 from ..utilities import importers
 
-
 # try:
 #     import utilities.db_handlers as db_handlers
 # except Exception:
@@ -147,9 +146,10 @@ def dateCheck(datestring, fuzzy=False) -> bool:
     try:
         dateparse(datestring, fuzzy=fuzzy)
         return True
+    except ValueError:
+        return False
     except TypeError:
-        # e isnt used but caught for proper handling, this just needs to
-        # evaluate as false if it cant parse the date for any reason
+        # ValueError is the standard exception for dateutil, TypeError serves as an extra catchall
         return False
 
 
@@ -175,12 +175,12 @@ def import_file_dialogue(import_file_name, import_year: int = 0):
         file_type = str(import_file_name).split(".")[1]
         # print(f"file_type is: {file_type}")
         if "csv" in file_type:
-            # print("CSV file detected")
+            print("CSV file detected")
             transaction_data = file_import_handler.importer_csv(
                 import_file_name, import_year
             )
         elif "pdf" in file_type:
-            # print(" file detected")
+            print("PDF file detected")
             # hardcoded to capital one for now.  More advanced selection to be handled later
             transaction_data = file_import_handler.cap_one_import(
                 import_file_name, import_year
