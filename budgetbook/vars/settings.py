@@ -2,13 +2,8 @@
 """This file is a universal location for common variables within the application landscape.
 Eventually I want this to move to something more robust like the database itself."""
 import os
-import sqlite3
 
-# mydb = os.path.join(os.path.dirname(__file__), "", "data", "mybudget.db")
-mydb = os.path.join("D:\\", "scripts", "pybudget", "budgetbook", "db.sqlite3")
 expensedb = os.path.join("D:\\", "scripts", "pybudget", "budgetbook", "db.sqlite3")
-dbconnect = sqlite3.connect(expensedb)
-# mytable = "database_transaction"
 expenseTable = "transactions"
 
 month_dict = {

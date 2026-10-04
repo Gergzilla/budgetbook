@@ -7,6 +7,7 @@ from datetime import datetime
 import pandas as pd
 from ..vars import settings
 
+from ..utilities import db
 from ..utilities.logger import LoggingHandler
 
 # try:
@@ -37,7 +38,12 @@ logger = LoggingHandler("db_handlers").log
 class DatabaseSetup:
     """This is the initial database and table setup, It has been setup within the Database menu of
     the app.  Some tweaking is still needed for better user feedback and error handling.  But for
-    now they are just collected together in a proper method class"""
+    now they are just collected together in a proper method class
+
+    DEPRECATED: this class (its shared class-level connection and cursor) is being replaced by the
+    module-level functions table_exists(), create_budget_table() and create_database() below, which
+    use db.get_connection().  It is kept only so existing callers keep working during the
+    transition and will be removed once nothing calls it.  See db-connect-schema.md, section 8."""
 
     live_expense_database = default_database
     # temp hard set from settings file. I will figure out dynamic later when I make a full DB menu
@@ -138,6 +144,48 @@ class DatabaseSetup:
             )
             logger.warning(status_msg)
             return False, status_msg
+
+
+#### New connection-managed setup functions (replace DatabaseSetup) #####
+
+
+def table_exists(table: str = expenseTable) -> bool:
+    """True if the database file exists and contains the given table."""
+    if not os.path.exists(default_database):
+        logger.warning("Database file not found at %s", default_database)
+        return False
+    with db.get_connection() as conn:
+        row = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (table,)
+        ).fetchone()
+    logger.info("Table %s %s", table, "found" if row else "not found")
+    return row is not None
+
+
+def create_budget_table() -> bool:
+    """Create the transactions table if missing. True if created, False if it already existed."""
+    if table_exists():
+        logger.info("No action required, table already exists.")
+        return False
+    with db.get_connection() as conn:
+        conn.executescript(
+            "CREATE TABLE transactions (transaction_date TEXT, post_date TEXT, "
+            "transaction_name TEXT, transaction_amount REAL, tags TEXT, notes TEXT, "
+            "UNIQUE(transaction_date,transaction_name,transaction_amount))"
+        )
+    logger.info("Table created")
+    return True
+
+
+def create_database() -> bool:
+    """Create the database file if missing. True if created, False if it already existed."""
+    if os.path.exists(default_database):
+        logger.info("Database already exists at %s", default_database)
+        return False
+    with db.get_connection():
+        pass  # opening a connection creates the empty database file
+    logger.warning("Database file created at %s", default_database)
+    return True
 
 
 ##### Data add/remove functions  ######
