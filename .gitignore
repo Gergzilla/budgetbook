@@ -15,6 +15,9 @@ Statement*
 # deprecated archive, kept local for reference
 budgetbook/utilities/deprecated/*
 
+# local personal notes and scratch files, should not be public
+roadmap/learning
+
 # databases are ommited because it should be created on initial run
 db.sqlite3
 Dead_db.sqlite3_dead
@@ -35,7 +38,6 @@ charcode.py
 otje.webp
 pyside_main.py
 broken__main__.py
-test_main.py
 table_test_py
 signal_helpyer.py
 budgetbook/bha14.py
@@ -53,4 +55,4 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
-tests/
+.pytest_cache/

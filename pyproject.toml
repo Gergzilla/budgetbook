@@ -49,6 +49,10 @@ classifiers = [
     "Topic :: Office/Business :: Financial",
 ]
 
+[project.optional-dependencies]
+# development-only tools, install with: pip install -e .[dev]
+dev = ["pytest==9.0.2"]
+
 [project.urls]
 Documentation = "https://github.com/Gergzilla/budgetbook"
 Repository = "https://github.com/Gergzilla/budgetbook"
@@ -59,3 +63,13 @@ budget-book-gui = "main:main"
 [tool.hatch.build]
 # this tells hatch to look for your code in the src folder
 sources = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "9.0"
+testpaths = ["tests"]
+# lets "python -m pytest" and "pytest" import budgetbook from the repo root without pip install
+pythonpath = ["."]
+# -ra shows a short summary of every non-passing test (skipped, xfailed, failed)
+addopts = "-ra"
+# every xfail marker must really fail, so a fixed bug turns the test red until the marker is removed
+xfail_strict = true

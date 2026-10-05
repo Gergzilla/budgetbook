@@ -31,7 +31,7 @@ Future roadmap:
 
 ## Current Core Features
 
-For a summary of planned features you can find the current roadmap [on this page.](https://github.com/Gergzilla/budgetbook/roadmap.md)
+For a summary of planned features you can find the current roadmap [on this page.](https://github.com/Gergzilla/budgetbook/roadmap/roadmap.md)
 
 ## Installing from source
 
