@@ -6,6 +6,13 @@ import os
 expensedb = os.path.join("D:\\", "scripts", "pybudget", "budgetbook", "db.sqlite3")
 expenseTable = "transactions"
 
+
+def get_db_path() -> str:
+    """Database path resolved at call time: the PYBUDGET_DB environment variable (a separate
+    development or test database) wins, otherwise the live path in expensedb."""
+    return os.environ.get("PYBUDGET_DB") or expensedb
+
+
 month_dict = {
     "Jan": "January",
     "Feb": "February",

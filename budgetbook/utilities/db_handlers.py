@@ -151,8 +151,9 @@ class DatabaseSetup:
 
 def table_exists(table: str = expenseTable) -> bool:
     """True if the database file exists and contains the given table."""
-    if not os.path.exists(default_database):
-        logger.warning("Database file not found at %s", default_database)
+    db_path = settings.get_db_path()
+    if not os.path.exists(db_path):
+        logger.warning("Database file not found at %s", db_path)
         return False
     with db.get_connection() as conn:
         row = conn.execute(
@@ -179,12 +180,13 @@ def create_budget_table() -> bool:
 
 def create_database() -> bool:
     """Create the database file if missing. True if created, False if it already existed."""
-    if os.path.exists(default_database):
-        logger.info("Database already exists at %s", default_database)
+    db_path = settings.get_db_path()
+    if os.path.exists(db_path):
+        logger.info("Database already exists at %s", db_path)
         return False
     with db.get_connection():
         pass  # opening a connection creates the empty database file
-    logger.warning("Database file created at %s", default_database)
+    logger.warning("Database file created at %s", db_path)
     return True
 
 
