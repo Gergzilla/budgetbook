@@ -16,7 +16,7 @@ from ..utilities.logger import LoggingHandler
 #     from logger import LoggingHandler
 
 #### Database Setup Functions #####
-default_database = settings.expensedb
+default_database = settings.get_db_path()
 expenseTable = settings.expenseTable
 logger = LoggingHandler("db_handlers").log
 # print(logger.log)  # currently untested
