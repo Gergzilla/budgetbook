@@ -44,12 +44,8 @@ def backup_database(
     dest_dir = Path(backup_dir) if backup_dir else src_path.parent / "backups"
     dest_dir.mkdir(parents=True, exist_ok=True)
 
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     dest_path = dest_dir / f"{src_path.stem}-{stamp}{src_path.suffix}"
-    counter = 1
-    while dest_path.exists():  # two backups in the same second
-        dest_path = dest_dir / f"{src_path.stem}-{stamp}-{counter}{src_path.suffix}"
-        counter += 1
 
     src = sqlite3.connect(src_path)
     dest = sqlite3.connect(dest_path)
