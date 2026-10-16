@@ -103,6 +103,21 @@ def test_save_resave_updates_category_and_notes_of_existing_row(account):
 
 
 @pending_refactor
+def test_save_empty_values_never_overwrite_existing_ones(account):
+    # decided: a re-import (blank category/notes) must not wipe what the user already entered.
+    # Clearing details is a deliberate Admin-panel action, not a side effect of saving.
+    groceries = add_category("Groceries")
+    first = make_transactions({"name": "STORE", "category_id": groceries, "notes": "weekly shop"})
+    db_handlers.save_dataframe_to_db(first)
+    blank = make_transactions({"name": "STORE"})
+    blank["import_hash"] = first["import_hash"]
+    db_handlers.save_dataframe_to_db(blank)
+    assert fetch_all("SELECT COUNT(*), category_id, notes FROM transactions") == [
+        (1, groceries, "weekly shop")
+    ]
+
+
+@pending_refactor
 def test_save_column_order_does_not_matter(account):
     frame = make_transactions({"name": "COFFEE", "amount_cents": -450})
     db_handlers.save_dataframe_to_db(frame[list(reversed(frame.columns))])

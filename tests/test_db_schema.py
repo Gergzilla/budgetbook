@@ -71,3 +71,22 @@ def test_backup_copies_data_and_prunes(db_path, tmp_path):
     assert len(remaining) == 2
     assert [str(p) for p in remaining] == sorted(paths)[-2:]
     assert sqlite3.connect(remaining[-1]).execute("SELECT x FROM t").fetchone() == (42,)
+
+
+def test_migrate_refuses_database_newer_than_code(db_path):
+    future = schema.LATEST_VERSION + 1
+    with db.get_connection() as conn:
+        conn.execute("CREATE TABLE precious (x)")
+        conn.execute("INSERT INTO precious VALUES (1)")
+        conn.execute(f"PRAGMA user_version = {future}")
+
+    with pytest.raises(RuntimeError, match="newer than this app supports"):
+        schema.migrate()
+
+    # nothing was touched: version and data intact, no migration tables, no backup written
+    assert schema.get_schema_version() == future
+    with db.get_connection() as conn:
+        names = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        assert conn.execute("SELECT x FROM precious").fetchall() == [(1,)]
+    assert names == {"precious"}
+    assert not (db_path.parent / "backups").exists()
