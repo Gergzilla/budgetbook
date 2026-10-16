@@ -19,10 +19,12 @@ Contract assumed (change here first if it is wrong):
 remove_duplicates has no specs here on purpose: see the note at the bottom.
 """
 
+import sqlite3
+
 import pytest
 
 from budgetbook.utilities import db_handlers
-from tests.helpers import (
+from helpers import (
     add_account,
     add_category,
     fetch_all,
@@ -119,7 +121,7 @@ def test_save_failure_rolls_back_whole_batch(account):
     good = make_transactions({"name": "GOOD"})
     bad = make_transactions({"name": "BAD", "account_id": 999})  # no such account
     frame = good.reset_index(drop=True)._append(bad, ignore_index=True)
-    with pytest.raises(Exception):
+    with pytest.raises(sqlite3.IntegrityError):  # foreign key on account_id
         db_handlers.save_dataframe_to_db(frame)
     assert fetch_all("SELECT COUNT(*) FROM transactions") == [(0,)]
 
